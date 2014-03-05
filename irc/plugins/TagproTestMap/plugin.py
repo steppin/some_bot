@@ -140,7 +140,7 @@ class TagproTestMap(callbacks.Plugin):
         urls = ['http://maptest.newcompte.fr/testmap', 'http://justletme.be:8080/testmap']
         shuffle(urls)
         for url in urls:
-            if !self.__test(irc, msg, args, mapname, url):
+            if not self.__test(irc, msg, args, mapname, url):
                 return
             else:
                 irc.reply("Trying another server..")
