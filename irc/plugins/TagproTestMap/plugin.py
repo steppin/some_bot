@@ -36,6 +36,7 @@ import supybot.callbacks as callbacks
 import requests
 import os.path
 import psycopg2
+from random import shuffle
 
 
 
@@ -78,10 +79,12 @@ class TagproTestMap(callbacks.Plugin):
         irc.reply(resp)
     listmaps = wrap(listmaps, [optional('text')])
 
-    def test(self, irc, msg, args, mapname):
+    def __test(self, irc, msg, args, mapname, url) :
         """<mapname>
 
         Creates a test game with <mapname>.
+
+        Returns true iff it couldn't open the map because of the server
         """
 
         # TODO: configure a map directory
@@ -106,7 +109,6 @@ class TagproTestMap(callbacks.Plugin):
         mapdir = os.path.join('/home/steppin/tagpro/maps', tag)
         layout = os.path.join(mapdir, mapid + '.png')
         logic = os.path.join(mapdir, mapid + '.json')
-        url = 'http://tagpro-maptest.koalabeast.com/testmap'
         try:
             files = {'logic': open(logic, 'rb'), 'layout': open(layout, 'rb')}
         except IOError:
@@ -117,17 +119,35 @@ class TagproTestMap(callbacks.Plugin):
         except requests.ConnectionError as e:
             # TODO(step): log or print to stderr instead
             print e
-            irc.reply("I tried to upload the map but I had trouble reaching the server!")
-            return
+            irc.reply("I tried to upload the map but I had trouble reaching the server ("+url+")!")
+            return true
         #print r.content
         testurl = r.url
-        if testurl == 'http://tagpro-maptest.koalabeast.com/testmap':
-            irc.reply("I tried to upload the map but the server didn't like it.  Ask my owner to give me better debug output :(")
+        if testurl == url:
+            irc.reply("I tried to upload the map but the server ("+url+") didn't like it.  Ask my owner to give me better debug output :(")
+            return true
         else:
             #irc.reply('{} ({} by {})'.format(testurl, name, author))
             irc.reply('{} ({})'.format(testurl, name))
 
+    def test(self, irc, msg, args, mapname):
+        url = 'http://tagpro-maptest.koalabeast.com/testmap'
+        self.__test(irc, msg, args, mapname, url)
+
     test = wrap(test, ['text'])
+
+    def testEU(self, irc, msg, args, mapname):
+        urls = ['http://maptest.newcompte.fr/testmap', 'http://justletme.be:8080/testmap']
+        shuffle(urls)
+        for url in urls:
+            if not self.__test(irc, msg, args, mapname, url):
+                return
+            else:
+                irc.reply("Trying another server..")
+        self.test(irc, msg, args, mapname)
+
+    testEU = wrap(testEU, ['text'])
+
 
     def preview(self, irc, msg, args, mapname):
         """<mapname>
