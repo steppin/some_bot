@@ -129,7 +129,7 @@ class Map():
         except KeyError:
             pass
 
-        portal_entrances = []
+        portal_entrances = self.portal_entrances = []
         try:
             for entrance, exit in self.json['portals'].iteritems():
                 x, y = entrance.split(',')
@@ -318,7 +318,7 @@ class Map():
                         a, b = 0, 0
                         draw((a, b), (i, j), tiles, preview, drawBackground=False, source=speedpadblue)
                     elif color == colormap['portal']:
-                        if (i, j) in portal_entrances:
+                        if (i, j) in self.portal_entrances:
                             a, b = 0, 0
                         else:
                             a, b = 4, 0
