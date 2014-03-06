@@ -120,12 +120,12 @@ class TagproTestMap(callbacks.Plugin):
             # TODO(step): log or print to stderr instead
             print e
             irc.reply("I tried to upload the map but I had trouble reaching the server ("+url+")!")
-            return true
+            return True
         #print r.content
         testurl = r.url
         if testurl == url:
             irc.reply("I tried to upload the map but the server ("+url+") didn't like it.  Ask my owner to give me better debug output :(")
-            return true
+            return True
         else:
             #irc.reply('{} ({} by {})'.format(testurl, name, author))
             irc.reply('{} ({})'.format(testurl, name))
