@@ -131,12 +131,21 @@ class TagproTestMap(callbacks.Plugin):
             irc.reply('{} ({})'.format(testurl, name))
 
     def test(self, irc, msg, args, mapname):
+        """<mapname>
+
+        Creates a test game with <mapname>.
+        """
+
         url = 'http://tagpro-maptest.koalabeast.com/testmap'
         self.__test(irc, msg, args, mapname, url)
 
     test = wrap(test, ['text'])
 
     def testEU(self, irc, msg, args, mapname):
+        """<mapname>
+
+        Creates a test game with <mapname> on a european server.
+        """
         urls = ['http://maptest.newcompte.fr/testmap', 'http://justletme.be:8080/testmap']
         shuffle(urls)
         for url in urls:
