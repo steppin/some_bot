@@ -141,7 +141,7 @@ class TagproTestMap(callbacks.Plugin):
 
     test = wrap(test, ['text'])
 
-    def testEU(self, irc, msg, args, mapname):
+    def testeu(self, irc, msg, args, mapname):
         """<mapname>
 
         Creates a test game with <mapname> on a european server.
@@ -155,7 +155,7 @@ class TagproTestMap(callbacks.Plugin):
                 irc.reply("Trying another server..")
         self.test(irc, msg, args, mapname)
 
-    testEU = wrap(testEU, ['text'])
+    testeu = wrap(testeu, ['text'])
 
 
     def preview(self, irc, msg, args, mapname):
