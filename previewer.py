@@ -69,6 +69,8 @@ class Map():
         else:
             png = Image.open(pngpath)
         self.png = png
+        if png.mode != 'RGBA':
+            png = png.convert('RGBA')
         self.pixels = png.load()
 
         if 'http' in jsonpath:
