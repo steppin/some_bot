@@ -51,6 +51,9 @@ class Map():
         'gate': (0, 117, 0),
         'blueflag': (0, 0, 255),
         'redflag': (255, 0, 0),
+        'yellowflag': (128, 128, 0),
+        'blueendzone': (25, 0, 148),
+        'redendzone': (185, 0, 0),
         'speedpad': (255, 255, 0),
         'bomb': (255, 128, 0),
         'bluetile': (187, 184, 221),
@@ -176,6 +179,15 @@ class Map():
                         draw((a, b), (i, j), tiles, preview, drawBackground=True)
                     elif color == colormap['redflag']:
                         a, b = 8, 0
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                    elif color == colormap['yellowflag']:
+                        a, b = 7, 0
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                    elif color == colormap['blueendzone']:
+                        a, b = 5, 2
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                    elif color == colormap['redendzone']:
+                        a, b = 5, 1
                         draw((a, b), (i, j), tiles, preview, drawBackground=True)
                     elif color == colormap['tile']:
                         a, b = 2, 2
@@ -329,6 +341,15 @@ class Map():
                     elif color == colormap['redflag']:
                         a, b = 8, 0
                         draw((a, b), (i, j), tiles, preview, drawBackground=False)
+                    elif color == colormap['yellowflag']:
+                        a, b = 7, 0
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                    elif color == colormap['blueendzone']:
+                        a, b = 5, 2
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                    elif color == colormap['redendzone']:
+                        a, b = 5, 1
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
                 except KeyError:
                     print >> sys.stderr, "make this an error mkay"
 
