@@ -189,6 +189,12 @@ class Map():
                     elif color == colormap['redendzone']:
                         a, b = 5, 1
                         draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                    elif color == colormap['redspawn']:
+                        a, b = 6, 2
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                    elif color == colormap['bluespawn']:
+                        a, b = 6, 3
+                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
                     elif color == colormap['tile']:
                         a, b = 2, 2
                         draw((a, b), (i, j), tiles, preview)
@@ -343,13 +349,13 @@ class Map():
                         draw((a, b), (i, j), tiles, preview, drawBackground=False)
                     elif color == colormap['yellowflag']:
                         a, b = 7, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['blueendzone']:
-                        a, b = 5, 2
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['redendzone']:
-                        a, b = 5, 1
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
+                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
+                    elif color == colormap['redspawn']:
+                        a, b = 6, 2
+                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
+                    elif color == colormap['bluespawn']:
+                        a, b = 6, 3
+                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
                 except KeyError:
                     print >> sys.stderr, "make this an error mkay"
 
