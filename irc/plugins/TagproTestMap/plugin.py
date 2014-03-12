@@ -67,7 +67,7 @@ class TagproTestMap(callbacks.Plugin):
             if ircutils.isChannel(msg.args[0]):
                 irc.reply('Please use a private message to browse the full list.  Alternatively, provide a search string or week number, or visit http://tagpro.imgur.com')
                 return
-            self.cur.execute("SELECT name FROM maps ORDER BY name")
+            self.cur.execute("SELECT name FROM maps ORDER BY plays/NULLIF(AGE(date_added),0) DESC")
 
         count = self.cur.rowcount
         if count > 0:
@@ -128,6 +128,7 @@ class TagproTestMap(callbacks.Plugin):
             return True
         else:
             #irc.reply('{} ({} by {})'.format(testurl, name, author))
+            self.cur.execute("UPDATE maps SET plays=plays+1 WHERE mapid= %s", (mapid,))
             irc.reply('{} ({})'.format(testurl, name))
 
     def test(self, irc, msg, args, mapname):
