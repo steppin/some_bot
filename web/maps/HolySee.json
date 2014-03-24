@@ -1,0 +1,63 @@
+{
+    "info": {
+        "name": "The Holy See",
+        "author": "OP"
+    },
+    "switches": {
+        "22,37": {
+            "toggle": [
+                { "pos": { "x": 25, "y": 37 } },
+                { "pos": { "x": 25, "y": 36 } },
+                { "pos": { "x": 25, "y": 35 } },
+                { "pos": { "x": 33, "y": 37 } },
+                { "pos": { "x": 33, "y": 36 } },
+                { "pos": { "x": 33, "y": 35 } }
+            ]
+        },
+        "36,37": {
+            "toggle": [
+                { "pos": { "x": 33, "y": 37 } },
+                { "pos": { "x": 33, "y": 36 } },
+                { "pos": { "x": 33, "y": 35 } },
+                { "pos": { "x": 25, "y": 37 } },
+                { "pos": { "x": 25, "y": 36 } },
+                { "pos": { "x": 25, "y": 35 } }
+            ]
+        },
+        "36,3": {
+            "toggle": [
+                { "pos": { "x": 33, "y": 5 } },
+                { "pos": { "x": 33, "y": 4 } },
+                { "pos": { "x": 33, "y": 3 } },
+                { "pos": { "x": 25, "y": 5 } },
+                { "pos": { "x": 25, "y": 4 } },
+                { "pos": { "x": 25, "y": 3 } }
+            ]
+        },
+        "22,3": {
+            "toggle": [
+                { "pos": { "x": 25, "y": 4 } },
+                { "pos": { "x": 25, "y": 5 } },
+                { "pos": { "x": 25, "y": 3 } },
+                { "pos": { "x": 33, "y": 3 } },
+                { "pos": { "x": 33, "y": 4 } },
+                { "pos": { "x": 33, "y": 5 } }
+            ]
+        }
+    },
+
+    "fields": {
+        "25,3" : { "defaultState": "on" },
+        "25,4" : { "defaultState": "on" },
+        "25,5" : { "defaultState": "on" },
+        "25,35" : { "defaultState": "on" },
+        "25,36" : { "defaultState": "on" },
+        "25,37" : { "defaultState": "on" },
+        "33,3" : { "defaultState": "on" },
+        "33,4" : { "defaultState": "on" },
+        "33,5" : { "defaultState": "on" },
+        "33,35" : { "defaultState": "on" },
+        "33,36" : { "defaultState": "on" },
+        "33,37" : { "defaultState": "on" }
+    }
+}

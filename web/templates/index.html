@@ -26,18 +26,17 @@
         <a href="#" class="navbar-brand">some_bot map frontend</a>
     </div>
 
-
     <div class="row">
     {% for map in maps %}
         <div class="col-md-4 map" id="{{ map.name }}">
             <div class="thumbnail">
-                <h2 class='searchable'>{{ map.name.title() }}</h2>
+                <h2 class='searchable'>{{ map.name }}</h2>
                 <img src="{{ map.url }}" style="height:225px";>
                  <div class="caption">
                     <h3 class='searchable'>{{ map.get('author', 'No author available') }}</h3>
                     <p class='searchable'>{{ map.get('description', 'No description available.') }}</p>
                     <div class="buttongroup">
-                        <a href="#" class="btn btn-primary" role="button">Test map</a>
+                        <a href="#" class="btn btn-primary testmap" role="button" mapname="{{ map.name }}">Test map</a>
                         <a href="{{ map.url }}" class="btn btn-primary">Fullsize Preview</a>
                     </div>
                 </div>
@@ -54,6 +53,22 @@
 <script src="/static/js/bootstrap.min.js"></script>
 
 <script>
+
+    // Testmap function
+    $('.testmap').click(function () {
+        console.log($(this).attr('mapname'));
+        $.ajax({
+            url: "maptest",
+            data: {'mapname':$(this).attr('mapname'),}
+        }).done(function(data) {
+            console.log(data);
+            if(data.success) {
+                window.open(data.testurl);
+            }
+        });
+     });
+
+    // Search function
     $('#search').on('keyup', function() {
         var rex = new RegExp($(this).val(), 'i');
         $('.map').hide();

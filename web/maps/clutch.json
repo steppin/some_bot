@@ -1,0 +1,32 @@
+{
+    "info": {
+        "name": "Clutch",
+        "author": "LuckySpammer"
+    },
+    "switches": {
+        "47,18": {
+            "toggle": [
+                { "pos": { "x": 51, "y": 18 } },
+                { "pos": { "x": 52, "y": 17 } },
+                { "pos": { "x": 53, "y": 16 } },
+				{ "pos": { "x": 49, "y": 14 } }
+            ]
+        },
+        "17,15": {
+            "toggle": [
+                { "pos": { "x": 11, "y": 17 } },
+                { "pos": { "x": 12, "y": 16 } },
+                { "pos": { "x": 13, "y": 15 } },
+				{ "pos": { "x": 15, "y": 19 } }
+            ]
+        }
+    },
+    "fields": {
+        "51,18" : { "defaultState": "red" },
+		"52,17" : { "defaultState": "red" },
+		"53,16" : { "defaultState": "red" },
+        "11,17" : { "defaultState": "blue" },
+		"12,16" : { "defaultState": "blue" },
+		"13,15" : { "defaultState": "blue" }
+	}
+}

@@ -1,0 +1,52 @@
+{
+
+
+    "info":
+    {
+      "name": "Boostsv2.1",
+      "author": "Danny"
+    },
+
+
+    "switches":
+    {
+
+      "17,5":
+      {
+        "toggle":
+        [
+          { "pos": { "x": 27, "y": 3 } },
+          { "pos": { "x": 30, "y": 4 } },
+          { "pos": { "x": 30, "y": 5 } },
+          { "pos": { "x": 30, "y": 6 } }
+        ]
+      },
+
+      "31,35":
+      {
+        "toggle":
+        [
+          { "pos": { "x": 18, "y": 34 } },
+          { "pos": { "x": 18, "y": 35 } },
+          { "pos": { "x": 18, "y": 36 } },
+          { "pos": { "x": 21, "y": 37 } }
+        ]
+      }
+
+    },
+
+
+    "fields":
+    {
+      "27,3": { "defaultState": "on" },
+      "30,4": { "defaultState": "off" },
+      "30,5": { "defaultState": "off" },
+      "30,6": { "defaultState": "off" },
+      "18,34": { "defaultState": "off" },
+      "18,35": { "defaultState": "off" },
+      "18,36": { "defaultState": "off" },
+      "21,37": { "defaultState": "on" }
+    }
+
+
+  }

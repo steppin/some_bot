@@ -1,0 +1,18 @@
+{
+    "info": {
+        "name": "Shortcut",
+        "author": "LuckySpammer"
+    },
+    "switches": {
+        "25,5": {
+            "toggle": [
+                { "pos": { "x": 29, "y": 3 } }
+            ]
+        },
+        "41,21": {
+            "toggle": [
+                { "pos": { "x": 37, "y": 23 } }
+            ]
+        }
+    }
+}

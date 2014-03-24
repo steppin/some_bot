@@ -1,0 +1,46 @@
+{
+    "info": {
+        "name": "Star",
+        "author": "LuckySpammer"
+    },
+    "switches": {
+        "18,14": {
+            "toggle": [
+                { "pos": { "x": 20, "y": 21 } },
+                { "pos": { "x": 21, "y": 21 } },
+                { "pos": { "x": 22, "y": 21 } },
+                { "pos": { "x": 20, "y": 22 } },
+                { "pos": { "x": 21, "y": 22 } },
+                { "pos": { "x": 22, "y": 22 } },
+                { "pos": { "x": 20, "y": 23 } },
+                { "pos": { "x": 21, "y": 23 } },
+                { "pos": { "x": 22, "y": 23 } }
+            ]
+        },
+        "24,30": {
+            "toggle": [
+                { "pos": { "x": 20, "y": 21 } },
+                { "pos": { "x": 21, "y": 21 } },
+                { "pos": { "x": 22, "y": 21 } },
+                { "pos": { "x": 20, "y": 22 } },
+                { "pos": { "x": 21, "y": 22 } },
+                { "pos": { "x": 22, "y": 22 } },
+                { "pos": { "x": 20, "y": 23 } },
+                { "pos": { "x": 21, "y": 23 } },
+                { "pos": { "x": 22, "y": 23 } }
+            ]
+        }
+    },
+
+    "fields": {
+        "20,21" : { "defaultState": "off" },
+        "21,21" : { "defaultState": "off" },
+        "22,21" : { "defaultState": "off" },
+        "20,22" : { "defaultState": "off" },
+        "21,22" : { "defaultState": "off" },
+        "22,22" : { "defaultState": "off" },
+        "20,23" : { "defaultState": "off" },
+        "21,23" : { "defaultState": "off" },
+        "22,23" : { "defaultState": "off" }
+    }
+}

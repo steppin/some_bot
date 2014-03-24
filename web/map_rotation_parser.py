@@ -1,7 +1,8 @@
 from bs4 import BeautifulSoup as bs
 import requests
+from redis import Redis
 
-def get_maps(url='http://www.reddit.com/r/TagPro/wiki/index', tagid='wiki_current_rotation'):
+def get_maps(url='http://www.reddit.com/r/TagPro/wiki/index', tagid='wiki_current_rotation', tags=['']):
 	'''
 	Parse table of maps from reddit's tagpro index, unless otherwise chosen (although this will break)
 	'''
@@ -21,13 +22,16 @@ def get_maps(url='http://www.reddit.com/r/TagPro/wiki/index', tagid='wiki_curren
 		# We want the map name and the map url, so we'll grab ones with text
 		# The table goes "row of images, row of links w/ names, row of images"
 		if m.text:
-			parsed_maps.append( {'name':m.text, 'url':m.find('a').get('href')})
+			name = m.text
+			url = m.find('a').get('href')
+			name = name.title().replace('Motw', 'MOTW')
+			parsed_maps.append( {'name':name, 'url':url, 'tags':tags})
 
 	# Sort so the MOTWs are at the top of the list so they get the most exposure
 	parsed_maps.sort(key=lambda x: 'motw' not in x.get('name').lower())
-
 	return parsed_maps
 
-
 if __name__ == "__main__":
-	print get_current_rotation()
+	maps = get_maps(tags=['current'])
+	maps.extend(get_maps(tagid='wiki_retired_maps', tags=['retired']))
+	print maps
