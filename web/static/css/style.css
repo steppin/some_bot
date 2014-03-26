@@ -1,0 +1,49 @@
+body {
+  /*background-color:#3D4548;#565248;*/
+  background-color: #444;
+}
+.banner {
+  -webkit-border-radius: 7px;
+  -moz-border-radius: 7px;
+  -ms-border-radius: 7px;
+  -o-border-radius: 7px;
+  border-radius: 7px;
+  background-color: #666;
+}
+.thumbnail {
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 10px;
+  text-align: center;
+  background-color: #efefef;
+  vertical-align: top;
+}
+.btn-default {
+  background-color: #efefef;
+}
+.thumnail .overview {
+  padding-left: 15px;
+  padding-right: 15px;
+  padding-top: 10px;
+}
+.buttongroup {
+  text-align: center;
+  padding-top: 5px;
+}
+.caption {
+  text-align: left;
+}
+.center {
+  margin: 0 auto;
+  float: none;
+}
+p {
+  display: inline-block;
+  margin-left: auto;
+  margin-right: auto;
+  text-indent: 3em;
+}
+h3, h2 {
+  border-bottom: 1px solid #dedede;
+  text-align: center;
+}
