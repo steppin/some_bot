@@ -16,40 +16,71 @@
     </head>
 	<body>
         <div class="container-fluid">
-
             <div class="col-md-8 col-md-offset-2">
-
-            <div class="row"  style="padding-top:50px">
-                <nav class="navbar navbar-inverse" role="navigation">
-                    <form class="navbar-form navbar-right" role="search">
-                        <input type="text" class="form-control" placeholder="Search" id="search">
-                    </form>
-                    <a href="#" class="navbar-brand">some_bot map frontend</a>
-                </nav>
-            </div>
+                <div class="row"  style="padding-top:50px">
+                    <nav class="navbar navbar-inverse" role="navigation">
+                        <form class="navbar-form navbar-right" role="search">
+                            <input type="text" class="form-control" placeholder="Search" id="search">
+                        </form>
+                        <a href="#" class="navbar-brand">some_bot map frontend</a>
+                    </nav>
+                </div>
 
                 {% block content %}
                 {% endblock %}
-
 
             </div>
 
         </div>
         <!--TODO(step): replace this with dropzone-->
-        <div id="upload">
-            <h1>Upload Map</h1>
-            <form action="/" method=post enctype=multipart/form-data>
-            <p>
-                <input type=file name=layout><br />
-                <input type=file name=logic><br />
-                <input type=submit value=Upload>
-            </p>
+
+        <div class="col-md-2" style="padding-top:300px">
+            <div class="thumbnail">
+                <h3>Test your map</h3>
+                <div style="text-align:left">
+                    <form id="mapupload" action="/" method="post" multiple style='height:200px'>
+                        Drop a .json and a .png file here to test your map.
+                        Click to navigate for files.
+                    </form>
+                </div>
+            </div>
         </div>
+
         <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
         <script src="/static/js/jquery.min.js"></script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="/static/js/bootstrap.min.js"></script>
+        <script src="/static/js/dropzone.js"></script>
         <script>
+
+            Dropzone.options.mapupload = {
+              paramName: "file", // The name that will be used to transfer the file
+              maxFilesize: 0.5, // MB
+              uploadMultiple: true,
+              maxFiles: 2,
+              autoProcessQueue: false,
+              acceptedFiles: "image/png,.json",
+            };
+
+            var mapupload = new Dropzone("#mapupload");
+
+            mapupload.on("successmultiple", function(files, data) {
+                if(data.success) {
+                    //window.open(data.testurl);
+                    mapupload.removeAllFiles(true);
+                    $('#mapupload').html("<b>Testing your map now. Drag or click to test a different map.</b>");
+                }
+            });
+
+            mapupload.on("maxfilesreached", function(file) {
+                mapupload.processQueue();
+                console.log(file);
+            });
+
+    </script>
+
+
+    <script>
             // Search function
             $('#search').on('keyup', function() {
                 var rex = new RegExp($(this).val(), 'i');
@@ -59,5 +90,7 @@
                 }).closest('.map').show();
             });
         </script>
+
+
 	</body>
 </html>

@@ -1,4 +1,4 @@
-from flask import Flask, request, g, redirect, url_for, abort, render_template, send_from_directory
+from flask import Flask, request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify
 from werkzeug import secure_filename
 import sqlite3
 import os
@@ -43,7 +43,6 @@ def close_db(error):
     if hasattr(g, 'db'):
         g.db.close()
     
-
 def add_map(mapname):
     db = get_db()
     db.execute('insert into maps (mapname) values (?)', [mapname])
@@ -76,11 +75,17 @@ def recent_maps():
 @app.route('/', methods=['GET','POST'])
 def upload_map():
     if request.method == 'POST':
-        layout = request.files['layout']
-        logic = request.files['logic']
+        layout, logic = None, None
+        files = request.files.getlist('file[]')
+        for f in files:
+            if f.filename[-5:] == ".json":
+                logic = f
+            elif f.filename[-4:] == ".png":
+                layout = f
         # TODO: make secure filename so people can't overwrite? secure file name
-        mapname = os.path.splitext(layout.filename)[0]
         if layout and logic:
+            mapname = os.path.splitext(layout.filename)[0]
+            dir(layout)
             layout.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.png'))
             logic.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.json'))
             generate_preview(mapname)
