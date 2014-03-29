@@ -4,19 +4,18 @@ SomeBot Brains!
 {% endblock %}
 {% block content %}
 	{% if mapname is defined %}
-    <div id="image"><a href="static/maps/{{ mapname }}.png" target="_blank"><img class="new" src="static/maps/{{ mapname }}.png"></a></div>
+    <div id="image"><a href="static/maps/{{ mapname }}.png" target="_blank"><img class="new" src="static/maps/{{ map.mapname }}.png"></a></div>
         <p>{{ j }}</p>
     {% else %}
 
         <div class="row">
         {% for map in maps %}
-            <div class="col-md-4 map" id="{{ map.mapname }}">
+            <div class="col-lg-4 col-md-6 map" id="{{ map.mapname }}">
                 <div class="thumbnail">
-                    <h2 class='searchable'>{{ map.mapname }}</h2>
-                    <img src="/static/thumbs/{{ map.mapname }}.png">
+                    <h2><a href="/show?mapname={{ map.mapname }}" class="searchable">{{ map.mapname }}</h2>
+                    <img src="/static/thumbs/{{ map.mapname }}.png" style="width:250px;">
                      <div class="caption">
-                        <h3 class='searchable'>author</h3>
-                        <p class='searchable'>description</p>
+                        <h3 class='searchable'>{{ map.author }}</h3>
                         <div class="buttongroup">
                             <a href="#" class="btn btn-primary testmap" role="button" mapname="{{ map.mapname }}">Test map</a>
                             <a href="/static/previews/{{ map.mapname }}.png" class="btn btn-primary">Fullsize Preview</a>
@@ -26,7 +25,6 @@ SomeBot Brains!
             </div>
         {% endfor %}
         </div>
-
 
 	{% endif %}
 {% endblock %}
