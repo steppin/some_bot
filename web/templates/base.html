@@ -22,7 +22,7 @@
                         <form class="navbar-form navbar-right" role="search">
                             <input type="text" class="form-control" placeholder="Search" id="search">
                         </form>
-                        <a href="#" class="navbar-brand">some_bot map frontend</a>
+                        <a href="/" class="navbar-brand">some_bot map frontend</a>
                     </nav>
                 </div>
 
@@ -51,8 +51,8 @@
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="/static/js/bootstrap.min.js"></script>
         <script src="/static/js/dropzone.js"></script>
-        <script>
 
+        <script>
             Dropzone.options.mapupload = {
               paramName: "file", // The name that will be used to transfer the file
               maxFilesize: 0.5, // MB
@@ -77,6 +77,19 @@
                 console.log(file);
             });
 
+    </script>
+
+    <script>
+    $('.testmap').click(function () {
+        $.ajax({
+            url: "maptest",
+            data: {'mapname':$(this).attr('mapname'),}
+        }).done(function(data) {
+            if(data.success) {
+                window.open(data.testurl);
+            }
+        });
+     });
     </script>
 
 
