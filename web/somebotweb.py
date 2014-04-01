@@ -75,7 +75,7 @@ def recent_maps(author=None):
     db = get_db()
     if author:
         print author
-        cur = db.execute('select mapname from maps where author like (?) by upload_time desc', [author])
+        cur = db.execute('select mapname from maps where author like (?) order by upload_time desc', [author])
     else:
         cur = db.execute('select mapname from maps order by upload_time desc')
     maps = cur.fetchall()
