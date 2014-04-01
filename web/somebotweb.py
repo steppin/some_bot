@@ -94,24 +94,32 @@ def get_test_link(mapname):
 @app.route('/', methods=['GET','POST'])
 def upload_map():
     if request.method == 'POST':
-        layout, logic = None, None
+        layout = request.files.get("layout", None)
+        logic = request.files.get("logic", None)
+        mapname = request.form.get("mapname", None)
+        print layout, logic, mapname
         # I'm not sure if dropzone supports multiple file upload and individual names
-        files = request.files.getlist('file[]')
-        for f in files:
-            if f.filename[-5:] == ".json":
-                logic = f
-            elif f.filename[-4:] == ".png":
-                layout = f
+        if not logic and not layout:
+            files = request.files.getlist('file[]')
+            for f in files:
+                if f.filename[-5:] == ".json":
+                    logic = f
+                elif f.filename[-4:] == ".png":
+                    layout = f
         # TODO: make secure filename so people can't overwrite? secure file name
         # Generate a md5 based on map name and author?
         # Or just mapname+'_'+mapauthor
         if layout and logic:
-            mapname = os.path.splitext(layout.filename)[0]
+            if not mapname: 
+                mapname = os.path.splitext(layout.filename)[0]
+            else:
+                mapname = mapname.strip()
             layout.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.png'))
             logic.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.json'))
             generate_preview(mapname)
             generate_thumb(mapname)
             add_map(mapname)
+            print "Added map %s to database" %(mapname)
             return redirect(url_for('show_map', mapname=mapname))
         else:
             abort(404)
@@ -141,7 +149,6 @@ def get_map_data(mapname):
     # Some more things we might want to display
     # creation date, version, similar maps
     return map_data
-
 
 @app.route("/maptest")
 def test_map():
