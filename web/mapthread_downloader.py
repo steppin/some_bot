@@ -65,9 +65,10 @@ for links in comment_links:
 	if png_data and json_data:
 		json_info = json.loads(json_data)['info']
 		mapname = json_info['name']
+		author = json_info.get('author', "No author listed")
 		print "Posting %s...." %(mapname)
 		files = {"logic":json_data, "layout":png_data}
-		r = requests.post("http://localhost:5000/", data={"mapname":mapname}, files=files)
+		r = requests.post("http://localhost:5000/", data={"mapname":mapname, "author":author}, files=files)
 		print "Status: ", r.status_code
 		total += 1
 	else:
