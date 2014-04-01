@@ -13,9 +13,11 @@ import previewer
 # TODO:
 # * check filetypes, size limits, basically a tagpromaplint
 
-app = Flask(__name__)
 
+
+app = Flask(__name__)
 DEBUG = True
+
 # TODO: use a nice path here;
 # http://flask.pocoo.org/docs/config/#instance-folders
 BASE_DIR = app.root_path
@@ -50,6 +52,8 @@ def add_map(mapname, author=""):
     db = get_db()
     db.execute('insert into maps (mapname, author, upload_time) values (?, ?, ?)', [mapname, author, time.time()])
     db.commit()
+    # TODO check if map actually was inserted correctly
+    return True
 
 def generate_preview(mapname):
     # TODO: need to check if the files exist
@@ -97,6 +101,15 @@ def get_test_link(mapname):
     r = requests.post(test_server, files=file_data)
     return r.url
 
+@app.route("/upload", methods=['GET', 'POST'])
+def save_map():
+    mapname = request.args.get('mapname', '')
+    return render_template('upload.html', map=get_map_data(mapname))
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    return render_template('login.html')
+
 @app.route('/', methods=['GET','POST'])
 def upload_map():
     if request.method == 'POST':
@@ -104,7 +117,6 @@ def upload_map():
         logic = request.files.get("logic", None)
         mapname = request.form.get("mapname", None)
         author = request.form.get("author", "No author listed")
-        print layout, logic, mapname
         # I'm not sure if dropzone supports multiple file upload and individual names
         if not logic and not layout:
             files = request.files.getlist('file[]')
@@ -125,9 +137,10 @@ def upload_map():
             logic.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.json'))
             generate_preview(mapname)
             generate_thumb(mapname)
-            add_map(mapname, author=author)
-            print "Added map %s to database" %(mapname)
-            return redirect(url_for('show_map', mapname=mapname))
+            success = add_map(mapname, author=author)
+            testurl = get_test_link(mapname)
+            saveurl = url_for('save_map', mapname=mapname)
+            return jsonify(success=success, saveurl=saveurl, testurl=testurl)
         else:
             abort(404)
     else:
@@ -136,7 +149,7 @@ def upload_map():
         # This is a little hacky, recent_maps() returns a sqlite row, but we need a list of mapnames
         print maps
         maps_data = map(lambda x: get_map_data(x[0]), maps)
-        return render_template('upload.html', maps=maps_data)
+        return render_template('showmaps.html', maps=maps_data)
 
 @app.route('/show')
 def show_map():
@@ -164,7 +177,8 @@ def test_map():
     mapname = request.args.get('mapname', None)
     if mapname:
         testurl = get_test_link(mapname)
-        return jsonify(success=True, testurl=testurl)
+        showurl = url_for('save_map', mapname=mapname)
+        return jsonify(success=True, testurl=testurl, showurl=showurl)
     else:
         return abort(404)
 
