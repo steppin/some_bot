@@ -4,6 +4,7 @@ import sqlite3
 import os
 import json
 import requests
+import time
 
 from PIL import Image
 
@@ -45,9 +46,9 @@ def close_db(error):
     if hasattr(g, 'db'):
         g.db.close()
     
-def add_map(mapname):
+def add_map(mapname, author=""):
     db = get_db()
-    db.execute('insert into maps (mapname) values (?)', [mapname])
+    db.execute('insert into maps (mapname, author, upload_time) values (?, ?, ?)', [mapname, author, time.time()])
     db.commit()
 
 def generate_preview(mapname):
@@ -70,10 +71,15 @@ def generate_thumb(mapname):
     # TODO: use app.config.THUMB_DIR instead
     thumbnail.save(os.path.join(THUMB_DIR, mapname + '.png'))
 
-def recent_maps():
+def recent_maps(author=None):
     db = get_db()
-    cur = db.execute('select mapname from maps order by id desc')
+    if author:
+        print author
+        cur = db.execute('select mapname from maps where author like (?) by upload_time desc', [author])
+    else:
+        cur = db.execute('select mapname from maps order by upload_time desc')
     maps = cur.fetchall()
+    print maps
     return maps
 
 def get_test_link(mapname):
@@ -97,6 +103,7 @@ def upload_map():
         layout = request.files.get("layout", None)
         logic = request.files.get("logic", None)
         mapname = request.form.get("mapname", None)
+        author = request.form.get("author", "No author listed")
         print layout, logic, mapname
         # I'm not sure if dropzone supports multiple file upload and individual names
         if not logic and not layout:
@@ -110,7 +117,7 @@ def upload_map():
         # Generate a md5 based on map name and author?
         # Or just mapname+'_'+mapauthor
         if layout and logic:
-            if not mapname: 
+            if not mapname:
                 mapname = os.path.splitext(layout.filename)[0]
             else:
                 mapname = mapname.strip()
@@ -118,14 +125,16 @@ def upload_map():
             logic.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.json'))
             generate_preview(mapname)
             generate_thumb(mapname)
-            add_map(mapname)
+            add_map(mapname, author=author)
             print "Added map %s to database" %(mapname)
             return redirect(url_for('show_map', mapname=mapname))
         else:
             abort(404)
     else:
-        maps = recent_maps()
+        author = request.args.get("author", None)
+        maps = recent_maps(author=author)
         # This is a little hacky, recent_maps() returns a sqlite row, but we need a list of mapnames
+        print maps
         maps_data = map(lambda x: get_map_data(x[0]), maps)
         return render_template('upload.html', maps=maps_data)
 
@@ -171,7 +180,7 @@ def download():
         if filetype == "png":
             return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapname + '.png'))
         elif filetype == "json":
-            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapname + '.json'))
+            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapname + '.json'), as_attachment=True)
         else:
             return abort(404)
     else:
