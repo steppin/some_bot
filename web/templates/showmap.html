@@ -5,18 +5,18 @@ SomeBot Brains!
 
 {% block content %}
 
-    <div class="col-lg-10 col-lg-offset-1 map" id="{{ mapname }}">
+    <div class="col-lg-10 col-lg-offset-1 map" id="{{ mapid }}">
         <div class="thumbnail">
             <h2 class='searchable'>{{ map.mapname }}</h2>
-            <img src="/static/previews/{{ map.mapname }}.png" style="max-height:500px;">
+            <a href="/static/previews/{{ map.mapid }}.png"><img src="/static/previews/{{ map.mapid }}.png" style="max-height:500px;"></a>
              <div class="caption">
                 <h3>by: <a href="/?author={{ map.author }}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>
                 <div class="buttongroup">
-                    <a href="#" class="btn btn-primary testmap" role="button" mapname="{{ map.mapname }}">Test map</a>
-                    <a href="/static/previews/{{ map.mapname }}.png" class="btn btn-primary">Fullsize Preview</a>
-                    <a href="/download?mapname={{ map.mapname }}&type=png" download="{{ map.mapname }}" class="btn btn-primary">Download png</a>
-                    <a href="/download?mapname={{ map.mapname }}&type=json" download="{{ map.mapname }}" class="btn btn-primary">Download json</a>
+                    <a href="#" class="btn btn-primary testmap" role="button" mapid="{{ map.mapid }}">Test map</a>
+                    <a href="/static/previews/{{ map.mapid }}.png" class="btn btn-primary">Fullsize Preview</a>
+                    <a href="/download?mapname={{ map.mapname }}&type=png&mapid={{ map.mapid }}" download="{{ map.mapname }}" class="btn btn-primary">Download png</a>
+                    <a href="/download?mapname={{ map.mapname }}&type=json&mapid={{ map.mapid }}" download="{{ map.mapname }}" class="btn btn-primary">Download json</a>
                 
                 </div>
                 

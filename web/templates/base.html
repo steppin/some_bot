@@ -102,7 +102,7 @@
     $('.testmap').click(function () {
         $.ajax({
             url: "maptest",
-            data: {'mapname':$(this).attr('mapname'),}
+            data: {'mapid':$(this).attr('mapid'),}
         }).done(function(data) {
             if(data.success) {
                     window.open(data.testurl);

@@ -2,7 +2,7 @@ from flask import Flask, request, g, redirect, url_for, abort, render_template, 
 from werkzeug import secure_filename
 import sqlite3
 import os
-import json
+import simplejson as json
 import requests
 import time
 
@@ -12,8 +12,6 @@ import previewer
 
 # TODO:
 # * check filetypes, size limits, basically a tagpromaplint
-
-
 
 app = Flask(__name__)
 DEBUG = True
@@ -47,64 +45,106 @@ def close_db(error):
     """Closes the database again at the end of the request."""
     if hasattr(g, 'db'):
         g.db.close()
-    
-def add_map(mapname, author=""):
-    db = get_db()
-    db.execute('insert into maps (mapname, author, upload_time) values (?, ?, ?)', [mapname, author, time.time()])
-    db.commit()
-    # TODO check if map actually was inserted correctly
-    return True
 
-def generate_preview(mapname):
+def add_map_to_db(mapname, author):
+    db = get_db()
+    uptime = time.time()
+    db.execute('insert into maps (mapname, author, upload_time, last_tested, times_tested) values (?, ?, ?, 0, 0)', [mapname, author, uptime])
+    db.commit()
+    mapid = db.execute("select id from maps where upload_time = ?", [uptime])
+    mapid = str(mapid.fetchall()[0][0])
+    print "New map -> [%s] %s by %s" %(mapid, mapname, author)
+    return mapid
+
+def add_map(layout, logic):
+    '''
+    mapid = add_map(layout, logic)
+
+    Given logic and layout data, parses logic to get mapname and layout
+    saves logic and layout, generates previews and thumbs, adds map to database
+    '''
+    logic_data = json.loads(logic.read())
+    mapname = logic_data.get('info', {}).get('name')
+    author = logic_data.get('info', {}).get('author')
+
+    if mapname and author:
+
+        mapid = add_map_to_db(mapname, author)
+
+        layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
+        layout.save(layoutpath)
+        
+        logicpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.json')
+        with open(logicpath, "wb") as f:
+            f.write( json.dumps(logic_data, logicpath))
+
+        generate_preview(mapid)
+        generate_thumb(mapid)
+
+        # TODO check if map actually was inserted correctly
+        return mapid
+
+    else:
+        return -1
+
+
+def increment_test(mapid):
+    db = get_db()
+    db.execute('update maps set last_tested=(?) where id=(?)', [time.time(), mapid])
+    db.execute('update maps set times_tested=times_tested+1 where id=(?)', [mapid])
+    db.commit()
+
+def generate_preview(mapid):
     # TODO: need to check if the files exist
-    layout = os.path.join(UPLOAD_DIR, mapname + '.png')
-    logic = os.path.join(UPLOAD_DIR, mapname + '.json')
+    layout = os.path.join(app.config['UPLOAD_DIR'], mapid + '.png')
+    logic = os.path.join(app.config['UPLOAD_DIR'], mapid + '.json')
     map_ = previewer.Map(layout, logic)
     preview = map_.preview()
     # TODO: use app.config.PREVIEW_DIR instead
-    with open(os.path.join(PREVIEW_DIR, mapname + '.png'), 'w') as f:
+    with open(os.path.join(PREVIEW_DIR, mapid + '.png'), 'w') as f:
         f.write(preview.getvalue())
 
-def generate_thumb(mapname):
-    preview = os.path.join(PREVIEW_DIR, mapname + '.png')
+def generate_thumb(mapid):
+    preview = os.path.join(PREVIEW_DIR, mapid + '.png')
     target_width = 400
     thumbnail = Image.open(preview)
     width, height = thumbnail.size
     target_height = target_width*float(height)/width
     thumbnail.thumbnail((target_width, target_height), Image.ANTIALIAS)
     # TODO: use app.config.THUMB_DIR instead
-    thumbnail.save(os.path.join(THUMB_DIR, mapname + '.png'))
+    thumbnail.save(os.path.join(THUMB_DIR, mapid + '.png'))
 
 def recent_maps(author=None):
     db = get_db()
     if author:
-        print author
-        cur = db.execute('select mapname from maps where author like (?) order by upload_time desc', [author])
+        cur = db.execute('select id from maps where author like (?) order by upload_time desc', [author])
     else:
-        cur = db.execute('select mapname from maps order by upload_time desc')
+        cur = db.execute('select id from maps order by upload_time desc')
     maps = cur.fetchall()
-    print maps
     return maps
 
-def get_test_link(mapname):
+def get_test_link(mapid):
     ''' 
-    INPUT: mapname
+    INPUT: map id (primary key of db)
     OUTPUT: test url from test server
 
     Given a map name, grabs logic and layout data from the config folders,
     sends post request to test server and returns test url server responds with
     '''
     test_server = 'http://tagpro-maptest.koalabeast.com/testmap'
-    layout = os.path.join(app.config['UPLOAD_DIR'], mapname + '.png')
-    logic = os.path.join(app.config['UPLOAD_DIR'], mapname + '.json')
+    layout = os.path.join(app.config['UPLOAD_DIR'], mapid + '.png')
+    logic = os.path.join(app.config['UPLOAD_DIR'], mapid + '.json')
     file_data = {'logic':open(logic).read(), 'layout':open(layout).read()}
+
     r = requests.post(test_server, files=file_data)
+    increment_test(mapid)
+
     return r.url
 
 @app.route("/upload", methods=['GET', 'POST'])
 def save_map():
-    mapname = request.args.get('mapname', '')
-    return render_template('upload.html', map=get_map_data(mapname))
+    mapid = request.args.get('mapid', '')
+    return render_template('upload.html', map=get_map_data(mapid))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -115,9 +155,9 @@ def upload_map():
     if request.method == 'POST':
         layout = request.files.get("layout", None)
         logic = request.files.get("logic", None)
-        mapname = request.form.get("mapname", None)
-        author = request.form.get("author", "No author listed")
-        # I'm not sure if dropzone supports multiple file upload and individual names
+        generate_test = request.args.get("generate_testlink", False)
+
+        # Handle upload by dropzone, not sure how to specify filenames
         if not logic and not layout:
             files = request.files.getlist('file[]')
             for f in files:
@@ -125,21 +165,15 @@ def upload_map():
                     logic = f
                 elif f.filename[-4:] == ".png":
                     layout = f
+
         # TODO: make secure filename so people can't overwrite? secure file name
-        # Generate a md5 based on map name and author?
-        # Or just mapname+'_'+mapauthor
         if layout and logic:
-            if not mapname:
-                mapname = os.path.splitext(layout.filename)[0]
-            else:
-                mapname = mapname.strip()
-            layout.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.png'))
-            logic.save(os.path.join(app.config['UPLOAD_DIR'], mapname + '.json'))
-            generate_preview(mapname)
-            generate_thumb(mapname)
-            success = add_map(mapname, author=author)
-            testurl = get_test_link(mapname)
-            saveurl = url_for('save_map', mapname=mapname)
+            mapid = add_map(layout, logic)
+            saveurl = url_for('save_map', mapid=mapid)
+            testurl = None
+            if generate_test:
+                testurl = get_test_link(mapid)
+            success = mapid >= 0
             return jsonify(success=success, saveurl=saveurl, testurl=testurl)
         else:
             abort(404)
@@ -147,26 +181,26 @@ def upload_map():
         author = request.args.get("author", None)
         maps = recent_maps(author=author)
         # This is a little hacky, recent_maps() returns a sqlite row, but we need a list of mapnames
-        print maps
-        maps_data = map(lambda x: get_map_data(x[0]), maps)
+        maps_data = map(lambda x: get_map_data(str(x[0])), maps)
         return render_template('showmaps.html', maps=maps_data)
 
 @app.route('/show')
 def show_map():
-    mapname = request.args.get('mapname', '')
-    return render_template('showmap.html', map=get_map_data(mapname))
+    mapid = request.args.get('mapid', '')
+    return render_template('showmap.html', map=get_map_data(mapid))
 
-def get_map_data(mapname):
-    json_file = os.path.join(app.config['UPLOAD_DIR'], mapname+'.json')
+def get_map_data(mapid):
+    json_file = os.path.join(app.config['UPLOAD_DIR'], mapid+'.json')
     map_json = json.loads(open(json_file).read())
     map_data = {
-                'mapname':mapname,
+                'mapid':mapid,
+                'mapname':map_json.get('info',{}).get('name', "No name listed"),
                 'author':map_json.get('info',{}).get('author', "No author listed"),
                 'description':map_json.get('info',{}).get('description', "No description available"),
-                'jsonurl':os.path.join(app.config['UPLOAD_DIR'], mapname+'.json'),
-                'pngurl':os.path.join(app.config['UPLOAD_DIR'], mapname+'.png'),
-                'previewurl':os.path.join(PREVIEW_DIR, mapname + '.png'),
-                'thumburl':os.path.join(THUMB_DIR, mapname+'.png')
+                'jsonurl':os.path.join(app.config['UPLOAD_DIR'], mapid+'.json'),
+                'pngurl':os.path.join(app.config['UPLOAD_DIR'], mapid+'.png'),
+                'previewurl':os.path.join(PREVIEW_DIR, mapid+'.png'),
+                'thumburl':os.path.join(THUMB_DIR, mapid+'.png')
               }
     # Some more things we might want to display
     # creation date, version, similar maps
@@ -174,30 +208,33 @@ def get_map_data(mapname):
 
 @app.route("/maptest")
 def test_map():
-    mapname = request.args.get('mapname', None)
-    if mapname:
-        testurl = get_test_link(mapname)
-        showurl = url_for('save_map', mapname=mapname)
+    mapid = request.args.get('mapid', None)
+    if mapid:
+        showurl = url_for('save_map', mapid=mapid)
+        testurl = get_test_link(mapid)
         return jsonify(success=True, testurl=testurl, showurl=showurl)
     else:
         return abort(404)
 
-@app.route('/map/<mapname>')
-def return_map(mapname):
-    return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapname + '.png'))
+@app.route('/map/<mapid>')
+def return_map(mapid):
+    filename = get_mapname_from_id(mapid)
+    return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'), attachment_filename=secure_filename(filename)+".png")
 
 @app.route("/download")
 def download():
-    mapname = request.args.get("mapname", None)
+    mapid = request.args.get("mapid", "")
+    mapname = request.args.get("mapname", "")
     filetype = request.args.get("type", None)
-    if mapname and filetype:
+    if mapid and filetype and mapname:
         if filetype == "png":
-            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapname + '.png'))
+            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'), attachment_filename=secure_filename(mapname+".png"))
         elif filetype == "json":
-            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapname + '.json'), as_attachment=True)
+            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.json'), as_attachment=True, attachment_filename=secure_filename(mapname+".json"))
         else:
             return abort(404)
     else:
         return abort(404)
+
 if __name__ == '__main__':
     app.run(debug=DEBUG)

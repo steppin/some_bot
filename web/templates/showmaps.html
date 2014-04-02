@@ -7,15 +7,15 @@ SomeBot Brains!
 
         <div class="row">
         {% for map in maps %}
-            <div class="col-lg-4 col-md-6 map" id="{{ map.mapname }}">
+            <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
-                    <h2><a href="/show?mapname={{ map.mapname }}" class="searchable">{{ map.mapname }}</a></h2>
-                    <a href="/show?mapname={{ map.mapname }}"><img src="/static/thumbs/{{ map.mapname }}.png" style="width:250px;"></a>
+                    <h2><a href="/show?mapid={{ map.mapid }}" class="searchable">{{ map.mapname }}</a></h2>
+                    <a href="/show?mapname={{ map.mapid }}"><img src="/static/thumbs/{{ map.mapid }}.png" style="width:250px;"></a>
                      <div class="caption">
                                                 <h3>by: <a href="/?author={{ map.author }}" class='searchable'>{{ map.author }}</a></h3>
                         <div class="buttongroup">
-                            <a href="#" class="btn btn-primary testmap" role="button" mapname="{{ map.mapname }}">Test map</a>
-                            <a href="/static/previews/{{ map.mapname }}.png" class="btn btn-primary">Fullsize Preview</a>
+                            <a href="#" class="btn btn-primary testmap" role="button" mapid="{{ map.mapid }}">Test map</a>
+                            <a href="/static/previews/{{ map.mapid }}.png" class="btn btn-primary">Fullsize Preview</a>
                         </div>
                     </div>
                 </div>
