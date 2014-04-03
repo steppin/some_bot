@@ -221,6 +221,12 @@ def return_map(mapid):
     filename = get_mapname_from_id(mapid)
     return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'), attachment_filename=secure_filename(filename)+".png")
 
+@app.route("/author/<author>")
+def return_maps_by_author(author):
+    maps = recent_maps(author=author)
+    maps_data = map(lambda x: get_map_data(str(x[0])), maps)
+    return render_template('showmaps.html', maps=maps_data)
+
 @app.route("/download")
 def download():
     mapid = request.args.get("mapid", "")
