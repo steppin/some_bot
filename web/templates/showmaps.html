@@ -1,17 +1,14 @@
-{% extends "base.html" %}
-{% block title %}
-SomeBot Brains!
-{% endblock %}
+{% if not standalone %}{% extends 'base.html' %}{% endif -%}
 
 {% block content %}
         {% for map in maps %}
         {% if loop.index0%3 == 0 %}
-            <div class="row">
+            <div class="row maprow">
         {% endif %}
             <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
                     <h2><a href="/show?mapid={{ map.mapid }}" class="searchable" style="word-wrap:break-word;">{{ map.mapname }}</a></h2>
-                    <a href="/show?mapname={{ map.mapid }}"><img src="/static/thumbs/{{ map.mapid }}.png" style="max-width:250px; max-height:250px;"></a>
+                    <a href="/show?mapid={{ map.mapid }}"><img src="/static/thumbs/{{ map.mapid }}.png" style="max-width:300px; max-height:250px;"></a>
                      <div class="caption">
                                                 <h3>by: <a href="/?author={{ map.author }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
@@ -21,9 +18,8 @@ SomeBot Brains!
                     </div>
                 </div>
              </div>
-         {% if loop.index0%3 == 2 %}
+         {% if loop.index0%3 == 2  or loop.last %}
         </div>
         {% endif %}
         {% endfor %}
-
 {% endblock %}

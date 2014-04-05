@@ -26,16 +26,18 @@
 
                         <ul class="nav navbar-nav navbar-right">
                             <li><a href="/login">Login</a></li>
-                            <li><form class="navbar-form navbar-right" role="search">
+                            <li><form class="navbar-form navbar-right" role="search" id="searchform">
                                 <input type="text" class="form-control" placeholder="Search" id="search">
                             </form></li>
                         </ul>
                     </nav>
-                </div>
+                </div> 
 
+
+                <div id="mapdiv">
                 {% block content %}
                 {% endblock %}
-
+                </div>
             </div>
 
         </div>
@@ -114,13 +116,36 @@
 
     <script>
             // Search function
+            lastTimeout = false;
             $('#search').on('keyup', function() {
+                query = $("#search").val();
+                console.log(query);
+                if(query != "") {
+                    console.log("setting timeout")
+                    if(lastTimeout) {
+                        clearTimeout(lastTimeout);
+                    }
+                    lastTimeout = setTimeout( function () {
+                        $.ajax({
+                            url:"search",
+                            data:{"query":query}
+                        }).done(function(data) {
+                            if(data.success) {
+                                console.log(data.html);
+                                $("#mapdiv").html(data.html);
+                            }
+                        })
+                    }, 500);
+
+                }
+            });
+                /*
                 var rex = new RegExp($(this).val(), 'i');
                 $('.map').hide();
                 $('.searchable').filter(function() {
                     return rex.test($(this).text());
                 }).closest('.map').show();
-            });
+                */
         </script>
 
 

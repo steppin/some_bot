@@ -23,12 +23,14 @@ UPLOAD_DIR = os.path.join(BASE_DIR, 'static/maps')
 PREVIEW_DIR = os.path.join(BASE_DIR, 'static/previews')
 THUMB_DIR = os.path.join(BASE_DIR, 'static/thumbs')
 DATABASE = os.path.join(BASE_DIR, 'maps.db')
+SEARCHDB = os.path.join(BASE_DIR, "search.db")
 
 app.config.from_object(__name__)
 
-def connect_db():
+
+def connect_db(dbname=app.config['DATABASE']):
     """Connects to the specific database."""
-    rv = sqlite3.connect(app.config['DATABASE'])
+    rv = sqlite3.connect(dbname)
     rv.row_factory = sqlite3.Row
     return rv
 
@@ -47,14 +49,23 @@ def close_db(error):
         g.db.close()
 
 def add_map_to_db(mapname, author):
+    '''
+    Add map to search and maps db
+    search is a full text search table that only accepts text (except for rowid)
+    maps is the table for data about maps (upload time, how many times tested, last tested)
+
+    Returns the ID of the map that is inserted.
+    '''
     db = get_db()
-    uptime = time.time()
-    db.execute('insert into maps (mapname, author, upload_time, last_tested, times_tested) values (?, ?, ?, 0, 0)', [mapname, author, uptime])
+    insert_time = time.time()
+    db.execute('insert into maps (mapname, upload_time, times_tested, last_tested) values (?, ?, 0, 0)', [mapname, insert_time])
     db.commit()
-    mapid = db.execute("select id from maps where upload_time = ?", [uptime])
-    mapid = str(mapid.fetchall()[0][0])
+    cur = db.execute("select id from maps where upload_time = (?)", [insert_time])
+    mapid = cur.fetchall()[0][0]
+    db.execute("insert into search (docid, mapname, author, description) values (?, ?, ?, ?)", [mapid, mapname, author, description])
+    db.commit()
     print "New map -> [%s] %s by %s" %(mapid, mapname, author)
-    return mapid
+    return str(mapid)
 
 def add_map(layout, logic):
     '''
@@ -83,10 +94,8 @@ def add_map(layout, logic):
 
         # TODO check if map actually was inserted correctly
         return mapid
-
     else:
         return -1
-
 
 def increment_test(mapid):
     db = get_db()
@@ -114,13 +123,13 @@ def generate_thumb(mapid):
     # TODO: use app.config.THUMB_DIR instead
     thumbnail.save(os.path.join(THUMB_DIR, mapid + '.png'))
 
-def recent_maps(author=None):
+def recent_maps(author=None, page_limit=100):
     db = get_db()
     if author:
-        cur = db.execute('select id from maps where author like (?) order by upload_time desc', [author])
+        cur = db.execute('select id from maps where author like (?) order by upload_time desc limit (?)', [author, page_limit])
     else:
-        cur = db.execute('select id from maps order by upload_time desc')
-    maps = cur.fetchall()
+        cur = db.execute('select id from maps order by upload_time desc limit (?)', [page_limit])
+    maps = map(lambda x: x[0], cur.fetchall())
     return maps
 
 def get_test_link(mapid):
@@ -181,7 +190,7 @@ def upload_map():
         author = request.args.get("author", None)
         maps = recent_maps(author=author)
         # This is a little hacky, recent_maps() returns a sqlite row, but we need a list of mapnames
-        maps_data = map(lambda x: get_map_data(str(x[0])), maps)
+        maps_data = get_data_from_ids(maps)
         return render_template('showmaps.html', maps=maps_data)
 
 @app.route('/show')
@@ -190,20 +199,31 @@ def show_map():
     return render_template('showmap.html', map=get_map_data(mapid))
 
 def get_map_data(mapid):
-    json_file = os.path.join(app.config['UPLOAD_DIR'], mapid+'.json')
-    map_json = json.loads(open(json_file).read())
+    try:
+        int(mapid)
+    except:
+        return {
+                'mapname':"An error occurred, please try a different map",
+              }
+    db = get_db()
+    cur = db.execute("select * from maps where id=(?)", [int(mapid)])
+    d = cur.fetchall()
+
+    mapid, mapname, upload_time, times_tested, last_tested = d[0]
+    cur = db.execute("select * from search where docid=(?)", [int(mapid)])
+    mapname, author, description = cur.fetchall()[0]
+    mapid = str(mapid)
+
     map_data = {
                 'mapid':mapid,
-                'mapname':map_json.get('info',{}).get('name', "No name listed"),
-                'author':map_json.get('info',{}).get('author', "No author listed"),
-                'description':map_json.get('info',{}).get('description', "No description available"),
+                'mapname':mapname,
+                'author':author,
+                'description':description,
                 'jsonurl':os.path.join(app.config['UPLOAD_DIR'], mapid+'.json'),
                 'pngurl':os.path.join(app.config['UPLOAD_DIR'], mapid+'.png'),
                 'previewurl':os.path.join(PREVIEW_DIR, mapid+'.png'),
                 'thumburl':os.path.join(THUMB_DIR, mapid+'.png')
               }
-    # Some more things we might want to display
-    # creation date, version, similar maps
     return map_data
 
 @app.route("/maptest")
@@ -224,7 +244,7 @@ def return_map(mapid):
 @app.route("/author/<author>")
 def return_maps_by_author(author):
     maps = recent_maps(author=author)
-    maps_data = map(lambda x: get_map_data(str(x[0])), maps)
+    maps_data = get_data_from_ids(maps)
     return render_template('showmaps.html', maps=maps_data)
 
 @app.route("/download")
@@ -241,6 +261,28 @@ def download():
             return abort(404)
     else:
         return abort(404)
+
+def search_db(query):
+    db = get_db()
+    cur = db.execute("select docid from search where search match (?)", ["*"+query+"*"])
+    return map(lambda x: x[0], cur.fetchall())
+
+def get_data_from_ids(mapids):
+    for mapid in mapids:
+        yield get_map_data(str(mapid))
+
+@app.route("/search")
+def search():
+    query = request.args.get("query", "")
+    if query:
+        mapids = search_db(query)
+        print "Query -> ", mapids
+    else:
+        mapids = recent_maps()
+
+    maps_data = get_data_from_ids(mapids)
+    data = render_template('showmaps.html', maps=maps_data, standalone=True)
+    return jsonify(success=True, html=data)
 
 if __name__ == '__main__':
     app.run(debug=DEBUG)

@@ -8,7 +8,7 @@ SomeBot Brains!
     <div class="col-lg-10 col-lg-offset-1 map" id="{{ mapid }}">
         <div class="thumbnail">
             <h2 class='searchable'>{{ map.mapname }}</h2>
-            <a href="/static/previews/{{ map.mapid }}.png"><img src="/static/previews/{{ map.mapid }}.png" style="max-height:500px;"></a>
+            <a href="/static/previews/{{ map.mapid }}.png"><img src="/static/previews/{{ map.mapid }}.png" style="max-width:100%; max-height:500px;"></a>
              <div class="caption">
                 <h3>by: <a href="/?author={{ map.author }}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>
