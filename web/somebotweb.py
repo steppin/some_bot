@@ -1,5 +1,11 @@
+# -*- coding: utf8 -*-
+
 from flask import Flask, request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify
 from werkzeug import secure_filename
+
+from flask.ext.sqlalchemy import SQLAlchemy
+import flask.ext.whooshalchemy as whooshalchemy
+
 import sqlite3
 import os
 import simplejson as json
@@ -7,6 +13,9 @@ import requests
 import time
 
 from PIL import Image
+
+#from map_schema import db, Map
+
 
 import previewer
 
@@ -16,6 +25,7 @@ import previewer
 app = Flask(__name__)
 DEBUG = True
 
+
 # TODO: use a nice path here;
 # http://flask.pocoo.org/docs/config/#instance-folders
 BASE_DIR = app.root_path
@@ -23,32 +33,36 @@ UPLOAD_DIR = os.path.join(BASE_DIR, 'static/maps')
 PREVIEW_DIR = os.path.join(BASE_DIR, 'static/previews')
 THUMB_DIR = os.path.join(BASE_DIR, 'static/thumbs')
 DATABASE = os.path.join(BASE_DIR, 'maps.db')
-SEARCHDB = os.path.join(BASE_DIR, "search.db")
-
 app.config.from_object(__name__)
 
+app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://maps:maptesting@localhost/maps"
+app.config["WHOOSH_BASE"] = "postgresql://maps:maptesting@localhost/search"
 
-def connect_db(dbname=app.config['DATABASE']):
-    """Connects to the specific database."""
-    rv = sqlite3.connect(dbname)
-    rv.row_factory = sqlite3.Row
-    return rv
+db = SQLAlchemy(app)
 
-def get_db():
-    """Opens a new database connection if there is none yet for the
-    current application context.
-    """
-    if not hasattr(g, 'db'):
-        g.db = connect_db()
-    return g.db
+class Map(db.Model):
+    __searchable__ = ["author", "mapname", "description"]
 
-@app.teardown_appcontext
-def close_db(error):
-    """Closes the database again at the end of the request."""
-    if hasattr(g, 'db'):
-        g.db.close()
+    id = db.Column(db.Integer, primary_key=True)
+    mapname = db.Column(db.Text)
+    author = db.Column(db.Text)
+    description = db.Column(db.Text)
+    upload_time = db.Column(db.Float)
+    last_tested = db.Column(db.Float)
+    times_tested = db.Column(db.Integer)
 
-def add_map_to_db(mapname, author):
+    def __init__(self, mapname, author, description):
+        self.mapname = mapname
+        self.author = author
+        self.description = description
+        self.upload_time = time.time()
+        self.last_tested = 0
+        self.times_tested = 0
+
+    def __repr__(self):
+        return "<Map [%s] %s - %s>" %(str(self.id), self.mapname, self.author)
+
+def add_map_to_db(mapname, author, description, commit=True):
     '''
     Add map to search and maps db
     search is a full text search table that only accepts text (except for rowid)
@@ -56,16 +70,12 @@ def add_map_to_db(mapname, author):
 
     Returns the ID of the map that is inserted.
     '''
-    db = get_db()
-    insert_time = time.time()
-    db.execute('insert into maps (mapname, upload_time, times_tested, last_tested) values (?, ?, 0, 0)', [mapname, insert_time])
-    db.commit()
-    cur = db.execute("select id from maps where upload_time = (?)", [insert_time])
-    mapid = cur.fetchall()[0][0]
-    db.execute("insert into search (docid, mapname, author, description) values (?, ?, ?, ?)", [mapid, mapname, author, description])
-    db.commit()
-    print "New map -> [%s] %s by %s" %(mapid, mapname, author)
-    return str(mapid)
+    m = Map(mapname, author, description)
+    db.session.add(m)
+    if commit:
+        db.commit()
+    print "New map -> [%s] %s by %s" %(m.id, mapname, author)
+    return str(m.id)
 
 def add_map(layout, logic):
     '''
@@ -77,9 +87,9 @@ def add_map(layout, logic):
     logic_data = json.loads(logic.read())
     mapname = logic_data.get('info', {}).get('name')
     author = logic_data.get('info', {}).get('author')
+    description = logic_data.get('info', {}).get('description')
 
     if mapname and author:
-
         mapid = add_map_to_db(mapname, author)
 
         layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
@@ -98,10 +108,14 @@ def add_map(layout, logic):
         return -1
 
 def increment_test(mapid):
-    db = get_db()
-    db.execute('update maps set last_tested=(?) where id=(?)', [time.time(), mapid])
-    db.execute('update maps set times_tested=times_tested+1 where id=(?)', [mapid])
-    db.commit()
+    try:
+        mapid = int(mapid)
+    except:
+        return False
+    m = Map.query.get(mapid)
+    m.last_tested = time.time()
+    m.times_tested += 1
+    db.session.commit()
 
 def generate_preview(mapid):
     # TODO: need to check if the files exist
@@ -123,13 +137,11 @@ def generate_thumb(mapid):
     # TODO: use app.config.THUMB_DIR instead
     thumbnail.save(os.path.join(THUMB_DIR, mapid + '.png'))
 
-def recent_maps(author=None, page_limit=100):
-    db = get_db()
+def recent_maps(author=None, page_limit=100, offset=0):
     if author:
-        cur = db.execute('select id from maps where author like (?) order by upload_time desc limit (?)', [author, page_limit])
+        maps = Map.query.filter_by(author=author).offset(offset).limit(page_limit)
     else:
-        cur = db.execute('select id from maps order by upload_time desc limit (?)', [page_limit])
-    maps = map(lambda x: x[0], cur.fetchall())
+        maps = Map.query.offset(offset).limit(page_limit)
     return maps
 
 def get_test_link(mapid):
@@ -141,8 +153,8 @@ def get_test_link(mapid):
     sends post request to test server and returns test url server responds with
     '''
     test_server = 'http://tagpro-maptest.koalabeast.com/testmap'
-    layout = os.path.join(app.config['UPLOAD_DIR'], mapid + '.png')
-    logic = os.path.join(app.config['UPLOAD_DIR'], mapid + '.json')
+    layout = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.png')
+    logic = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.json')
     file_data = {'logic':open(logic).read(), 'layout':open(layout).read()}
 
     r = requests.post(test_server, files=file_data)
@@ -153,7 +165,7 @@ def get_test_link(mapid):
 @app.route("/upload", methods=['GET', 'POST'])
 def save_map():
     mapid = request.args.get('mapid', '')
-    return render_template('upload.html', map=get_map_data(mapid))
+    return render_template('upload.html', map=get_map_data_from_id(mapid))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -166,7 +178,8 @@ def upload_map():
         logic = request.files.get("logic", None)
         generate_test = request.args.get("generate_testlink", False)
 
-        # Handle upload by dropzone, not sure how to specify filenames
+        # Handle upload by dropzone, not sure how to specify filenames with dropzone
+        # it sends just a list of files
         if not logic and not layout:
             files = request.files.getlist('file[]')
             for f in files:
@@ -175,7 +188,6 @@ def upload_map():
                 elif f.filename[-4:] == ".png":
                     layout = f
 
-        # TODO: make secure filename so people can't overwrite? secure file name
         if layout and logic:
             mapid = add_map(layout, logic)
             saveurl = url_for('save_map', mapid=mapid)
@@ -190,39 +202,30 @@ def upload_map():
         author = request.args.get("author", None)
         maps = recent_maps(author=author)
         # This is a little hacky, recent_maps() returns a sqlite row, but we need a list of mapnames
-        maps_data = get_data_from_ids(maps)
+        maps_data = get_data_from_maps(maps)
         return render_template('showmaps.html', maps=maps_data)
+
+
 
 @app.route('/show')
 def show_map():
     mapid = request.args.get('mapid', '')
-    return render_template('showmap.html', map=get_map_data(mapid))
+    return render_template('showmap.html', map=get_map_data_from_id(mapid))
 
-def get_map_data(mapid):
-    try:
-        int(mapid)
-    except:
-        return {
-                'mapname':"An error occurred, please try a different map",
-              }
-    db = get_db()
-    cur = db.execute("select * from maps where id=(?)", [int(mapid)])
-    d = cur.fetchall()
+def get_map_data_from_id(mapid):
+    m = Map.query.get(mapid)
+    return get_map_data(m)
 
-    mapid, mapname, upload_time, times_tested, last_tested = d[0]
-    cur = db.execute("select * from search where docid=(?)", [int(mapid)])
-    mapname, author, description = cur.fetchall()[0]
-    mapid = str(mapid)
-
+def get_map_data(m):
     map_data = {
-                'mapid':mapid,
-                'mapname':mapname,
-                'author':author,
-                'description':description,
-                'jsonurl':os.path.join(app.config['UPLOAD_DIR'], mapid+'.json'),
-                'pngurl':os.path.join(app.config['UPLOAD_DIR'], mapid+'.png'),
-                'previewurl':os.path.join(PREVIEW_DIR, mapid+'.png'),
-                'thumburl':os.path.join(THUMB_DIR, mapid+'.png')
+                'mapid':m.id,
+                'mapname':m.mapname,
+                'author':m.author,
+                'description':m.description,
+                'jsonurl':os.path.join(app.config['UPLOAD_DIR'], str(m.id)+'.json'),
+                'pngurl':os.path.join(app.config['UPLOAD_DIR'], str(m.id)+'.png'),
+                'previewurl':os.path.join(PREVIEW_DIR, str(m.id)+'.png'),
+                'thumburl':os.path.join(THUMB_DIR, str(m.id)+'.png')
               }
     return map_data
 
@@ -238,13 +241,12 @@ def test_map():
 
 @app.route('/map/<mapid>')
 def return_map(mapid):
-    filename = get_mapname_from_id(mapid)
-    return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'), attachment_filename=secure_filename(filename)+".png")
+    return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(str(mapid)+'.png'), attachment_filename=secure_filename(str(filename))+".png")
 
 @app.route("/author/<author>")
 def return_maps_by_author(author):
     maps = recent_maps(author=author)
-    maps_data = get_data_from_ids(maps)
+    maps_data = get_data_from_maps(maps)
     return render_template('showmaps.html', maps=maps_data)
 
 @app.route("/download")
@@ -263,24 +265,23 @@ def download():
         return abort(404)
 
 def search_db(query):
-    db = get_db()
-    cur = db.execute("select docid from search where search match (?)", ["*"+query+"*"])
-    return map(lambda x: x[0], cur.fetchall())
+    maps = Map.query.whoosh_search(query)
+    return maps
 
-def get_data_from_ids(mapids):
-    for mapid in mapids:
-        yield get_map_data(str(mapid))
+def get_data_from_maps(maps):
+    for m in maps:
+        yield get_map_data(m)
 
 @app.route("/search")
 def search():
     query = request.args.get("query", "")
+    print query
     if query:
-        mapids = search_db(query)
-        print "Query -> ", mapids
+        maps = search_db(query)
     else:
-        mapids = recent_maps()
+        maps = recent_maps()
 
-    maps_data = get_data_from_ids(mapids)
+    maps_data = get_data_from_maps(maps)
     data = render_template('showmaps.html', maps=maps_data, standalone=True)
     return jsonify(success=True, html=data)
 
