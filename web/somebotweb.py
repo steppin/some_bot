@@ -4,7 +4,6 @@ from flask import Flask, request, g, redirect, url_for, abort, render_template, 
 from werkzeug import secure_filename
 
 from flask.ext.sqlalchemy import SQLAlchemy
-import flask.ext.whooshalchemy as whooshalchemy
 
 import sqlite3
 import os
@@ -14,35 +13,21 @@ import time
 
 from PIL import Image
 
-#from map_schema import db, Map
-
-
 import previewer
 
 # TODO:
 # * check filetypes, size limits, basically a tagpromaplint
 
 app = Flask(__name__)
-DEBUG = True
 
-
-# TODO: use a nice path here;
-# http://flask.pocoo.org/docs/config/#instance-folders
 BASE_DIR = app.root_path
-UPLOAD_DIR = os.path.join(BASE_DIR, 'static/maps')
-PREVIEW_DIR = os.path.join(BASE_DIR, 'static/previews')
-THUMB_DIR = os.path.join(BASE_DIR, 'static/thumbs')
-DATABASE = os.path.join(BASE_DIR, 'maps.db')
-app.config.from_object(__name__)
 
-app.config['SQLALCHEMY_DATABASE_URI'] = "postgresql://maps:maptesting@localhost/maps"
-app.config["WHOOSH_BASE"] = "postgresql://maps:maptesting@localhost/search"
+app.config.from_pyfile('config.cfg')
+
 
 db = SQLAlchemy(app)
 
 class Map(db.Model):
-    __searchable__ = ["author", "mapname", "description"]
-
     id = db.Column(db.Integer, primary_key=True)
     mapname = db.Column(db.Text)
     author = db.Column(db.Text)
@@ -72,8 +57,7 @@ def add_map_to_db(mapname, author, description, commit=True):
     '''
     m = Map(mapname, author, description)
     db.session.add(m)
-    if commit:
-        db.commit()
+    db.session.commit()
     print "New map -> [%s] %s by %s" %(m.id, mapname, author)
     return str(m.id)
 
@@ -88,10 +72,9 @@ def add_map(layout, logic):
     mapname = logic_data.get('info', {}).get('name')
     author = logic_data.get('info', {}).get('author')
     description = logic_data.get('info', {}).get('description')
-
     if mapname and author:
-        mapid = add_map_to_db(mapname, author)
-
+        mapid = add_map_to_db(mapname, author, description)
+        mapid = str(mapid)
         layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
         layout.save(layoutpath)
         
@@ -101,7 +84,7 @@ def add_map(layout, logic):
 
         generate_preview(mapid)
         generate_thumb(mapid)
-
+        print "Map added successfully"
         # TODO check if map actually was inserted correctly
         return mapid
     else:
@@ -124,24 +107,28 @@ def generate_preview(mapid):
     map_ = previewer.Map(layout, logic)
     preview = map_.preview()
     # TODO: use app.config.PREVIEW_DIR instead
-    with open(os.path.join(PREVIEW_DIR, mapid + '.png'), 'w') as f:
+    with open(os.path.join(PREVIEW_DIR, str(mapid) + '.png'), 'w') as f:
         f.write(preview.getvalue())
+    print "Created preview successfully"
 
 def generate_thumb(mapid):
-    preview = os.path.join(PREVIEW_DIR, mapid + '.png')
-    target_width = 400
+    preview = os.path.join(PREVIEW_DIR, str(mapid) + '.png')
+    target_width = 250
     thumbnail = Image.open(preview)
     width, height = thumbnail.size
-    target_height = target_width*float(height)/width
+    #target_height = target_width*float(height)/width
+    target_height = 250
     thumbnail.thumbnail((target_width, target_height), Image.ANTIALIAS)
     # TODO: use app.config.THUMB_DIR instead
-    thumbnail.save(os.path.join(THUMB_DIR, mapid + '.png'))
+    thumbnail.save(os.path.join(THUMB_DIR, str(mapid) + '.png'))
+    print "Created thumbnail"
+
 
 def recent_maps(author=None, page_limit=100, offset=0):
     if author:
         maps = Map.query.filter_by(author=author).offset(offset).limit(page_limit)
     else:
-        maps = Map.query.offset(offset).limit(page_limit)
+        maps = Map.query.order_by("upload_time desc").offset(offset).limit(page_limit)
     return maps
 
 def get_test_link(mapid):
@@ -165,7 +152,7 @@ def get_test_link(mapid):
 @app.route("/upload", methods=['GET', 'POST'])
 def save_map():
     mapid = request.args.get('mapid', '')
-    return render_template('upload.html', map=get_map_data_from_id(mapid))
+    return render_template('showmap.html', map=get_map_data_from_id(mapid))
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -205,8 +192,6 @@ def upload_map():
         maps_data = get_data_from_maps(maps)
         return render_template('showmaps.html', maps=maps_data)
 
-
-
 @app.route('/show')
 def show_map():
     mapid = request.args.get('mapid', '')
@@ -222,10 +207,11 @@ def get_map_data(m):
                 'mapname':m.mapname,
                 'author':m.author,
                 'description':m.description,
-                'jsonurl':os.path.join(app.config['UPLOAD_DIR'], str(m.id)+'.json'),
-                'pngurl':os.path.join(app.config['UPLOAD_DIR'], str(m.id)+'.png'),
-                'previewurl':os.path.join(PREVIEW_DIR, str(m.id)+'.png'),
-                'thumburl':os.path.join(THUMB_DIR, str(m.id)+'.png')
+                #'jsonurl':url_for(app.config['UPLOAD_DIR'], filename=str(m.id)+'.json'),
+                #'pngurl':url_for(app.config['UPLOAD_DIR'], filename=str(m.id)+'.png'),
+                #'previewurl':url_for(app.config['PREVIEW_DIR'], filename=str(m.id)+'.png'),
+                #'thumburl':url_for(THUMB_DIR, filename=str(m.id)+'.png'),
+                'times_tested':str(m.times_tested),
               }
     return map_data
 
@@ -265,7 +251,9 @@ def download():
         return abort(404)
 
 def search_db(query):
-    maps = Map.query.whoosh_search(query)
+    querystring = "%"+query +"%"
+    maps = Map.query.filter(Map.author.ilike(querystring)).all()
+    maps.extend( Map.query.filter(Map.mapname.ilike(querystring)))
     return maps
 
 def get_data_from_maps(maps):
@@ -275,7 +263,6 @@ def get_data_from_maps(maps):
 @app.route("/search")
 def search():
     query = request.args.get("query", "")
-    print query
     if query:
         maps = search_db(query)
     else:
@@ -286,4 +273,4 @@ def search():
     return jsonify(success=True, html=data)
 
 if __name__ == '__main__':
-    app.run(debug=DEBUG)
+    app.run(debug=app.debug)

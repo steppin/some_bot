@@ -43,7 +43,6 @@
         </div>
         <!--TODO(step): replace this with dropzone-->
 
-
         <div class="col-md-2" style="padding-top:300px">
             <div class="thumbnail">
                 <h3>Test your map</h3>
@@ -97,11 +96,8 @@
 
     </script>
 
-
-
     <script>
-
-    $('.testmap').click(function () {
+    $('body').delegate('.testmap', "click", function () {
         $.ajax({
             url: "maptest",
             data: {'mapid':$(this).attr('mapid'),}
@@ -117,10 +113,10 @@
     <script>
             // Search function
             lastTimeout = false;
-            $('#search').on('keyup', function() {
+            $('body').delegate('#search', 'keyup', function() {
                 query = $("#search").val();
                 console.log(query);
-                if(query != "") {
+                if(true) {
                     console.log("setting timeout")
                     if(lastTimeout) {
                         clearTimeout(lastTimeout);
@@ -134,7 +130,7 @@
                                 console.log(data.html);
                                 $("#mapdiv").html(data.html);
                             }
-                        })
+                        });
                     }, 500);
 
                 }
