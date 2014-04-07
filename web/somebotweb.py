@@ -24,7 +24,6 @@ BASE_DIR = app.root_path
 
 app.config.from_pyfile('config.cfg')
 
-
 db = SQLAlchemy(app)
 
 class Map(db.Model):
@@ -46,6 +45,7 @@ class Map(db.Model):
 
     def __repr__(self):
         return "<Map [%s] %s - %s>" %(str(self.id), self.mapname, self.author)
+
 
 def add_map_to_db(mapname, author, description, commit=True):
     '''
