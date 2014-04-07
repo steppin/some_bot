@@ -11,7 +11,7 @@ import simplejson as json
 import requests
 import time
 
-from PIL import Image
+from PIL import Image, ImageOps
 
 import previewer
 
@@ -107,22 +107,26 @@ def generate_preview(mapid):
     map_ = previewer.Map(layout, logic)
     preview = map_.preview()
     # TODO: use app.config.PREVIEW_DIR instead
-    with open(os.path.join(PREVIEW_DIR, str(mapid) + '.png'), 'w') as f:
+    with open(os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png'), 'w') as f:
         f.write(preview.getvalue())
     print "Created preview successfully"
 
 def generate_thumb(mapid):
-    preview = os.path.join(PREVIEW_DIR, str(mapid) + '.png')
+    preview_file = os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png')
+    preview = Image.open(preview_file)
+    prex, prey = preview.size
     target_width = 250
-    thumbnail = Image.open(preview)
-    width, height = thumbnail.size
-    #target_height = target_width*float(height)/width
-    target_height = 250
-    thumbnail.thumbnail((target_width, target_height), Image.ANTIALIAS)
-    # TODO: use app.config.THUMB_DIR instead
-    thumbnail.save(os.path.join(THUMB_DIR, str(mapid) + '.png'))
-    print "Created thumbnail"
+    target_height = int(target_width * prey / float(prex))
+    offset = (0, target_width/2 - target_height/2)
+    if target_height > target_width:
+        target_height = 250
+        target_width = int(target_height * prex / float(prey))
+        offset = (target_height/2 - target_width/2, 0)
 
+    preview.thumbnail((target_width, target_height), Image.ANTIALIAS)
+    centered_thumb = Image.new(preview.mode, size=(250,250), color=(0,0,0,255))
+    centered_thumb.paste(preview, offset)
+    centered_thumb.save(os.path.join(app.config['THUMB_DIR'], str(mapid) + '.png'))
 
 def recent_maps(author=None, page_limit=100, offset=0):
     if author:
@@ -181,8 +185,10 @@ def upload_map():
             testurl = None
             if generate_test:
                 testurl = get_test_link(mapid)
+                return redirect(testurl)
             success = mapid >= 0
-            return jsonify(success=success, saveurl=saveurl, testurl=testurl)
+            if success:
+                return redirect(saveurl)
         else:
             abort(404)
     else:
@@ -221,13 +227,21 @@ def test_map():
     if mapid:
         showurl = url_for('save_map', mapid=mapid)
         testurl = get_test_link(mapid)
+        print "Testurl: ", testurl
         return jsonify(success=True, testurl=testurl, showurl=showurl)
     else:
         return abort(404)
 
-@app.route('/map/<mapid>')
-def return_map(mapid):
-    return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(str(mapid)+'.png'), attachment_filename=secure_filename(str(filename))+".png")
+@app.route("/m/<author>/<mapname>")
+def return_author_map(author, mapname):
+    m = search_db(author=author, mapname=mapname)
+    if m:
+        map_data = get_map_data(m)
+        return render_template("showmap.html", map=map_data)
+    else:
+        maps = recent_maps()
+        maps_data = get_data_from_maps(maps)
+        return render_template('showmaps.html', maps=maps_data)
 
 @app.route("/author/<author>")
 def return_maps_by_author(author):
@@ -250,10 +264,14 @@ def download():
     else:
         return abort(404)
 
-def search_db(query):
-    querystring = "%"+query +"%"
-    maps = Map.query.filter(Map.author.ilike(querystring)).all()
-    maps.extend( Map.query.filter(Map.mapname.ilike(querystring)))
+def search_db(query=None, mapname=None, author=None):
+    maps = []
+    if author and mapname:
+        maps = Map.query.filter(Map.author.ilike(author)).filter(Map.mapname.ilike(mapname)).first()
+    else:
+        querystring = "%"+query +"%"
+        maps = Map.query.filter(Map.author.ilike(querystring)).all()
+        maps.extend(Map.query.filter(Map.mapname.ilike(querystring)).all())
     return maps
 
 def get_data_from_maps(maps):
@@ -264,7 +282,7 @@ def get_data_from_maps(maps):
 def search():
     query = request.args.get("query", "")
     if query:
-        maps = search_db(query)
+        maps = search_db(query=query)
     else:
         maps = recent_maps()
 
