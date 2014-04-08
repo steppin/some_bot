@@ -4,7 +4,6 @@ SomeBot Brains!
 {% endblock %}
 
 {% block content %}
-
     <div class="col-lg-10 col-lg-offset-1 map" id="{{ mapid }}">
         <div class="thumbnail">
             <h2 class='searchable'>{{ map.mapname }}</h2>
@@ -17,7 +16,6 @@ SomeBot Brains!
                     <a href="/static/previews/{{ map.mapid }}.png" class="btn btn-primary">Fullsize Preview</a>
                     <a href="/download?mapname={{ map.mapname }}&type=png&mapid={{ map.mapid }}" download="{{ map.mapname }}" class="btn btn-primary">Download png</a>
                     <a href="/download?mapname={{ map.mapname }}&type=json&mapid={{ map.mapid }}" download="{{ map.mapname }}" class="btn btn-primary">Download json</a>
-                
                 </div>
                 
             </div>
