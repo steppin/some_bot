@@ -32,9 +32,10 @@
 
                         <ul class="nav navbar-nav navbar-right">
                             <li><a href="/login">Login</a></li>
-                            <li><form class="navbar-form navbar-right" role="search" id="searchform">
+                            <li><form class="navbar-form navbar-right" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
                                 <input type="text" class="form-control" placeholder="Search" id="search">
-                            </form></li>
+                                 </form>
+                            </li>
                         </ul>
                     </nav>
                 </div> 
@@ -45,16 +46,14 @@
                 {% endblock %}
                 </div>
             </div>
-
         </div>
-        <!--TODO(step): replace this with dropzone-->
 
         <div class="col-md-2" style="padding-top:300px">
             <div class="thumbnail">
                 <h3>Test your map</h3>
                 <div style="text-align:left">
 
-                    <form id="mapupload" action="/" method="post" multiple style='height:200px'>
+                    <form id="mapupload" action="/upload" method="post" multiple style='height:200px'>
                         Drop a .json and a .png file here to test your map.
                         Click to navigate for files.
                     </form>
@@ -86,31 +85,31 @@
             mapupload.on("successmultiple", function(files, data) {
                 if(data.success) {
                     console.log(data);
-                    //window.open(data.testurl);
-                    mapupload.removeAllFiles(true);
                     if($('#autotest')[0].checked) {
-                        window.location(data.testurl);
+                        window.location.replace(data.testurl);
                     }
-                    window.location.replace(data.saveurl);
+                    else {
+                        window.location.replace(data.saveurl);
+                    }
                 }
             });
 
+            // When two files are in the queue, start uploading
             mapupload.on("maxfilesreached", function(file) {
                 mapupload.processQueue();
-                console.log(file);
             });
 
     </script>
 
     <script>
+    
     $('body').delegate('.testmap', "click", function () {
+        mapid = $(this).attr('mapid');
         $.ajax({
-            url: "/maptest",
-            data: {'mapid':$(this).attr('mapid'),}
+            url: "/maptest/"+mapid,
         }).done(function(data) {
             if(data.success) {
-                    console.log(data.testurl);
-                    window.location.replace(data.testurl);
+                window.location.replace(data.testurl);
             }
         });
      });
@@ -118,24 +117,39 @@
 
     <script>
             // Search function
+
+            // Handle search form submission
+            // Write window URL on form submission so searches can be shared
+            $("#searchform").submit( function(event) {
+                query = $("#search").val();
+                clearTimeout(lastTimeout);
+                window.location.replace(window.location.origin+"/search?query="+query);
+                return false;
+            });
+
+
+            // Handle instant search results
+            // Delay is set to 500 milliseconds between keypresses
+            // Standalone set to true so entire page doesn't reload
+            requestDelay = 500;
             lastTimeout = false;
             $('body').delegate('#search', 'keyup', function() {
                 query = $("#search").val();
-                console.log(query);
                 if(true) {
                     if(lastTimeout) {
                         clearTimeout(lastTimeout);
                     }
                     lastTimeout = setTimeout( function () {
-                        $.ajax({
-                            url:"/search",
-                            data:{"query":query}
-                        }).done(function(data) {
-                            if(data.success) {
-                                $("#mapdiv").html(data.html);
-                            }
-                        });
-                    }, 500);
+                            $.ajax({
+                                url:"/search",
+                                data:{"query":query, "standalone":true}
+                            }).done(function(data) {
+                                if(data.success) {
+                                    $("#mapdiv").html(data.html);
+                                }
+                            });
+                            lastTimeout = false;
+                        }, requestDelay);
 
                 }
             });
