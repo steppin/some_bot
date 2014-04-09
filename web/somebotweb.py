@@ -92,6 +92,7 @@ class Map(db.Model):
         Output: Map formatted in JSON
         '''
         strid = str(self.id)
+        print strid, self.mapname, self.author
         map_data = {
             'mapid':self.id,
             'mapname':self.mapname,
@@ -102,8 +103,10 @@ class Map(db.Model):
             'previewurl':"/static/previews/"+strid+'.png',
             'thumburl':"/static/thumbs/"+strid+'.png',
             'times_tested':self.times_tested,
-            "mapurl":"/a/%s/%s" %(self.author, self.mapname) if self.author else "/show/"+strid,
-            "authorurl":url_for('return_maps_by_author', author=self.author)
+            "mapurl":u"/a/{author}/{mapname}".format(author=self.author, mapname=self.mapname) if self.author else "/show/"+strid,
+            "authorurl":url_for('return_maps_by_author', author=self.author),
+            "pngdownload":u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
+            "jsondownload":u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             }
         return map_data
 
@@ -373,7 +376,6 @@ def return_map_by_author(author, mapname):
         maps = recent_maps()
     maps_data = get_data_from_maps(maps)
     return render_template('showmaps.html', maps=maps_data)
-
 
 @app.route("/download")
 def download():
