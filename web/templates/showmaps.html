@@ -7,13 +7,13 @@
         {% endif %}
             <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
-                    <h2><a href="/m/{{ map.author }}/{{ map.mapname }}" class="searchable" style="word-wrap:break-word;">{{ map.mapname }}</a></h2>
-                    <a class="img_helper" href="/show?mapid={{ map.mapid }}"><img class="img_vertical" src="/static/thumbs/{{ map.mapid }}.png"></a>
+                    <h2><a href="{{ map.mapurl }}" class="searchable" style="word-wrap:break-word;">{{ map.mapname }}</a></h2>
+                    <a class="img_helper" href="{{ map.mapurl }}"><img class="img_vertical" src="{{ map.thumburl }}"></a>
                      <div class="caption">
-                                                <h3>by: <a href="/?author={{ map.author }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
+                                                <h3>by: <a href="{{ map.authorurl }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
                             <a href="#" class="btn btn-primary testmap" role="button" mapid="{{ map.mapid }}">Test map</a>
-                            <a href="/static/previews/{{ map.mapid }}.png" class="btn btn-primary">Fullsize Preview</a>
+                            <a href="{{ map.previewurl }}" class="btn btn-primary">Fullsize Preview</a>
                         </div>
                     </div>
                 </div>
@@ -22,7 +22,5 @@
         </div>
         {% endif %}
         {% endfor %}
-
-
 
 {% endblock %}
