@@ -2,6 +2,7 @@
 """A preview generator for tagpro."""
 
 from __future__ import division
+import functools
 
 import sys
 import json
@@ -13,11 +14,14 @@ import itertools
 from PIL import Image, ImageDraw
 
 
-TILESIZE = 40
+TILE_SIZE = 40
+SIZE_LIMIT_X = 256
+SIZE_LIMIT_Y = 256
 
 
 def usage():
-    print >> sys.stderr, 'Usage: {} PNG JSON [SPLATS] > PREVIEW'.format(sys.argv[0])
+    print >> sys.stderr, 'Usage: {} PNG JSON [SPLATS] > PREVIEW'.format(
+        sys.argv[0])
 
 
 class Splat():
@@ -38,8 +42,8 @@ class Splat():
 class Map():
     tiles = Image.open('resources/tiles.png')
     speedpad = Image.open('resources/speedpad.png')
-    speedpadblue = Image.open('resources/speedpadblue.png')
-    speedpadred = Image.open('resources/speedpadred.png')
+    speedpad_blue = Image.open('resources/speedpadblue.png')
+    speedpad_red = Image.open('resources/speedpadred.png')
     portal = Image.open('resources/portal.png')
     colormap = {
         'black': (0, 0, 0),
@@ -64,155 +68,158 @@ class Map():
         'bluespawn': (0, 0, 155),
         'redspawn': (155, 0, 0)
     }
+    coord_map = {colormap['speedpad']: (0, 0, speedpad),
+                 colormap['speedpadred']: (0, 0, speedpad_red),
+                 colormap['speedpadblue']: (0, 0, speedpad_blue),
+                 colormap['bomb']: (6, 5, None),
+                 colormap['redtile']: (3, 1, None),
+                 colormap['bluetile']: (3, 2, None),
+                 colormap['spike']: (2, 3, None),
+                 colormap['button']: (2, 5, None),
+                 colormap['powerup']: (7, 8, None),
+                 colormap['blueflag']: (9, 0, None),
+                 colormap['redflag']: (8, 0, None),
+                 colormap['yellowflag']: (7, 0, None),
+                 colormap['blueendzone']: (5, 2, None),
+                 colormap['redendzone']: (5, 1, None),
+                 colormap['redspawn']: (6, 2, None),
+                 colormap['bluespawn']: (6, 3, None),
+                 colormap['tile']: (2, 2, None)}
+
+    # Directions are N,S,E,W
+    wall_dirs = {(True, True, True, True): (4, 4),
+                 (True, True, True, False): (0, 4),
+                 (True, True, False, True): (7, 4),
+                 (True, True, False, False): (4, 2),
+                 (True, False, True, True): (4, 8),
+                 (True, False, True, False): (2, 8),
+                 (True, False, False, True): (6, 8),
+                 (True, False, False, False): (0, 6),
+                 (False, True, True, True): (4, 0),
+                 (False, True, True, False): (2, 0),
+                 (False, True, False, True): (6, 0),
+                 (False, True, False, False): (0, 2),
+                 (False, False, True, True): (2, 4),
+                 (False, False, True, False): (8, 6),
+                 (False, False, False, True): (9, 6),
+                 (False, False, False, False): (0, 0)}
 
     def __init__(self, pngpath, jsonpath):
         if 'http' in pngpath:
-            pfile = cStringIO.StringIO(urllib.urlopen(pngpath).read())
-            png = Image.open(pfile)
+            png_handle = cStringIO.StringIO(urllib.urlopen(pngpath).read())
+            png = Image.open(png_handle)
         else:
             png = Image.open(pngpath)
-        self.png = png
+
         if png.mode != 'RGBA':
             png = png.convert('RGBA')
+        self.png = png
+        self.max_x, self.max_y = self.png.size
+        if self.max_x > SIZE_LIMIT_X or self.max_y > SIZE_LIMIT_Y:
+            raise ValueError("Image '{}' is too large. Limit is {}x{}, but "
+                             "it is {}x{}.".format(pngpath,
+                                                   SIZE_LIMIT_X, SIZE_LIMIT_Y,
+                                                   self.max_x, self.max_y))
         self.pixels = png.load()
+        self._preview = None
+        self.portal_entrances = []
 
         if 'http' in jsonpath:
-            jfile = urllib.urlopen(jsonpath)
-            j = json.load(jfile)
+            json_file = urllib.urlopen(jsonpath)
+            self.json = json.load(json_file)
         else:
             with open(jsonpath) as fp:
-                j = json.load(fp)
-        self.json = j
+                self.json = json.load(fp)
 
-    def draw(self, (x, y), (i, j), tiles, preview, drawBackground=False, source=None, draw_num_tiles=1):
-        """draw square (x, y) from source on preview in spot (i, j)"""
+    def draw(self, (x, y), (i, j), tiles, preview, draw_background=False,
+             source=None, draw_num_tiles=1):
+        """Draws a square square size (x, y) from the source source
+        onto preview at coordinates (i, j)"""
 
-        if drawBackground:
-            im = tiles.crop((2 * TILESIZE, 2 * TILESIZE, 2 * TILESIZE + TILESIZE, 2 * TILESIZE + TILESIZE))
-            # TODO(step): lol comment this so people don't curse you
-            for c, d in itertools.product(xrange(i, i + draw_num_tiles), xrange(j, j + draw_num_tiles)):
-                preview.paste(im, (int(c * TILESIZE), int(d * TILESIZE)))
+        if draw_background:
+            im = tiles.crop((2 * TILE_SIZE, 2 * TILE_SIZE,
+                             2 * TILE_SIZE + TILE_SIZE,
+                             2 * TILE_SIZE + TILE_SIZE))
+
+            # itertools.product simply returns all combinations from a
+            # combination of iterables.
+            # For a further usage look at self.all_coords, which eliminates
+            # a double `for` loop and just gives us the x, y pairs we want.
+            for c, d in itertools.product(xrange(i, i + draw_num_tiles),
+                                          xrange(j, j + draw_num_tiles)):
+                preview.paste(im, (int(c * TILE_SIZE), int(d * TILE_SIZE)))
 
         if not source:
             source = tiles
 
-        x, y = x * TILESIZE, y * TILESIZE
-        im = source.crop((x, y, x + draw_num_tiles * TILESIZE, y + draw_num_tiles * TILESIZE))
-        preview.paste(im, (int(i * TILESIZE), int(j * TILESIZE)), im)
+        x, y = x * TILE_SIZE, y * TILE_SIZE
+        im = source.crop((
+            x, y, x + draw_num_tiles * TILE_SIZE,
+            y + draw_num_tiles * TILE_SIZE))
+        preview.paste(im, (int(i * TILE_SIZE), int(j * TILE_SIZE)), im)
+
+    @property
+    def all_coords(self):
+        return itertools.product(range(self.max_x), range(self.max_y))
 
     def _draw_under(self):
-        speedpad = self.speedpad
-        speedpadred = self.speedpadred
-        speedpadblue = self.speedpadblue
-        portal = self.portal
-        tiles = self.tiles
-        preview = self.preview
-        colormap = self.colormap
-        pixels = self.pixels
-        max_x, max_y = self.max_x, self.max_y
-        draw = self.draw
-
         green = []
         blue = []
         red = []
+        draw = functools.partial(self.draw, tiles=self.tiles,
+                                 preview=self._preview, draw_background=True)
         try:
             for point, state in self.json['fields'].iteritems():
+                x, y = point.split(',')
                 if state['defaultState'] == 'on':
-                    x, y = point.split(',')
-                    green.append((int(x), int(y)))
+                    l = green
                 elif state['defaultState'] == 'red':
-                    x, y = point.split(',')
-                    red.append((int(x), int(y)))
+                    l = red
                 elif state['defaultState'] == 'blue':
-                    x, y = point.split(',')
-                    blue.append((int(x), int(y)))
+                    l = blue
+                else:
+                    continue
+                l.append((int(x), int(y)))
         except KeyError:
             pass
+        if 'portals' in self.json:
+            portals = [z.split(",") for z in self.json['portals']]
+            self.portal_entrances.extend((int(x), int(y)) for x, y in portals)
 
-        portal_entrances = self.portal_entrances = []
-        try:
-            for entrance, exit in self.json['portals'].iteritems():
-                x, y = entrance.split(',')
-                portal_entrances.append((int(x), int(y)))
-        except KeyError:
-            pass
-
-        for i in range(max_x):
-            for j in range(max_y):
-                try:
-                    color = pixels[i, j][:3]
-                    if color == colormap['speedpad']:
+        for i, j in self.all_coords:
+            try:
+                source = None
+                color = self.get_color(i, j)
+                if color in self.coord_map:
+                    a, b, source = self.coord_map[color]
+                    draw((a, b), (i, j), source=source)
+                elif color == self.colormap['portal']:
+                    if (i, j) in self.portal_entrances:
                         a, b = 0, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True, source=speedpad)
-                    elif color == colormap['speedpadred']:
-                        a, b = 0, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True, source=speedpadred)
-                    elif color == colormap['speedpadblue']:
-                        a, b = 0, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True, source=speedpadblue)
-                    elif color == colormap['portal']:
-                        if (i, j) in portal_entrances:
-                            a, b = 0, 0
-                        else:
-                            a, b = 4, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True, source=portal)
-                    elif color == colormap['bomb']:
-                        a, b = 6, 5
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['redtile']:
-                        a, b = 3, 1
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['bluetile']:
-                        a, b = 3, 2
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['spike']:
-                        a, b = 2, 3
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['button']:
-                        a, b = 2, 5
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['powerup']:
-                        a, b = 7, 8
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['blueflag']:
-                        a, b = 9, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['redflag']:
-                        a, b = 8, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['yellowflag']:
-                        a, b = 7, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['blueendzone']:
-                        a, b = 5, 2
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['redendzone']:
-                        a, b = 5, 1
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['redspawn']:
-                        a, b = 6, 2
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['bluespawn']:
-                        a, b = 6, 3
-                        draw((a, b), (i, j), tiles, preview, drawBackground=True)
-                    elif color == colormap['tile']:
-                        a, b = 2, 2
-                        draw((a, b), (i, j), tiles, preview)
-                    elif color == colormap['gate']:
-                        if (i, j) in green:
-                            a, b = 10, 2
-                        elif (i, j) in red:
-                            a, b = 10, 3
-                        elif (i, j) in blue:
-                            a, b = 10, 4
-                        else:
-                            a, b = 10, 1
-                        draw((a, b), (i, j), tiles, preview)
-                except KeyError:
-                    print >> sys.stderr, "make this an error mkay"
+                    else:
+                        a, b = 4, 0
+                    source = self.portal
+                elif color == self.colormap['gate']:
+                    if (i, j) in green:
+                        a, b = 10, 2
+                    elif (i, j) in red:
+                        a, b = 10, 3
+                    elif (i, j) in blue:
+                        a, b = 10, 4
+                    else:
+                        a, b = 10, 1
+                elif color == self.colormap['black']:
+                    continue
+                elif color == self.colormap['wall']:
+                    continue
+                else:
+                    raise KeyError("Unknown RGB value {}".format(color))
+                draw((a, b), (i, j), source=source)
+            except KeyError as e:
+                print >> sys.stderr, e
 
     def _draw_splats(self, splatfile):
-        im = self.preview
+        im = self._preview
         with open(splatfile) as f:
             splats = json.load(f)
         radius = 10
@@ -220,151 +227,76 @@ class Map():
         color = {2: (0, 0, 255, opacity), 1: (255, 0, 0, opacity)}
         shift = 10
 
-        redsplat = Splat(color[1], radius)
-        bluesplat = Splat(color[2], radius)
+        red_splat = Splat(color[1], radius)
+        blue_splat = Splat(color[2], radius)
 
         for splat in splats:
-            (x, y) = (splat['x'] + shift, splat['y'] + shift)
+            x, y = splat['x'] + shift, splat['y'] + shift
             t = splat['t']
             if t == 1:
-                redsplat.paste_onto(im, (x, y))
+                red_splat.paste_onto(im, (x, y))
             elif t == 2:
-                bluesplat.paste_onto(im, (x, y))
+                blue_splat.paste_onto(im, (x, y))
+
+    def get_color(self, i, j):
+        return self.pixels[i, j][:3]
+
+    def get_wall(self, i, j):
+        max_width = self.max_x - 1
+        max_height = self.max_y - 1
+        north, south, west, east = [False] * 4
+        if j > 0:
+            north = self.get_color(i, j - 1) == self.colormap[
+                'wall']
+        if j < max_height:
+            south = self.get_color(i, j + 1) == self.colormap['wall']
+        if i > 0:
+            west = self.get_color(i - 1, j) == self.colormap['wall']
+        if i < max_width:
+            east = self.get_color(i + 1, j) == self.colormap['wall']
+        return self.wall_dirs[(north, south, east, west)]
 
     def _draw_over(self):
-        speedpad = self.speedpad
-        speedpadred = self.speedpadred
-        speedpadblue = self.speedpadblue
-        portal = self.portal
-        tiles = self.tiles
-        preview = self.preview
-        colormap = self.colormap
-        pixels = self.pixels
-        max_x, max_y = self.max_x, self.max_y
-        draw = self.draw
-        png = self.png
-
+        draw = functools.partial(self.draw, tiles=self.tiles,
+                                 preview=self._preview, draw_background=False)
         marsballs = []
-        try:
-            for coords in self.json['marsballs']:
-                marsballs.append((int(coords['x']), int(coords['y'])))
-        except KeyError:
-            pass
+        if 'marsballs' in self.json:
+            marsballs.extend((int(coordinates['x']), int(coordinates['y']))
+                             for coordinates in self.json['marsballs'])
 
-        for i in range(max_x):
-            for j in range(max_y):
-                try:
-                    color = pixels[i, j][:3]
-                    if color == colormap['black']:
-                        preview.paste((0, 0, 0, 255), (i * TILESIZE, j * TILESIZE, i * TILESIZE + TILESIZE, j * TILESIZE + TILESIZE))
-                    elif color == colormap['wall']:
-                        north, south, west, east = [False] * 4
-                        if j > 0:
-                            north = pixels[i, j - 1][:3] == colormap['wall']
-                        if j < png.size[1] - 1:
-                            south = pixels[i, j + 1][:3] == colormap['wall']
-                        if i > 0:
-                            west = pixels[i - 1, j][:3] == colormap['wall']
-                        if i < png.size[0] - 1:
-                            east = pixels[i + 1, j][:3] == colormap['wall']
-                        if north:
-                            if south:
-                                if east:
-                                    if west:
-                                        a, b = 4, 4
-                                    else:
-                                        a, b = 0, 4
-                                else:
-                                    if west:
-                                        a, b = 7, 4
-                                    else:
-                                        a, b = 4, 2
-                            else:
-                                if east:
-                                    if west:
-                                        a, b = 4, 8
-                                    else:
-                                        a, b = 2, 8
-                                else:
-                                    if west:
-                                        a, b = 6, 8
-                                    else:
-                                        a, b = 0, 6
-                        else:
-                            if south:
-                                if east:
-                                    if west:
-                                        a, b = 4, 0
-                                    else:
-                                        a, b = 2, 0
-                                else:
-                                    if west:
-                                        a, b = 6, 0
-                                    else:
-                                        a, b = 0, 2
-                            else:
-                                if east:
-                                    if west:
-                                        a, b = 2, 4
-                                    else:
-                                        a, b = 8, 6
-                                else:
-                                    if west:
-                                        a, b = 9, 6
-                                    else:
-                                        a, b = 0, 0
-                        draw((a, b), (i, j), tiles, preview)
-                    elif color == colormap['speedpad']:
+        for i, j in self.all_coords:
+            try:
+                source = None
+                color = self.get_color(i, j)
+                if color == self.colormap['wall']:
+                    a, b = self.get_wall(i, j)
+                elif color == self.colormap['portal']:
+                    if (i, j) in self.portal_entrances:
                         a, b = 0, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False, source=speedpad)
-                    elif color == colormap['speedpadred']:
-                        a, b = 0, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False, source=speedpadred)
-                    elif color == colormap['speedpadblue']:
-                        a, b = 0, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False, source=speedpadblue)
-                    elif color == colormap['portal']:
-                        if (i, j) in self.portal_entrances:
-                            a, b = 0, 0
-                        else:
-                            a, b = 4, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False, source=portal)
-                    elif color == colormap['bomb']:
-                        a, b = 6, 5
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['spike']:
-                        a, b = 2, 3
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['button']:
-                        a, b = 2, 5
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['powerup']:
-                        a, b = 7, 8
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['blueflag']:
-                        a, b = 9, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['redflag']:
-                        a, b = 8, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['yellowflag']:
-                        a, b = 7, 0
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['redspawn']:
-                        a, b = 6, 2
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                    elif color == colormap['bluespawn']:
-                        a, b = 6, 3
-                        draw((a, b), (i, j), tiles, preview, drawBackground=False)
-                except KeyError:
-                    print >> sys.stderr, "make this an error mkay"
+                    else:
+                        a, b = 4, 0
+                    source = self.portal
+                elif color in self.coord_map:
+                    a, b, source = self.coord_map[color]
+                elif color == self.colormap['black']:
+                    self._preview.paste((0, 0, 0, 255), (
+                        i * TILE_SIZE, j * TILE_SIZE, (i + 1) * TILE_SIZE,
+                        (j + 1) * TILE_SIZE))
+                    continue
+                else:
+                    raise KeyError("Unknown RGB value {}".format(color))
+                draw((a, b), (i, j), source=source)
+            except KeyError as e:
+                print >> sys.stderr, e
 
         for i, j in marsballs:
-            draw((11, 0), (i - fractions.Fraction('1/2'), j - fractions.Fraction('1/2')), tiles, preview, drawBackground=False, draw_num_tiles=2)
+            draw((11, 0),
+                 (i - fractions.Fraction('1/2'), j - fractions.Fraction('1/2')),
+                 draw_num_tiles=2)
 
     def preview(self, splats=None, save=None):
-        self.max_x, self.max_y = max_x, max_y = self.png.size
-        self.preview = Image.new('RGBA', (max_x * TILESIZE, max_y * TILESIZE))
+        self._preview = Image.new('RGBA', (self.max_x * TILE_SIZE,
+                                           self.max_y * TILE_SIZE))
 
         self._draw_under()
         if splats:
@@ -372,10 +304,10 @@ class Map():
         self._draw_over()
 
         if save:
-            self.preview.save(save, 'PNG')
+            self._preview.save(save, 'PNG')
 
         temp = cStringIO.StringIO()
-        self.preview.save(temp, 'PNG')
+        self._preview.save(temp, 'PNG')
         return temp
 
 
@@ -384,13 +316,11 @@ def main():
         usage()
         return 1
 
-    pngpath = sys.argv[1]
-    jsonpath = sys.argv[2]
+    png_path = sys.argv[1]
+    json_path = sys.argv[2]
     splats = sys.argv[3] if len(sys.argv) > 3 else None
-
-    map_ = Map(pngpath, jsonpath)
+    map_ = Map(png_path, json_path)
     preview = map_.preview(splats=splats)
-
     sys.stdout.write(preview.getvalue())
 
 
