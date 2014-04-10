@@ -15,8 +15,7 @@ from PIL import Image, ImageDraw
 
 
 TILE_SIZE = 40
-SIZE_LIMIT_X = 256
-SIZE_LIMIT_Y = 256
+SIZE_LIMIT = 100*100
 
 
 def usage():
@@ -115,11 +114,11 @@ class Map():
             png = png.convert('RGBA')
         self.png = png
         self.max_x, self.max_y = self.png.size
-        if self.max_x > SIZE_LIMIT_X or self.max_y > SIZE_LIMIT_Y:
-            raise ValueError("Image '{}' is too large. Limit is {}x{}, but "
-                             "it is {}x{}.".format(pngpath,
-                                                   SIZE_LIMIT_X, SIZE_LIMIT_Y,
-                                                   self.max_x, self.max_y))
+        if self.max_x * self.max_y > SIZE_LIMIT:
+            error_msg = "Image '{}' is too large. Limit is {} px, but it is {}x{}.".format(
+                pngpath, SIZE_LIMIT, self.max_x, self.max_y
+            )
+            raise ValueError(error_msg)
         self.pixels = png.load()
         self._preview = None
         self.portal_entrances = []
