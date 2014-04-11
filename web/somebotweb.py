@@ -3,6 +3,7 @@ from flask import Flask, request, g, redirect, url_for, abort, render_template, 
 from werkzeug import secure_filename
 
 from flask.ext.sqlalchemy import SQLAlchemy
+from sqlalchemy import or_
 
 import sqlite3
 import os
@@ -75,7 +76,7 @@ class Map(db.Model):
     last_tested = db.Column(db.Float)
     times_tested = db.Column(db.Integer)
 
-    def __init__(self, mapname, author, description):
+    def __init__(self, mapname, author, description, status=None):
         self.mapname = mapname
         self.author = author
         self.description = description
@@ -92,13 +93,14 @@ class Map(db.Model):
         Output: Map formatted in JSON
         '''
         strid = str(self.id)
-        print strid, self.mapname, self.author
+
         map_data = {
             'mapid':self.id,
             'mapname':self.mapname,
             'author':self.author,
             'description':self.description,
             'jsonurl':"/static/maps/"+strid+'.json',
+            'uploaddate':time.strftime('%Y-%m-%d', time.localtime(self.upload_time)),
             'pngurl':"/static/maps/"+strid+'.png',
             'previewurl':"/static/previews/"+strid+'.png',
             'thumburl':"/static/thumbs/"+strid+'.png',
@@ -109,7 +111,6 @@ class Map(db.Model):
             "jsondownload":u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             }
         return map_data
-
 
 def add_map_to_db(mapname, author, description, commit=True):
     '''
@@ -233,17 +234,18 @@ def generate_thumb(mapid):
     centered_thumb.paste(preview_img, offset)
     centered_thumb.save(os.path.join(app.config['THUMB_DIR'], str(mapid) + '.png'))
 
-def recent_maps(author=None, page_limit=100, offset=0):
+def recent_maps(page=0, page_size=18):
     '''
     Get recent maps from the database
-    INPUT: All optional - author, page_limit (number of entries), and offset for pagination
+    INPUT: All optional - author, page_size (number of entries), and offset for pagination
     OUTPUT: Map objects ordered by upload_time descending
     '''
-    if author:
-        maps = Map.query.filter(Map.author.ilike(author)).order_by("upload_time desc").offset(offset).limit(page_limit)
-    else:
-        maps = Map.query.order_by("upload_time desc").offset(offset).limit(page_limit)
-    return maps
+    total = Map.query.count()
+    maps = Map.query.order_by("upload_time desc").offset(page_size*page).limit(page_size).all()
+    pages = None
+    if total > page_size:
+        pages = paginate(page, 9, total/page_size+2)
+    return maps, pages
 
 def get_test_link(mapid):
     ''' 
@@ -274,34 +276,36 @@ def upload_map():
     If they're not there, look for a list of files names file[] (dropzone compatibility)
     If we have both a layout and a logic, save the file and generate previews, add to db, etc.
     If not, return a 404
-
     '''
-    layout = request.files.get("layout", None)
-    logic = request.files.get("logic", None)
-    generate_test = request.args.get("generate_testlink", False)
+    if request.method == "POST":
+        layout = request.files.get("layout", None)
+        logic = request.files.get("logic", None)
+        generate_test = request.args.get("generate_testlink", False)
 
-    # Handle upload by dropzone, not sure how to specify filenames with dropzone
-    # it sends just a list of files
-    if not logic and not layout:
-        files = request.files.getlist('file[]')
-        for f in files:
-            if f.filename[-5:] == ".json":
-                logic = f
-            elif f.filename[-4:] == ".png":
-                layout = f
+        # Handle upload by dropzone, not sure how to specify filenames with dropzone
+        # it sends just a list of files
+        if not logic and not layout:
+            files = request.files.getlist('file[]')
+            for f in files:
+                if f.filename[-5:] == ".json":
+                    logic = f
+                elif f.filename[-4:] == ".png":
+                    layout = f
 
-    if layout and logic:
-        mapid = add_map(layout, logic)
-        success = mapid >= 0
-        if success:
-            if generate_test:
-                test_url = get_test_link(mapid)
-                return jsonify(testurl=test_url, success=success)
-            else:
-                save_url = url_for('save_map', mapid=mapid)
-                return jsonify(saveurl=save_url, success=success)
+        if layout and logic:
+            mapid = add_map(layout, logic)
+            success = mapid >= 0
+            if success:
+                if generate_test:
+                    test_url = get_test_link(mapid)
+                    return jsonify(testurl=test_url, success=success)
+                else:
+                    save_url = url_for('save_map', mapid=mapid)
+                    return jsonify(saveurl=save_url, success=success)
+        else:
+            abort(404)
     else:
-        abort(404)
+        return render_template("upload.html", map={})
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -311,13 +315,35 @@ def login():
     '''
     return render_template('login.html')
 
+def paginate(page, page_size, total_pages):
+    # Create a range of pages given by
+    # the current page, the page_size and the total number of pages
+    # [1, 2, 3, ..., page_size]
+    # [6, 7, 8, ... 6+page_size]
+    # [7, 8, 9, ... min(7+page_size, total_pages))]
+    start = min(max(1, page-page_size/2+1), total_pages-page_size)
+    stop = min( max(page+page_size/2+2, page_size), total_pages)
+    return range(start, stop)
+    '''
+    if page < page_size/2:
+        return range(1,min(page_size, total_pages))
+    else:
+        return range(page-page_size/2+1, min(page+page_size/2+2, total_pages))
+    '''
 @app.route('/', methods=['GET'])
 def index():
     '''
     If a GET request is given to /, return recent maps
     '''
-    maps = recent_maps()
-    return render_template('showmaps.html', maps=get_data_from_maps(maps))
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+        if page <= 0:
+            page = 1
+    except:
+        page = 1
+    maps, pages = recent_maps(page=(page-1))
+    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=True, pages=pages, current_page=page)
 
 @app.route('/show/<int:mapid>')
 def show_map(mapid):
@@ -377,6 +403,33 @@ def return_map_by_author(author, mapname):
     maps_data = get_data_from_maps(maps)
     return render_template('showmaps.html', maps=maps_data)
 
+@app.route("/retired")
+def retired():
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+        if page <= 0:
+            page = 1
+    except:
+        page = 1
+    maps, pages = search_db(status="retired", page=(page-1))
+    maps_data = get_data_from_maps(maps)
+    return render_template('showmaps.html', maps=maps_data)
+
+@app.route("/currentrotation")
+def current_rotation():
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+        if page <= 0:
+            page = 1
+    except:
+        page = 1
+
+    maps, pages = search_db(status="inrotation", page=(page-1))
+    maps_data = get_data_from_maps(maps)
+    return render_template('showmaps.html', maps=maps_data, paginate=True, pages=pages, current_page=page)
+
 @app.route("/download")
 def download():
     '''
@@ -402,26 +455,36 @@ def download():
     else:
         return abort(404)
 
-def search_db(query=None, mapname=None, author=None):
+def search_db(query=None, mapname=None, author=None, status=None, page=0, page_size=30, order="upload_time desc"):
     '''
     Search the sqlachemy db object database
     INPUT: query or mapname and author
     OUTPUT: Map objects that match the search criteria
 
-    #TODO: Spruce this up. Add page_limit and offset for pagination
+    #TODO: Spruce this up. Add page_size and offset for pagination
     '''
     maps = []
+
     if author and mapname:
         maps = Map.query.filter(Map.author.ilike(author)).filter(Map.mapname.ilike(mapname)).first()
+        return maps
+
     elif author and not mapname:
-        maps = Map.query.filter(Map.author.ilike(author)).all()
+        maps = Map.query.filter(Map.author.ilike(author))
     elif mapname and not author:
-        maps = Map.query.filter(Map.mapname.ilike(mapname)).all()
+        maps = Map.query.filter(Map.mapname.ilike(mapname))
+    elif status:
+        maps = Map.query.filter_by(status=status)
     elif query:
         querystring = "%"+query +"%"
-        maps = Map.query.filter(Map.author.ilike(querystring)).all()
-        maps.extend(Map.query.filter(Map.mapname.ilike(querystring)).all())
-    return maps
+        maps = Map.query.filter(or_(Map.author.ilike(querystring), Map.mapname.ilike(querystring)))
+
+    total = maps.count()
+    maps = maps.order_by(order).offset(page_size*page).limit(page_size).all()
+    pages = []
+    if total > page_size:
+        pages = paginate(page, 9, total/page_size+2)
+    return maps, pages
 
 def get_data_from_maps(maps):
     '''
@@ -438,23 +501,32 @@ def search():
     If no query is specified, return recent_maps
     This is so when you search something, then delete the search,
     recent_maps are returned
+    standalone tells whether to render the whole page (base.html + showmaps.html)
+    or just render showmaps.html (for 'instant' searching)
     '''
     query = request.args.get("query", "")
+    page = request.args.get("page", 1)
     standalone = request.args.get("standalone", False)
+
+    try:
+        page = int(page)
+        if page <= 0:
+            page = 1
+    except:
+        page = 1
+
     if query:
-        maps = search_db(query=query)
+        maps, pages = search_db(query=query, page=(page-1))
     else:
-        maps = recent_maps()
+        maps, pages = recent_maps()
 
     maps_data = get_data_from_maps(maps)
-    # standalone renders the showmaps.html template by itself
-    # having flask render the template and replacing the map div with 
-    # the processed template
+
     if standalone:
-        data = render_template('showmaps.html', maps=maps_data, standalone=True)
+        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=True, pages=pages, current_page=page)
         return jsonify(success=True, html=data)
     else:
-        return render_template('showmaps.html', maps=maps_data)
+        return render_template('showmaps.html', maps=maps_data, paginate=True, pages=pages, current_page=page)
 
 
 if __name__ == '__main__':
