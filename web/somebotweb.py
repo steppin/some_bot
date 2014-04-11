@@ -75,6 +75,7 @@ class Map(db.Model):
     upload_time = db.Column(db.Float)
     last_tested = db.Column(db.Float)
     times_tested = db.Column(db.Integer)
+    status = db.Column(db.Text)
 
     def __init__(self, mapname, author, description, status=None):
         self.mapname = mapname
@@ -83,6 +84,7 @@ class Map(db.Model):
         self.upload_time = time.time()
         self.last_tested = 0
         self.times_tested = 0
+        self.status = status
 
     def __repr__(self):
         return "<Map [%s] %s - %s>" %(str(self.id), self.mapname, self.author)
@@ -99,6 +101,7 @@ class Map(db.Model):
             'mapname':self.mapname,
             'author':self.author,
             'description':self.description,
+            'status':self.status,
             'jsonurl':"/static/maps/"+strid+'.json',
             'uploaddate':time.strftime('%Y-%m-%d', time.localtime(self.upload_time)),
             'pngurl':"/static/maps/"+strid+'.png',
@@ -403,8 +406,8 @@ def return_map_by_author(author, mapname):
     maps_data = get_data_from_maps(maps)
     return render_template('showmaps.html', maps=maps_data)
 
-@app.route("/retired")
-def retired():
+@app.route("/s/<status>")
+def get_maps_by_status(status):
     page = request.args.get("page", 1)
     try:
         page = int(page)
@@ -412,23 +415,16 @@ def retired():
             page = 1
     except:
         page = 1
-    maps, pages = search_db(status="retired", page=(page-1))
-    maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data)
-
-@app.route("/currentrotation")
-def current_rotation():
-    page = request.args.get("page", 1)
-    try:
-        page = int(page)
-        if page <= 0:
-            page = 1
-    except:
-        page = 1
-
-    maps, pages = search_db(status="inrotation", page=(page-1))
-    maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data, paginate=True, pages=pages, current_page=page)
+    maps, pages = search_db(status=status, page=(page-1))
+    if len(maps) > 0:
+        if len(maps) > 1:
+            maps_data = get_data_from_maps(maps)
+            return render_template('showmaps.html', maps=maps_data, paginate=True, pages=pages, current_page=page)
+        else:
+            map_data = maps[0].get_json()
+            return render_template("showmap.html", map=map_data)
+    else:
+        abort(404)
 
 @app.route("/download")
 def download():
