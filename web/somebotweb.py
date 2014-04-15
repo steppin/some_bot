@@ -324,7 +324,7 @@ def paginate(page, page_size, total_pages):
     # [1, 2, 3, ..., page_size]
     # [6, 7, 8, ... 6+page_size]
     # [7, 8, 9, ... min(7+page_size, total_pages))]
-    start = min(max(1, page-page_size/2+1), total_pages-page_size)
+    start = max(1, page-page_size/2+1)
     stop = min( max(page+page_size/2+2, page_size), total_pages)
     return range(start, stop)
     '''
@@ -346,7 +346,9 @@ def index():
     except:
         page = 1
     maps, pages = recent_maps(page=(page-1))
-    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=True, pages=pages, current_page=page)
+    print pages, len(pages)
+
+    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=(len(pages) > 0), pages=pages, current_page=page)
 
 @app.route('/show/<int:mapid>')
 def show_map(mapid):
@@ -419,7 +421,7 @@ def get_maps_by_status(status):
     if len(maps) > 0:
         if len(maps) > 1:
             maps_data = get_data_from_maps(maps)
-            return render_template('showmaps.html', maps=maps_data, paginate=True, pages=pages, current_page=page)
+            return render_template('showmaps.html', maps=maps_data, paginate=(len(pages)>0), pages=pages, current_page=page)
         else:
             map_data = maps[0].get_json()
             return render_template("showmap.html", map=map_data)
@@ -519,7 +521,7 @@ def search():
     maps_data = get_data_from_maps(maps)
 
     if standalone:
-        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=True, pages=pages, current_page=page)
+        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=(len(pages)>0), pages=pages, current_page=page)
         return jsonify(success=True, html=data)
     else:
         return render_template('showmaps.html', maps=maps_data, paginate=True, pages=pages, current_page=page)
