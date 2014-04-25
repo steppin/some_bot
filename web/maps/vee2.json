@@ -1,0 +1,59 @@
+{
+    "info": {
+        "name": "Big Vird",
+        "author": "LuckySpambasdf"
+    },
+    "switches": {
+        "21,16": {
+            "toggle": [
+                { "pos": { "x": 18, "y": 12 } },
+                { "pos": { "x": 19, "y": 12 } },
+                { "pos": { "x": 19, "y": 13 } },
+                { "pos": { "x": 20, "y": 13 } },
+                { "pos": { "x": 21, "y": 14 } },
+                { "pos": { "x": 21, "y": 15 } },
+                { "pos": { "x": 20, "y": 14 } }
+            ]
+        },
+        "45,16": {
+            "toggle": [
+                { "pos": { "x": 47, "y": 12 } },
+                { "pos": { "x": 48, "y": 12 } },
+                { "pos": { "x": 46, "y": 13 } },
+                { "pos": { "x": 47, "y": 13 } },
+                { "pos": { "x": 45, "y": 14 } },
+                { "pos": { "x": 45, "y": 15 } },
+                { "pos": { "x": 46, "y": 14 } }
+            ]
+        },
+
+        "31,22": {
+            "toggle": [
+                { "pos": { "x": 33, "y": 25 } }
+            ]
+        },
+
+        "35,22": {
+            "toggle": [
+                { "pos": { "x": 33, "y": 25 } }
+            ]
+        }
+    },
+
+    "fields": {
+        "18,12" : { "defaultState": "on" },
+        "19,12" : { "defaultState": "on" },
+        "19,13" : { "defaultState": "on" },
+        "20,13" : { "defaultState": "on" },
+        "20,14" : { "defaultState": "on" },
+        "47,12" : { "defaultState": "on" },
+        "48,12" : { "defaultState": "on" },
+        "46,13" : { "defaultState": "on" },
+        "45,14" : { "defaultState": "on" },
+        "45,15" : { "defaultState": "on" },
+        "21,14" : { "defaultState": "on" },
+        "21,15" : { "defaultState": "on" },
+        "47,13" : { "defaultState": "on" },
+        "46,14" : { "defaultState": "on" }
+    }
+}

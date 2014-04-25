@@ -1,0 +1,21 @@
+{
+    "info": {
+        "name": "Mars Ball Explorer",
+        "author": "LuckySpammer "
+    },
+    "switches": {
+        "27,9": {
+            "toggle": [
+                { "pos": { "x": 27, "y": 14 } }
+            ]
+        },
+        "27,25": {
+            "toggle": [
+                { "pos": { "x": 27, "y": 20 } }
+            ]
+        }
+    },
+    "marsballs": [
+        { "x": 27, "y": 17 }
+    ]
+}

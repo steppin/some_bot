@@ -1,0 +1,59 @@
+{
+    "switches": {
+        "25,23": {
+            "toggle": [
+                { "pos": { "x": 46, "y": 21 } },
+                { "pos": { "x": 45, "y": 21 } },
+                { "pos": { "x": 44, "y": 21 } },
+                { "pos": { "x": 26, "y": 24 } }
+            ]
+        },
+        "10,36": {
+            "toggle": [
+                { "pos": { "x": 10, "y": 33 } },
+                { "pos": { "x": 10, "y": 34 } },
+                { "pos": { "x": 11, "y": 34 } },
+                { "pos": { "x": 11, "y": 35 } },
+                { "pos": { "x": 9, "y": 33 } }
+            ]
+        },
+        "38,12": {
+            "toggle": [
+                { "pos": { "x": 38, "y": 14 } },
+                { "pos": { "x": 37, "y": 14 } },
+                { "pos": { "x": 38, "y": 15 } },
+                { "pos": { "x": 37, "y": 13 } },
+                { "pos": { "x": 39, "y": 15 } }
+            ]
+        },
+        "23,25": {
+            "toggle": [
+                { "pos": { "x": 4, "y": 27 } },
+                { "pos": { "x": 3, "y": 27 } },
+                { "pos": { "x": 2, "y": 27 } },
+                { "pos": { "x": 22, "y": 24 } }
+            ]
+        }
+    },
+
+    "fields": {
+        "2,27" : { "defaultState": "off" },
+        "3,27" : { "defaultState": "off" },
+        "4,27" : { "defaultState": "off" },
+        "9,33" : { "defaultState": "on" },
+        "10,33" : { "defaultState": "on" },
+        "10,34" : { "defaultState": "on" },
+        "11,34" : { "defaultState": "on" },
+        "11,35" : { "defaultState": "on" },
+        "22,24" : { "defaultState": "off" },
+        "26,24" : { "defaultState": "off" },
+        "37,13" : { "defaultState": "on" },
+        "37,14" : { "defaultState": "on" },
+        "38,14" : { "defaultState": "on" },
+        "38,15" : { "defaultState": "on" },
+        "39,15" : { "defaultState": "on" },
+        "44,21" : { "defaultState": "off" },
+        "45,21" : { "defaultState": "off" },
+        "46,21" : { "defaultState": "off" }
+    }
+}

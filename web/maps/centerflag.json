@@ -1,0 +1,93 @@
+{
+
+
+    "info":
+    {
+        "name": "Center Flag",
+        "author": "LuckySpammer"
+    },
+
+
+    "switches":
+    {
+        "12,13": {
+            "toggle": [
+                { "pos": { "x": 9, "y": 4 } },
+                { "pos": { "x": 10, "y": 5 } },
+                { "pos": { "x": 11, "y": 6 } },
+                { "pos": { "x": 11, "y": 7 } },
+                { "pos": { "x": 12, "y": 8 } },
+                { "pos": { "x": 12, "y": 9 } },
+
+                { "pos": { "x": 12, "y": 17 } },
+                { "pos": { "x": 12, "y": 18 } },
+                { "pos": { "x": 11, "y": 19 } },
+                { "pos": { "x": 11, "y": 20 } },
+                { "pos": { "x": 10, "y": 21 } },
+                { "pos": { "x": 9, "y": 22 } }
+            ]
+        },
+        "44,13": {
+            "toggle": [
+                { "pos": { "x": 47, "y": 4 } },
+                { "pos": { "x": 46, "y": 5 } },
+                { "pos": { "x": 45, "y": 6 } },
+                { "pos": { "x": 45, "y": 7 } },
+                { "pos": { "x": 44, "y": 8 } },
+                { "pos": { "x": 44, "y": 9 } },
+
+                { "pos": { "x": 44, "y": 17 } },
+                { "pos": { "x": 44, "y": 18 } },
+                { "pos": { "x": 45, "y": 19 } },
+                { "pos": { "x": 45, "y": 20 } },
+                { "pos": { "x": 46, "y": 21 } },
+                { "pos": { "x": 47, "y": 22 } }
+            ]
+        }
+    },
+
+
+    "fields":
+    {
+        "9,4" : { "defaultState": "blue" },
+        "10,5" : { "defaultState": "blue" },
+        "11,6" : { "defaultState": "blue" },
+        "11,7" : { "defaultState": "blue" },
+        "12,8" : { "defaultState": "blue" },
+        "12,9" : { "defaultState": "blue" },
+
+        "12,17" : { "defaultState": "blue" },
+        "12,18" : { "defaultState": "blue" },
+        "11,19" : { "defaultState": "blue" },
+        "11,20" : { "defaultState": "blue" },
+        "10,21" : { "defaultState": "blue" },
+        "9,22" : { "defaultState": "blue" },
+
+        "1,7" : { "defaultState": "red" },
+        "1,19" : { "defaultState": "red" },
+
+        "47,4" : { "defaultState": "red" },
+        "46,5" : { "defaultState": "red" },
+        "45,6" : { "defaultState": "red" },
+        "45,7" : { "defaultState": "red" },
+        "44,8" : { "defaultState": "red" },
+        "44,9" : { "defaultState": "red" },
+
+        "44,17" : { "defaultState": "red" },
+        "44,18" : { "defaultState": "red" },
+        "45,19" : { "defaultState": "red" },
+        "45,20" : { "defaultState": "red" },
+        "46,21" : { "defaultState": "red" },
+        "47,22" : { "defaultState": "red" },
+
+        "55,7" : { "defaultState": "blue" },
+        "55,19" : { "defaultState": "blue" }
+    },
+
+    "portals": {
+        "1,6": { "destination": { "x": 53, "y": 13 }, "cooldown": 10000 },
+        "1,20": { "destination": { "x": 53, "y": 13 }, "cooldown": 10000 },
+        "55,6": { "destination": { "x": 3, "y": 13 }, "cooldown": 10000 },
+        "55,20": { "destination": { "x": 3, "y": 13 }, "cooldown": 10000 }
+    }
+}
