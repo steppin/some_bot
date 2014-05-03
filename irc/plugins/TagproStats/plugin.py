@@ -39,7 +39,7 @@ from operator import itemgetter
 
 
 koala = 'http://tagpro-{0}.koalabeast.com'
-koalaservers = ['origin', 'pi', 'centra', 'sphere', 'chord', 'diameter', 'maptest', 'sector']
+koalaservers = ['origin', 'pi', 'centra', 'sphere', 'chord', 'diameter', 'maptest', 'sector', 'radius']
 jj = 'http://{0}.jukejuice.com'
 jjservers = ['tangent'] # ['secant']
 servers = [(server, koala.format(server)) for server in koalaservers] + [(server, jj.format(server)) for server in jjservers]
