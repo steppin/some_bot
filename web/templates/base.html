@@ -29,8 +29,11 @@
             </ul>
 
             <ul class="nav navbar-nav navbar-right">
-                <li><a href="/upload">Upload a map</a></li>
+                {% if g.user %}
+                <li><a href="#">{{ g.user.email }}</a></li>
+                {% else %}
                 <li><a href="/login">Login</a></li>
+                {% endif %}
                 <li><form class="navbar-form navbar-right" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
                     <input type="text" class="form-control" placeholder="Search" id="search">
                      </form>
@@ -47,10 +50,6 @@
                         <ul class="nav navbar-nav navbar-left">
                             <li><a href="/s/inrotation">Current Rotation</a></li>
                             <li><a href="/s/retired">Retired Maps</a></li>
-                        </ul>
-                        <ul class="nav navbar-nav navbar-right">
-                            <li><a href="/s/MOTW">Map of the Week</a></li>
-                            <li><a href="/s/MOTM">Map of the Month</a></li>
                         </ul>
 
 

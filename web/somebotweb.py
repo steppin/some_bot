@@ -1,9 +1,12 @@
 # -*- coding: utf8 -*-
-from flask import Flask, request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify
+from flask import Flask, request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
 from werkzeug import secure_filename
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
+
+from flask.ext.openid import OpenID
+from openid.extensions import pape
 
 import sqlite3
 import os
@@ -56,8 +59,26 @@ The current URLs that are processed
 # TODO: Do a check so the production is always run in not-debug mode with 
 # the proper database
 app.config.from_pyfile('config.cfg')
+app.config.from_pyfile('secret.py')
 
 db = SQLAlchemy(app)
+
+oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
+
+
+class User(db.Model):
+    __tablename__ = 'users'  # 'user' is special in postgres
+    id = db.Column(db.Integer, primary_key=True)
+    # TODO: Reconsider using Text and instead use String?  Probably some performance differences and ability to index blah blah blah
+    name = db.Column(db.Text)
+    email = db.Column(db.Text)
+    openid = db.Column(db.Text)
+
+    def __init__(self, name, email, openid):
+        self.name = name
+        self.email = email
+        self.openid = openid
+
 
 class Map(db.Model):
     '''
@@ -90,6 +111,7 @@ class Map(db.Model):
         return "<Map [%s] %s - %s>" %(str(self.id), self.mapname, self.author)
 
     def get_json(self):
+        # TODO: this just returns a python dict, not json :/
         '''
         Input: map from database - given by Maps class from sqlalchemy
         Output: Map formatted in JSON
@@ -110,10 +132,53 @@ class Map(db.Model):
             'times_tested':self.times_tested,
             "mapurl":u"/a/{author}/{mapname}".format(author=self.author, mapname=self.mapname) if self.author else "/show/"+strid,
             "authorurl":url_for('return_maps_by_author', author=self.author),
+            # TODO: why mapname in here?
             "pngdownload":u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             "jsondownload":u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             }
         return map_data
+
+@app.before_request
+def lookup_current_user():
+    g.user = None
+    if 'openid' in session:
+        openid = session['openid']
+        g.user = User.query.filter_by(openid=openid).first()
+
+
+@app.route('/login', methods=['GET', 'POST'])
+@oid.loginhandler
+def login():
+    if g.user is not None:
+        return redirect(oid.get_next_url())
+    if request.method == 'POST':
+        openid = request.form.get('openid')
+        if openid:
+            pape_req = pape.Request([])
+            return oid.try_login(openid, ask_for=['email', 'nickname'], extensions=[pape_req])
+    return render_template('login.html', next=oid.get_next_url(),
+                           error=oid.fetch_error())
+
+
+@app.route('/logout')
+def logout():
+    session.pop('openid', None)
+    flash(u'You were signed out')
+    return redirect(oid.get_next_url())
+
+
+@oid.after_login
+def create_or_login(resp):
+    session['openid'] = resp.identity_url
+    user = User.query.filter_by(openid=resp.identity_url).first()
+    if user is None:
+        user = User(resp.fullname or resp.nickname, resp.email, session['openid'])
+        db.session.add(user)
+        db.session.commit()
+    flash(u'Successfully signed in')
+    g.user = user
+    return redirect(oid.get_next_url())
+
 
 def add_map_to_db(mapname, author, description, commit=True):
     '''
@@ -129,6 +194,7 @@ def add_map_to_db(mapname, author, description, commit=True):
     db.session.commit()
     print "New map -> [%s] %s by %s" %(m.id, mapname, author)
     return m
+
 
 def add_map(layout, logic):
     '''
@@ -310,13 +376,6 @@ def upload_map():
     else:
         return render_template("upload.html", map={})
 
-@app.route('/login', methods=['GET', 'POST'])
-def login():
-    '''
-    This doesn't do anything yet
-    It's here for posterity
-    '''
-    return render_template('login.html')
 
 def paginate(page, page_size, total_pages):
     # Create a range of pages given by
@@ -346,9 +405,8 @@ def index():
     except:
         page = 1
     maps, pages = recent_maps(page=(page-1))
-    print pages, len(pages)
 
-    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=(len(pages) > 0), pages=pages, current_page=page)
+    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=(pages), pages=pages, current_page=page)
 
 @app.route('/show/<int:mapid>')
 def show_map(mapid):
@@ -391,11 +449,12 @@ def get_map_by_mapname(mapname):
 
 @app.route("/a/<author>")
 def return_maps_by_author(author):
-    maps = search_db(author=author)
+    # TOOD: doubt pagination is working here
+    maps, pages = search_db(author=author)
     if not maps:
         maps = recent_maps()
     maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data)
+    return render_template('showmaps.html', maps=maps_data, paginate=pages, pages=pages)
 
 @app.route("/a/<author>/<mapname>")
 def return_map_by_author(author, mapname):
@@ -418,15 +477,8 @@ def get_maps_by_status(status):
     except:
         page = 1
     maps, pages = search_db(status=status, page=(page-1))
-    if len(maps) > 0:
-        if len(maps) > 1:
-            maps_data = get_data_from_maps(maps)
-            return render_template('showmaps.html', maps=maps_data, paginate=(len(pages)>0), pages=pages, current_page=page)
-        else:
-            map_data = maps[0].get_json()
-            return render_template("showmap.html", map=map_data)
-    else:
-        abort(404)
+    maps_data = get_data_from_maps(maps)
+    return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
 
 @app.route("/download")
 def download():
@@ -521,11 +573,17 @@ def search():
     maps_data = get_data_from_maps(maps)
 
     if standalone:
-        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=(len(pages)>0), pages=pages, current_page=page)
+        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=(pages), pages=pages, current_page=page)
         return jsonify(success=True, html=data)
     else:
-        return render_template('showmaps.html', maps=maps_data, paginate=True, pages=pages, current_page=page)
+        return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
 
 
 if __name__ == '__main__':
+    import sys
+    if sys.argv[-1] == "DROPDB":
+        db.drop_all()
+        db.session.commit()
+    db.create_all()
+    db.session.commit()
     app.run(debug=app.debug)

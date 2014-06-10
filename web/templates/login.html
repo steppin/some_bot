@@ -1,19 +1,14 @@
-{% extends "showmap.html" %}
-{% block title %}
-SomeBot Brains!
-{% endblock %}
+{% extends 'base.html' %}
 
-
+{% block title %}Sign in{% endblock %}
 {% block content %}
-
-    <div class="col-lg-10 col-lg-offset-1">
-        <div class="thumbnail">
-                <div class="buttongroup">
-                    <a class="btn btn-primary" href="/login">Login</a>
-                </div>
-                
-        </div>
-    </div>
-
-
+  <h2>Sign in</h2>
+  <form action="" method=post>
+    {% if error %}<p class=error><strong>Error:</strong> {{ error }}</p>{% endif %}
+    <p>
+      OpenID:
+      <input type=text name=openid size=30>
+      <input type=submit value="Sign in">
+      <input type=hidden name=next value="{{ next }}">
+  </form>
 {% endblock %}
