@@ -5,7 +5,7 @@ from werkzeug import secure_filename
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 
-from flask.ext.openid import OpenID
+from flask.ext.openid import OpenID, COMMON_PROVIDERS
 from openid.extensions import pape
 
 import sqlite3
@@ -154,10 +154,15 @@ def login():
     if request.method == 'POST':
         openid = request.form.get('openid')
         if openid:
+            openid_uri = COMMON_PROVIDERS.get(openid, COMMON_PROVIDERS['google'])
             pape_req = pape.Request([])
-            return oid.try_login(openid, ask_for=['email', 'nickname'], extensions=[pape_req])
-    return render_template('login.html', next=oid.get_next_url(),
-                           error=oid.fetch_error())
+            return oid.try_login(openid_uri, ask_for=['email', 'nickname'], extensions=[pape_req])
+    return render_template(
+            'login.html',
+            next=oid.get_next_url(),
+            error=oid.fetch_error(),
+            openid_providers=COMMON_PROVIDERS,
+    )
 
 
 @app.route('/logout')
@@ -239,6 +244,7 @@ def add_map(layout, logic):
         # TODO check if map actually was inserted correctly
         return mapid
     else:
+        # TODO: raise an error instead
         return -1
 
 def increment_test(mapid):
@@ -578,6 +584,9 @@ def search():
     else:
         return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
 
+
+db.create_all()
+db.session.commit()
 
 if __name__ == '__main__':
     import sys
