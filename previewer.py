@@ -42,7 +42,7 @@ rgbs = {
 }
 # Er good class use?
 class Map():
-	# Sprite directory
+# Sprite directory
     sprite_list = listdir("sprites/")
     if 'Thumbs.db' in sprite_list:
         sprite_list.remove('Thumbs.db')
@@ -88,11 +88,11 @@ class Map():
 			if pixels[x,y-1] in corr_adj["U"]:
 				if ('315' and '45') not in adj:
 					adj += "U"
-		if x != WIDTH-1:
+		if x != self.max_x-1:
 			if pixels[x+1,y] in corr_adj["R"]:
 				if '135' not in adj:
 					adj += "R"
-		if y != HEIGHT-1: 
+		if y != self.max_y-1: 
 			if pixels[x,y+1] in corr_adj["D"]:
 				if '135' not in adj:
 					adj += "D"
@@ -101,9 +101,10 @@ class Map():
 				if '225' and '315' not in adj:
 					adj += "L"
 		return adj
-	def draw(data, pixels):
-		for w in range(WIDTH):
-			for h in range(HEIGHT):
+	def draw(pixels, data):
+		img = Image.new("RGB", (self.max_x*40,self.max_y*40), "white")
+		for w in range(self.max_x):
+			for h in range(self.max_y):
 				map[(w,h)] = rgbs[pixels[w,h]]
 
 		for item in map:
