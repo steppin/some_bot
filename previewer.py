@@ -103,6 +103,7 @@ class Map():
 		return adj
 	def draw(pixels, data):
 		img = Image.new("RGB", (self.max_x*40,self.max_y*40), "white")
+		# xrange????
 		for w in range(self.max_x):
 			for h in range(self.max_y):
 				map[(w,h)] = rgbs[pixels[w,h]]
@@ -129,6 +130,7 @@ class Map():
 			else:
 				fails += 1
             if 'marsballs' in data:
+            	# xrange????
 	            for mars in range(len(data['marsballs'])):
 		        img.paste(sprites['marsball.png'],(data['marsballs'][mars]['x']*TILE_SIZE, data['marsballs'][mars]['y']*TILE_SIZE))
         # Good return?
