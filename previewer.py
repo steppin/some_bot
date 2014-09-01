@@ -86,7 +86,7 @@ class plot():
 		self.png = png
 		self.max_x, self.max_y = self.png.size
 		self.fails = 0
-		self.cords = map_cords()
+		self.cords = self.map_cords()
 		if self.max_x * self.max_y > SIZE_LIMIT:
 			error_msg = "Image '{}' is too large. Limit is {} px, but it is {}x{}.".format(
 				pngpath, SIZE_LIMIT, self.max_x, self.max_y)
@@ -136,7 +136,7 @@ class plot():
 			if paste+'.png' in sprites:
 				img.paste(sprites[paste+'.png'],(item[0]*TILE_SIZE,item[1]*TILE_SIZE))
 			else:
-				fails += 1
+				self.fails += 1
 		# Add all marsballs specified in json
 		if 'marsballs' in self.json:
 			for mars in range(len(self.json['marsballs'])):
