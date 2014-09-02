@@ -17,35 +17,6 @@ for pic in sprite_list:
 def usage():
 	print >> sys.stderr, 'Usage: {} PNG JSON [SPLATS] > PREVIEW'.format(
 		sys.argv[0])
-def adj_walls(x, y, paste):
-	corr_adj = {
-		"U": [(128, 112, 64), (128, 64, 112), (120, 120, 120)],
-		"R": [(128, 112, 64), (64, 128, 80), (120, 120, 120)],
-		"D": [(64, 128, 80), (64, 80, 128), (120, 120, 120)],
-		"L": [(64, 80, 128), (128, 64, 112), (120, 120, 120)]
-	}
-	adj = paste
-	# If within boundaries
-		# If wall dir corresponds
-			# Exclude wall type duplicates - Experimental 50% Success at catching odd 45s
-				# Add dir string
-	if y != 0:
-		if pixels[x,y-1] in corr_adj["U"]:
-			if ('315' and '45') not in adj:
-				adj += "U"
-	if x != self.max_x-1:
-		if pixels[x+1,y] in corr_adj["R"]:
-			if '135' not in adj:
-				adj += "R"
-	if y != self.max_y-1:
-		if pixels[x,y+1] in corr_adj["D"]:
-			if '135' not in adj:
-				adj += "D"
-	if x != 0:
-		if pixels[x-1,y] in corr_adj["L"]:
-			if '225' and '315' not in adj:
-				adj += "L"
-	return adj
 rgbs = {
 	(0, 0, 0): "black",
 	(120, 120, 120): "wall",
@@ -86,12 +57,12 @@ class plot():
 		self.png = png
 		self.max_x, self.max_y = self.png.size
 		self.fails = 0
-		self.cords = self.map_cords()
 		if self.max_x * self.max_y > SIZE_LIMIT:
 			error_msg = "Image '{}' is too large. Limit is {} px, but it is {}x{}.".format(
 				pngpath, SIZE_LIMIT, self.max_x, self.max_y)
 			raise ValueError(error_msg)
 		self.pixels = png.load()
+		self.cords = self.map_cords()
 		if 'http' in jsonpath:
 			json_file = urllib.urlopen(jsonpath)
 			self.json = load(json_file)
@@ -109,12 +80,42 @@ class plot():
 		Failed Displays: {}
 		""".format(self.json["info"]["name"], self.json["info"]["author"],
 		self.max_y, self.max_x, self.max_x*self.max_y, self.max_y*40, self.max_x*40, self.fails)
-	def map_cords():
+	def map_cords(self):
 		cords = {}
 		for w in range(self.max_x):
 			for h in range(self.max_y):
 				cords[(w,h)] = rgbs[self.pixels[w,h]]
 		return cords
+	def adj_walls(self, x, y, paste):
+		corr_adj = {
+			"U": [(128, 112, 64), (128, 64, 112), (120, 120, 120)],
+			"R": [(128, 112, 64), (64, 128, 80), (120, 120, 120)],
+			"D": [(64, 128, 80), (64, 80, 128), (120, 120, 120)],
+			"L": [(64, 80, 128), (128, 64, 112), (120, 120, 120)]
+		}
+		adj = paste
+		# If within boundaries
+			# If wall dir corresponds
+				# Exclude wall type duplicates - Experimental 50% Success at catching odd 45s
+					# Add dir string
+		if y != 0:
+			if self.pixels[x,y-1] in corr_adj["U"]:
+				if ('315' and '45') not in adj:
+					adj += "U"
+		if x != self.max_x-1:
+			if self.pixels[x+1,y] in corr_adj["R"]:
+				if '135' not in adj:
+					adj += "R"
+		if y != self.max_y-1:
+			if self.pixels[x,y+1] in corr_adj["D"]:
+				if '135' not in adj:
+					adj += "D"
+		if x != 0:
+			if self.pixels[x-1,y] in corr_adj["L"]:
+				if '225' and '315' not in adj:
+					adj += "L"
+		return adj
+		
 	def draw(self):
 		img = Image.new("RGB", (self.max_x*40,self.max_y*40), "white")
 		for item in self.cords:
@@ -132,7 +133,7 @@ class plot():
 				except KeyError:
 					pass
 			if paste in WALLS:
-				paste = adj_walls(item[0], item[1], paste)
+				paste = self.adj_walls(item[0], item[1], paste)
 			if paste+'.png' in sprites:
 				img.paste(sprites[paste+'.png'],(item[0]*TILE_SIZE,item[1]*TILE_SIZE))
 			else:
