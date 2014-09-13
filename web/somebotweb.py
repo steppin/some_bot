@@ -304,15 +304,16 @@ def recent_maps(page=0, page_size=18):
     return maps, pages
 
 
-def get_test_link(mapid):
+def get_test_link(mapid, eu=False):
     '''
     INPUT: map id (primary key of db)
+    INPUT: eu (whether to test on european server)
     OUTPUT: test url from test server
 
     Given a map name, grabs logic and layout data from the app's config folders,
     sends post request to test server and returns test url server responds with
     '''
-    test_server = 'http://tagpro-maptest.koalabeast.com/testmap'
+    test_server = 'http://tagpro-maptest.koalabeast.com/testmap' if not eu else 'http://maptest.newcompte.fr/testmap'
     layout = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.png')
     logic = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.json')
     file_data = {'logic':open(logic).read(), 'layout':open(layout).read()}
@@ -457,12 +458,13 @@ def get_json_by_id(mapid):
     return m.get_json()
 
 
-# TODO: add euro test option
-@app.route("/maptest/<int:mapid>")
-def test_map(mapid):
+@app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
+@app.route("/maptest/<int:mapid>/<zone>")
+def test_map(mapid, zone):
     if mapid:
         showurl = url_for('save_map', mapid=mapid)
-        testurl = get_test_link(mapid)
+        eu = zone == "eu"
+        testurl = get_test_link(mapid, eu)
         increment_test(mapid)
         if testurl:
             return jsonify(success=True, testurl=testurl, showurl=showurl)
