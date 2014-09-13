@@ -30,7 +30,7 @@
 
             <ul class="nav navbar-nav navbar-right">
                 {% if g.user %}
-                <li><a href="#">{{ g.user.email }}</a></li>
+                <li><a href="#">{{ g.email }}</a></li>
                 {% else %}
                 <li><a href="/login">Login</a></li>
                 {% endif %}

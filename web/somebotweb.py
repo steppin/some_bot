@@ -1,30 +1,22 @@
 # -*- coding: utf8 -*-
+import os
+import time
+import requests
+import simplejson as json
+
+from PIL import Image, ImageOps
+
 from flask import Flask, request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
 from werkzeug import secure_filename
 
 from flask.ext.sqlalchemy import SQLAlchemy
 from sqlalchemy import or_
 
-from flask.ext.openid import OpenID, COMMON_PROVIDERS
-from openid.extensions import pape
-
-import sqlite3
-import os
-import simplejson as json
-import requests
-import time
-
-from PIL import Image, ImageOps
+from flask_oauthlib.client import OAuth
 
 import previewer
 
 # TODO:
-# * check filetypes, size limits, basically a tagpromaplint
-
-app = Flask(__name__)
-
-BASE_DIR = app.root_path
-
 '''
 Things that need to be done:
     [ ] Pagination added to all map requests
@@ -34,6 +26,7 @@ Things that need to be done:
     [ ] Map versioning for multiple maps of same name
     [ ] Enhanced map upload page - if things are missing, let users add them
         If there's no description, let users add it on the upload page
+    [ ] check filetypes, size limits, basically a tagpromaplint
 
 The current URLs that are processed
 
@@ -48,22 +41,42 @@ The current URLs that are processed
                          I'm not sure if this takes the lowest or the highest mapid
 /download?mapname=MAPNAME&mapid=MAPID&filetype=FILETYPE ->
                         Download mapid.filetype and use mapname.filetype for download
-
+# TODO: ensure /m/<a>/<m> takes the most recent map
 '''
 
-# Read configuration from the file named config.cfg
-# This file contains LOCAL and DEBUG variables, 
-# specifying the database URI depending on LOCAL
-# This is necessary so the private database information isn't inadvertently
-# added to the github repository
-# TODO: Do a check so the production is always run in not-debug mode with 
-# the proper database
+app = Flask(__name__)
 app.config.from_pyfile('config.cfg')
-app.config.from_pyfile('secret.py')
+app.config.from_pyfile('secret.cfg')
+app.config.from_envvar('SOMEBOT_CFG', silent=True)
+
+
+if not app.debug:
+    # configure logging
+    import logging
+    stream_handler = logging.StreamHandler()
+    stream_handler.setLevel(logging.INFO)
+    app.logger.addHandler(stream_handler)
+
+app.logger.info('Using database: {}'.format(app.config.get('SQLALCHEMY_DATABASE_URI')))
+
+
+oauth = OAuth(app)
+google = oauth.remote_app(
+    'google',
+    consumer_key=app.config.get('GOOGLE_ID'),
+    consumer_secret=app.config.get('GOOGLE_SECRET'),
+    request_token_params={
+        'scope': 'https://www.googleapis.com/auth/userinfo.email'
+    },
+    base_url='https://www.googleapis.com/oauth2/v1/',
+    request_token_url=None,
+    access_token_method='POST',
+    access_token_url='https://accounts.google.com/o/oauth2/token',
+    authorize_url='https://accounts.google.com/o/oauth2/auth',
+)
+
 
 db = SQLAlchemy(app)
-
-oid = OpenID(app, safe_roots=[], extension_responses=[pape.Response])
 
 
 class User(db.Model):
@@ -72,15 +85,16 @@ class User(db.Model):
     # TODO: Reconsider using Text and instead use String?  Probably some performance differences and ability to index blah blah blah
     name = db.Column(db.Text)
     email = db.Column(db.Text)
-    openid = db.Column(db.Text)
 
-    def __init__(self, name, email, openid):
+    def __init__(self, name, email):
         self.name = name
         self.email = email
-        self.openid = openid
 
 
 class Map(db.Model):
+    # TODO: separate out the models?
+    # TODO: package instead of module
+    # TODO: nicer docstrings
     '''
     The map schema
     To make a map, we need a mapname, and author, and a description
@@ -94,6 +108,7 @@ class Map(db.Model):
     author = db.Column(db.Text)
     description = db.Column(db.Text)
     upload_time = db.Column(db.Float)
+    # TODO: sql alchemdy doesn't have some date type?
     last_tested = db.Column(db.Float)
     times_tested = db.Column(db.Integer)
     status = db.Column(db.Text)
@@ -113,76 +128,38 @@ class Map(db.Model):
     def get_json(self):
         # TODO: this just returns a python dict, not json :/
         '''
-        Input: map from database - given by Maps class from sqlalchemy
+        Input: map from database - given by Map class from sqlalchemy
         Output: Map formatted in JSON
         '''
         strid = str(self.id)
 
         map_data = {
-            'mapid':self.id,
-            'mapname':self.mapname,
-            'author':self.author,
-            'description':self.description,
-            'status':self.status,
-            'jsonurl':"/static/maps/"+strid+'.json',
-            'uploaddate':time.strftime('%Y-%m-%d', time.localtime(self.upload_time)),
-            'pngurl':"/static/maps/"+strid+'.png',
-            'previewurl':"/static/previews/"+strid+'.png',
-            'thumburl':"/static/thumbs/"+strid+'.png',
-            'times_tested':self.times_tested,
-            "mapurl":u"/a/{author}/{mapname}".format(author=self.author, mapname=self.mapname) if self.author else "/show/"+strid,
-            "authorurl":url_for('return_maps_by_author', author=self.author),
-            # TODO: why mapname in here?
-            "pngdownload":u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
-            "jsondownload":u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
+            'mapid': self.id,
+            'mapname': self.mapname,
+            'author': self.author,
+            'description': self.description,
+            'status': self.status,
+            'jsonurl': "/static/maps/"+strid+'.json',
+            'uploaddate': time.strftime('%Y-%m-%d', time.localtime(self.upload_time)),
+            'pngurl': "/static/maps/"+strid+'.png',
+            'previewurl': "/static/previews/"+strid+'.png',
+            'thumburl': "/static/thumbs/"+strid+'.png',
+            'times_tested': self.times_tested,
+            "mapurl": u"/a/{author}/{mapname}".format(author=self.author, mapname=self.mapname) if self.author else "/show/"+strid,
+            "authorurl": url_for('return_maps_by_author', author=self.author),
+            # TODO:  why mapname in here?
+            "pngdownload": u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
+            "jsondownload": u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             }
         return map_data
+
 
 @app.before_request
 def lookup_current_user():
     g.user = None
-    if 'openid' in session:
-        openid = session['openid']
-        g.user = User.query.filter_by(openid=openid).first()
-
-
-@app.route('/login', methods=['GET', 'POST'])
-@oid.loginhandler
-def login():
-    if g.user is not None:
-        return redirect(oid.get_next_url())
-    if request.method == 'POST':
-        openid = request.form.get('openid')
-        if openid:
-            openid_uri = COMMON_PROVIDERS.get(openid, COMMON_PROVIDERS['google'])
-            pape_req = pape.Request([])
-            return oid.try_login(openid_uri, ask_for=['email', 'nickname'], extensions=[pape_req])
-    return render_template(
-            'login.html',
-            next=oid.get_next_url(),
-            error=oid.fetch_error(),
-            openid_providers=COMMON_PROVIDERS,
-    )
-
-
-@app.route('/logout')
-def logout():
-    session.pop('openid', None)
-    flash(u'You were signed out')
-    return redirect(oid.get_next_url())
-
-
-@oid.after_login
-def create_or_login(resp):
-    session['openid'] = resp.identity_url
-    user = User.query.filter_by(openid=resp.identity_url).first()
-    if user is None:
-        user = User(resp.fullname or resp.nickname, resp.email, session['openid'])
-        db.session.add(user)
-        db.session.commit()
-    flash(u'Successfully signed in')
-    g.user = user
-    return redirect(oid.get_next_url())
+    if 'google_oauth' in session:
+        g.user = session['google_oauth']
+        g.email = session['email']
 
 
 def add_map_to_db(mapname, author, description, commit=True):
@@ -247,6 +224,7 @@ def add_map(layout, logic):
         # TODO: raise an error instead
         return -1
 
+
 def increment_test(mapid):
     '''
     INPUT: mapid
@@ -264,6 +242,7 @@ def increment_test(mapid):
     m.times_tested += 1
     db.session.commit()
 
+
 def generate_preview(mapid):
     '''
     INPUT: mapid
@@ -280,6 +259,7 @@ def generate_preview(mapid):
     preview = map_.preview()
     with open(os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png'), 'w') as f:
         f.write(preview.getvalue())
+
 
 def generate_thumb(mapid):
     '''
@@ -309,6 +289,7 @@ def generate_thumb(mapid):
     centered_thumb.paste(preview_img, offset)
     centered_thumb.save(os.path.join(app.config['THUMB_DIR'], str(mapid) + '.png'))
 
+
 def recent_maps(page=0, page_size=18):
     '''
     Get recent maps from the database
@@ -322,8 +303,9 @@ def recent_maps(page=0, page_size=18):
         pages = paginate(page, 9, total/page_size+2)
     return maps, pages
 
+
 def get_test_link(mapid):
-    ''' 
+    '''
     INPUT: map id (primary key of db)
     OUTPUT: test url from test server
 
@@ -338,9 +320,11 @@ def get_test_link(mapid):
     r = requests.post(test_server, files=file_data)
     return r.url
 
+
 @app.route("/save/<int:mapid>", methods=['GET'])
 def save_map(mapid):
     return render_template("showmap.html", map=get_json_by_id(mapid))
+
 
 @app.route("/upload", methods=['GET', 'POST'])
 def upload_map():
@@ -398,6 +382,8 @@ def paginate(page, page_size, total_pages):
     else:
         return range(page-page_size/2+1, min(page+page_size/2+2, total_pages))
     '''
+
+
 @app.route('/', methods=['GET'])
 def index():
     '''
@@ -414,12 +400,52 @@ def index():
 
     return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=(pages), pages=pages, current_page=page)
 
+
+@app.route('/login')
+def login():
+    return google.authorize(callback=url_for('authorized', _external=True))
+
+
+@app.route('/logout')
+def logout():
+    session.pop('google_oauth', None)
+    return redirect(url_for('index'))
+
+
+@app.route('/login/authorized')
+@google.authorized_handler
+def authorized(resp):
+    if resp is None:
+        # TODO: this seems stupid; render it on some page...
+        return 'Access denied: reason=%s error=%s' % (
+            request.args['error_reason'],
+            request.args['error_description']
+        )
+    # TODO: apparently resp can be an OAuthException (we should handle
+    # that)
+    session['google_oauth'] = resp
+    try:
+        email = google.get('userinfo').data['email']
+    except KeyError:
+        email = None
+    session['email'] = email
+    return redirect(url_for('index'))
+
+
+@google.tokengetter
+def get_google_oauth_token():
+    if 'google_oauth' in session:
+        resp = session['google_oauth']
+        return (resp['access_token'], '')
+
+
 @app.route('/show/<int:mapid>')
 def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
     return render_template('showmap.html', map=get_json_by_id(mapid))
+
 
 def get_json_by_id(mapid):
     '''
@@ -430,6 +456,8 @@ def get_json_by_id(mapid):
     m = Map.query.get(mapid)
     return m.get_json()
 
+
+# TODO: add euro test option
 @app.route("/maptest/<int:mapid>")
 def test_map(mapid):
     if mapid:
@@ -443,6 +471,7 @@ def test_map(mapid):
     else:
         return abort(404)
 
+
 @app.route("/m/<mapname>")
 def get_map_by_mapname(mapname):
     m = search_db(mapname=mapname)
@@ -453,6 +482,7 @@ def get_map_by_mapname(mapname):
         maps_data = get_data_from_maps(maps)
         return redirect(url_for('index'))
 
+
 @app.route("/a/<author>")
 def return_maps_by_author(author):
     # TOOD: doubt pagination is working here
@@ -461,6 +491,7 @@ def return_maps_by_author(author):
         maps = recent_maps()
     maps_data = get_data_from_maps(maps)
     return render_template('showmaps.html', maps=maps_data, paginate=pages, pages=pages)
+
 
 @app.route("/a/<author>/<mapname>")
 def return_map_by_author(author, mapname):
@@ -472,6 +503,7 @@ def return_map_by_author(author, mapname):
         maps = recent_maps()
     maps_data = get_data_from_maps(maps)
     return render_template('showmaps.html', maps=maps_data)
+
 
 @app.route("/s/<status>")
 def get_maps_by_status(status):
@@ -485,6 +517,7 @@ def get_maps_by_status(status):
     maps, pages = search_db(status=status, page=(page-1))
     maps_data = get_data_from_maps(maps)
     return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
+
 
 @app.route("/download")
 def download():
@@ -510,6 +543,7 @@ def download():
             return abort(404)
     else:
         return abort(404)
+
 
 def search_db(query=None, mapname=None, author=None, status=None, page=0, page_size=30, order="upload_time desc"):
     '''
@@ -542,6 +576,7 @@ def search_db(query=None, mapname=None, author=None, status=None, page=0, page_s
         pages = paginate(page, 9, total/page_size+2)
     return maps, pages
 
+
 def get_data_from_maps(maps):
     '''
     INPUT: list of Map objects
@@ -549,6 +584,7 @@ def get_data_from_maps(maps):
     '''
     for m in maps:
         yield m.get_json()
+
 
 @app.route("/search")
 def search():
@@ -585,9 +621,6 @@ def search():
         return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
 
 
-db.create_all()
-db.session.commit()
-
 if __name__ == '__main__':
     import sys
     if sys.argv[-1] == "DROPDB":
@@ -595,4 +628,4 @@ if __name__ == '__main__':
         db.session.commit()
     db.create_all()
     db.session.commit()
-    app.run(debug=app.debug)
+    app.run()
