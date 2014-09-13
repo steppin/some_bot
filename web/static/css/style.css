@@ -1,6 +1,19 @@
+html {
+  position: relative;
+  min-height: 100%;
+}
 body {
-  /*background-color:#3D4548;#565248;*/
   background-color: #444;
+  /* Margin bottom by footer height */
+  margin-bottom: 50px;
+}
+.footer {
+  position: absolute;
+  bottom: 0;
+  width: 100%;
+  /* Set the fixed height of the footer here */
+  height: 50px;
+  text-align: center;
 }
 .banner {
   -webkit-border-radius: 7px;
