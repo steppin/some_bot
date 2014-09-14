@@ -1,0 +1,29 @@
+#!/bin/bash
+
+# Needs imagemagick for mogrify
+# Needs previewer.py to be in same folder
+
+numprocesses=8
+
+# Create necessary directories
+mkdir ./static/{maps,previews,thumbs}
+
+# Create symbolic for resources below
+ln -s ../resources/ ./resources
+
+
+# Create database for maps
+sqlite3 maps.db < schema.sql
+
+# Populates database with map json data, gives each map a mapid
+# copies json and png to static/maps folder with filename of mapid.json / mapid.png
+input_mapsfolder="~/tagpro/tagpro-maps/somebot-brain/"
+python filldb.py $input_mapsfolder
+
+# Generates previews from all the data in the static/maps folder
+# Uses numprocesses for pool size
+python autopreview.py $numprocesses
+
+# Creates thumbnails of size 300x300 with a black background
+mogrify -resize 300x300 -background black -gravity center -extent 300x300 -format png -quality 100 -path ./static/thumbs ./static/previews/*.png
+
