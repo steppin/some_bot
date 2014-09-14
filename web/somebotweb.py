@@ -145,7 +145,7 @@ class Map(db.Model):
             'previewurl': "/static/previews/"+strid+'.png',
             'thumburl': "/static/thumbs/"+strid+'.png',
             'times_tested': self.times_tested,
-            "mapurl": u"/a/{author}/{mapname}".format(author=self.author, mapname=self.mapname) if self.author else "/show/"+strid,
+            "mapurl": "/show/"+strid,
             "authorurl": url_for('return_maps_by_author', author=self.author),
             # TODO:  why mapname in here?
             "pngdownload": u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
