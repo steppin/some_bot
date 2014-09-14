@@ -201,28 +201,24 @@ def add_map(layout, logic):
     being generated - some map previews can take a really long time to generate
     '''
     logic_data = json.loads(logic.read())
-    mapname = logic_data.get('info', {}).get('name')
-    author = logic_data.get('info', {}).get('author', "No author")
-    description = logic_data.get('info', {}).get('description', "No description")
-    if mapname and author:
-        pam = add_map_to_db(mapname, author, description)
-        mapid = str(pam.id)
+    mapname = logic_data.get('info', {}).get('name', 'No name')
+    author = logic_data.get('info', {}).get('author', 'No author')
+    description = logic_data.get('info', {}).get('description', 'No description')
+    pam = add_map_to_db(mapname, author, description)
+    mapid = str(pam.id)
 
-        layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
-        layout.save(layoutpath)
-        pam.layoutpath = layoutpath
-        logicpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.json')
-        with open(logicpath, "wb") as f:
-            f.write( json.dumps(logic_data, logicpath))
+    layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
+    layout.save(layoutpath)
+    pam.layoutpath = layoutpath
+    logicpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.json')
+    with open(logicpath, "wb") as f:
+        f.write( json.dumps(logic_data, logicpath))
 
-        generate_preview(mapid)
-        generate_thumb(mapid)
+    generate_preview(mapid)
+    generate_thumb(mapid)
 
-        # TODO check if map actually was inserted correctly
-        return mapid
-    else:
-        # TODO: raise an error instead
-        return -1
+    # TODO check if map actually was inserted correctly
+    return mapid
 
 
 def increment_test(mapid):
