@@ -531,7 +531,7 @@ def download():
     file, rather than a extensionless file
     '''
     mapid = request.args.get("mapid", "")
-    mapname = request.args.get("mapname", "")
+    mapname = request.args.get("mapname", mapid)
     filetype = request.args.get("type", None)
     if mapid and filetype and mapname:
         if filetype == "png":
