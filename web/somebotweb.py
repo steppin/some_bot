@@ -463,9 +463,10 @@ def test_map(mapid, zone):
         testurl = get_test_link(mapid, eu)
         increment_test(mapid)
         if testurl:
-            return jsonify(success=True, testurl=testurl, showurl=showurl)
+            return redirect(testurl)
         else:
-            return jsonify(success=False, message="Couldn't generate a test url")
+            # TODO: do something smarter
+            return abort(404)
     else:
         return abort(404)
 

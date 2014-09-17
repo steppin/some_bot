@@ -124,22 +124,6 @@
             });
 
     </script>
-
-    <script>
-
-    $('body').delegate('.testmap', "click", function () {
-        mapid = $(this).attr('mapid');
-        zone = $(this).attr('zone');
-        $.ajax({
-            url: "/maptest/"+mapid+"/"+zone,
-        }).done(function(data) {
-            if(data.success) {
-                window.location.replace(data.testurl);
-            }
-        });
-     });
-    </script>
-
     <script>
             // Search function
 

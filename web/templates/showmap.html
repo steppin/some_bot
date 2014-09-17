@@ -12,8 +12,8 @@ SomeBot Brains!
                 <h3>by: <a href="{{ map.authorurl }}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>
                 <div class="buttongroup">
-                    <a href="#" class="btn btn-primary testmap" role="button" mapid="{{ map.mapid }}" zone="us">Test (US)</a>
-                    <a href="#" class="btn btn-primary testmap" role="button" mapid="{{ map.mapid }}" zone="eu">Test (EU)</a>
+                    <a href="{{url_for('test_map', mapid=map.mapid, zone='us')}}" class="btn btn-primary" target="_blank" role="button">Test (US)</a>
+                    <a href="{{url_for('test_map', mapid=map.mapid, zone='eu')}}" class="btn btn-primary" target="_blank" role="button">Test (EU)</a>
                     <a href="{{ map.previewurl }}" class="btn btn-primary">Fullsize Preview</a>
                     <a href="{{ map.pngdownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download png</a>
                     <a href="{{ map.jsondownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download json</a>

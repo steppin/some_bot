@@ -13,8 +13,8 @@
                         <h3>by: <a href="{{ map.authorurl }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <p>Uploaded: {{ map.uploaddate }}</p>
                         <div class="buttongroup">
-                            <a href="#" class="btn btn-primary testmap" role="button" mapid="{{ map.mapid }}" zone="us">Test (US)</a>
-                            <a href="#" class="btn btn-primary testmap" role="button" mapid="{{ map.mapid }}" zone="eu">Test (EU)</a>
+                            <a href="{{url_for('test_map', mapid=map.mapid, zone='us')}}" target="_blank" class="btn btn-primary" role="button" >Test (US)</a>
+                            <a href="{{url_for('test_map', mapid=map.mapid, zone='eu')}}" target="_blank" class="btn btn-primary testmap" role="button">Test (EU)</a>
                             <a href="{{ map.previewurl }}" class="btn btn-primary btn-danger">Fullsize Preview</a>
                         </div>
                     </div>
