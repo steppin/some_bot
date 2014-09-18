@@ -27,8 +27,13 @@
             <ul class="nav navbar-nav navbar-right">
                 {% if g.user %}
                 <li><a href="#">{{ g.email }}</a></li>
+                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span></a></li>
                 {% else %}
-                <li><a href="/login">Login</a></li>
+                <li>
+                    <a href="/login">
+                        <span class="glyphicon glyphicon-log-in"></span> Login
+                    </a>
+                </li>
                 {% endif %}
                 <li><form class="navbar-form navbar-right" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
                     <input type="text" class="form-control" placeholder="Search" id="search">
