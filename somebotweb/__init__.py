@@ -1,3 +1,5 @@
+import os
+
 from flask import Flask
 from flask.ext.sqlalchemy import SQLAlchemy
 from flask_oauthlib.client import OAuth
@@ -7,6 +9,11 @@ app.config.from_pyfile('config.py')
 app.config.from_pyfile('secret.py')
 app.config.from_envvar('SOMEBOT_CFG', silent=True)
 
+app.config.update(
+    UPLOAD_DIR=os.path.join(app.static_folder, 'maps'),
+    PREVIEW_DIR=os.path.join(app.static_folder, 'previews'),
+    THUMB_DIR=os.path.join(app.static_folder, 'thumbs'),
+)
 
 if not app.debug:
     # configure logging
