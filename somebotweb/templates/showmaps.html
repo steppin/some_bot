@@ -27,7 +27,7 @@
 
 
 {% macro paginator(page, pages) -%}
-<div class="text-center"> 
+<div class="text-center">
     <ul class="pagination">
       <li><a href="/?page={{ current_page-1 }}">&laquo;</a></li>
         {% for page in pages %}
@@ -43,8 +43,8 @@
 {%- endmacro %}
 
 {% if paginate %}
-    {{ paginator(page, pages) }}    
-{% endif -%} 
+    {{ paginator(page, pages) }}
+{% endif -%}
 
 {% endblock %}
 
