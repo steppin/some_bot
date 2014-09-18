@@ -4,6 +4,9 @@ Some Bot Web
 Setup
 -----
 
-mkdir static/{maps,previews,thumbs}
+    mkdir static/{maps,previews,thumbs}
 
-sqlite3 maps.db < schema.sql
+Run
+----
+
+    python runserver.py
