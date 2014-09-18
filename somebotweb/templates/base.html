@@ -19,9 +19,18 @@
 	<body>
 
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
-        <div class="container">
+        <div class="container-fluid">
             <ul class="nav navbar-nav navbar-left">
                 <li><a href="/" class="navbar-brand">SomeBot's Brain!</a></li>
+                {% set navigation_bar = [
+                    ('/', 'index', 'Recent Maps'),
+                    ('/s/inrotation', 'inrotation', 'Current Rotation'),
+                    ('/s/retired', 'retired', 'Retired Maps'),
+                ] -%}
+                {% set active_page = active_page|default('index') -%}
+                {% for href, id, caption in navigation_bar %}
+                    <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
+                {% endfor %}
             </ul>
 
             <ul class="nav navbar-nav navbar-right">
@@ -44,50 +53,10 @@
     </nav>
 
     <div class="container-fluid" >
-        <!--TODO: move styling to css...-->
-        <div class="col-md-8 col-md-offset-2" style="padding-bottom:50px; padding-top:100px">
-            <div class="row">
-                <nav class="navbar navbar-inverse" role="navigation">
-                    <div class="container">
-                        <ul class="nav navbar-nav navbar-left">
-                            {% set navigation_bar = [
-                                ('/', 'index', 'Recent'),
-                                ('/s/inrotation', 'inrotation', 'Current Rotation'),
-                                ('/s/retired', 'retired', 'Retired Maps'),
-                            ] -%}
-                            {% set active_page = active_page|default('index') -%}
-                            {% for href, id, caption in navigation_bar %}
-                                <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
-                            {% endfor %}
-                        </ul>
-
-
-                    </div>
-                </nav>
-            </div>
-
-            <div id="mapdiv">
                 {% block content %}
                 {% endblock %}
-            </div>
-        </div>
     </div>
 
-        <div class="col-md-2" style="padding-top:300px">
-            <div class="thumbnail">
-                <h3>Test your map</h3>
-                <div style="text-align:left">
-
-                    <form id="mapupload" action="/upload" method="post" multiple style='height:200px'>
-                        Drop a .json and a .png file here to test your map.
-                        Click to navigate for files.
-                    </form>
-                      <div class="checkbox">
-                        <label><input type="checkbox" id="autotest">Autotest uploaded maps</label>
-                    </div>
-                </div>
-            </div>
-        </div>
 
         <footer class="footer">
             <div class="footer-content">
@@ -100,38 +69,6 @@
         <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
         <!-- Include all compiled plugins (below), or include individual files as needed -->
         <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
-        <script src="{{ url_for('static', filename='js/dropzone.js') }}"></script>
-
-        <script>
-            Dropzone.options.mapupload = {
-              paramName: "file", // The name that will be used to transfer the file
-              maxFilesize: 0.5, // MB
-              uploadMultiple: true,
-              maxFiles: 2,
-              autoProcessQueue: false,
-              acceptedFiles: "image/png,.json",
-            };
-
-            var mapupload = new Dropzone("#mapupload");
-
-            mapupload.on("successmultiple", function(files, data) {
-                if(data.success) {
-                    console.log(data);
-                    if($('#autotest')[0].checked) {
-                        window.location.replace(data.testurl);
-                    }
-                    else {
-                        window.location.replace(data.saveurl);
-                    }
-                }
-            });
-
-            // When two files are in the queue, start uploading
-            mapupload.on("maxfilesreached", function(file) {
-                mapupload.processQueue();
-            });
-
-    </script>
     <script>
             // Search function
 

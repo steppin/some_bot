@@ -4,7 +4,9 @@ SomeBot Brains!
 {% endblock %}
 
 {% block content %}
-    <div class="col-lg-10 col-lg-offset-1 map" id="{{ mapid }}">
+<div class="col-md-8 col-md-offset-2" style="padding-bottom:50px; padding-top:100px">
+<div id="mapdiv">
+    <div class="map" id="{{ mapid }}">
         <div class="thumbnail">
             <h2 class='searchable'>{{ map.mapname }}</h2>
             <a href="{{ map.previewurl }}"><img src="{{ map.previewurl }}" style="max-width:100%; max-height:500px;"></a>
@@ -21,5 +23,7 @@ SomeBot Brains!
             </div>
         </div>
     </div>
+</div>
+</div>
 
 {% endblock %}

@@ -1,10 +1,10 @@
 {% if not standalone %}{% extends 'base.html' %}{% endif -%}
 
 {% block content %}
+    <div class="col-md-9 col-md-offset-1" style="padding-bottom:50px; padding-top:100px">
+    <div id="mapdiv">
+        <div class="row maprow">
         {% for map in maps %}
-        {% if loop.index0%3 == 0 %}
-            <div class="row maprow">
-        {% endif %}
             <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
                     <h2 ><a href="{{ map.mapurl }}" class="searchable" style="word-wrap:break-word; text-align:left">{{ map.mapname }}</a></h2>
@@ -20,32 +20,81 @@
                     </div>
                 </div>
              </div>
-         {% if loop.index0%3 == 2  or loop.last %}
-        </div>
-        {% endif %}
         {% endfor %}
+        </div>
 
 
 {% macro paginator(page, pages) -%}
-<div class="text-center">
-    <ul class="pagination">
-      <li><a href="/?page={{ current_page-1 }}">&laquo;</a></li>
-        {% for page in pages %}
-            {% if page == current_page %}
-                <li class="active"><span>{{ page }} <span class="sr-only">(current)</span></span></li>
-            {% else %}
-                <li><a href="/?page={{ page }}">{{ page }}</a></li>
-            {% endif %}
-        {% endfor %}
-      <li><a href="/?page={{ current_page+1 }}">&raquo;</a></li>
-    </ul>
+<div class="row">
+    <div class="text-center">
+        <ul class="pagination">
+          <li><a href="/?page={{ current_page-1 }}">&laquo;</a></li>
+            {% for page in pages %}
+                {% if page == current_page %}
+                    <li class="active"><span>{{ page }} <span class="sr-only">(current)</span></span></li>
+                {% else %}
+                    <li><a href="/?page={{ page }}">{{ page }}</a></li>
+                {% endif %}
+            {% endfor %}
+          <li><a href="/?page={{ current_page+1 }}">&raquo;</a></li>
+        </ul>
     </div>
+</div>
 {%- endmacro %}
 
 {% if paginate %}
     {{ paginator(page, pages) }}
 {% endif -%}
+</div>
+</div>
+            <div class="col-md-2" style="padding-top: 200px">
+                <div class="thumbnail">
+                    <h3>Test your map</h3>
+                    <div style="text-align:left">
 
+                        <form id="mapupload" action="/upload" method="post" multiple style='height:200px'>
+                            Drop a .json and a .png file here to test your map.
+                            Click to navigate for files.
+                        </form>
+                          <div class="checkbox">
+                            <label><input type="checkbox" id="autotest">Autotest uploaded maps</label>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        <script src="{{ url_for('static', filename='js/dropzone.js') }}"></script>
+
+        <script>
+            Dropzone.options.mapupload = {
+              paramName: "file", // The name that will be used to transfer the file
+              maxFilesize: 0.5, // MB
+              uploadMultiple: true,
+              maxFiles: 2,
+              autoProcessQueue: false,
+              acceptedFiles: "image/png,.json",
+            };
+
+            var mapupload = new Dropzone("#mapupload");
+
+            mapupload.on("successmultiple", function(files, data) {
+                if(data.success) {
+                    console.log(data);
+                    if($('#autotest')[0].checked) {
+                        window.location.replace(data.testurl);
+                    }
+                    else {
+                        window.location.replace(data.saveurl);
+                    }
+                }
+            });
+
+            // When two files are in the queue, start uploading
+            mapupload.on("maxfilesreached", function(file) {
+                mapupload.processQueue();
+            });
+
+    </script>
 {% endblock %}
 
 

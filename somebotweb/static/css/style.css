@@ -15,14 +15,6 @@ body {
   height: 50px;
   text-align: center;
 }
-.banner {
-  -webkit-border-radius: 7px;
-  -moz-border-radius: 7px;
-  -ms-border-radius: 7px;
-  -o-border-radius: 7px;
-  border-radius: 7px;
-  background-color: #666;
-}
 .thumbnail {
   padding-left: 15px;
   padding-right: 15px;
