@@ -16,37 +16,9 @@ from flask_oauthlib.client import OAuth
 
 import previewer
 
-# TODO:
-'''
-Things that need to be done:
-    [ ] Pagination added to all map requests
-    [ ] Refactoring to make everything consistent
-        A map objects mapid is sometimes used as a string, sometimes an int
-    [ ] Login for map ownership
-    [ ] Map versioning for multiple maps of same name
-    [ ] Enhanced map upload page - if things are missing, let users add them
-        If there's no description, let users add it on the upload page
-    [ ] check filetypes, size limits, basically a tagpromaplint
-
-The current URLs that are processed
-
-/ -> GET: return showmaps.html rendered with recent_maps
-     POST: upload map to database, maybe generate testlink, maybe go to show_map page
-
-/upload -> definitely doesn't do upload thing
-/showmap?mapid=MAPID -> Render showmap.html with map given by mapid
-/search?query=QUERY -> Search database for query, returning results
-/a/<author> -> show maps given by author (case insensitive)
-/m/<author>/<mapname> -> show map by author with mapname, selecting the first map
-                         I'm not sure if this takes the lowest or the highest mapid
-/download?mapname=MAPNAME&mapid=MAPID&filetype=FILETYPE ->
-                        Download mapid.filetype and use mapname.filetype for download
-# TODO: ensure /m/<a>/<m> takes the most recent map
-'''
-
 app = Flask(__name__)
-app.config.from_pyfile('config.cfg')
-app.config.from_pyfile('secret.cfg')
+app.config.from_pyfile('config.py')
+app.config.from_pyfile('secret.py')
 app.config.from_envvar('SOMEBOT_CFG', silent=True)
 
 
@@ -618,13 +590,3 @@ def search():
         return jsonify(success=True, html=data)
     else:
         return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
-
-
-if __name__ == '__main__':
-    import sys
-    if sys.argv[-1] == "DROPDB":
-        db.drop_all()
-        db.session.commit()
-    db.create_all()
-    db.session.commit()
-    app.run()
