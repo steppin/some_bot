@@ -1,3 +1,7 @@
 *.pyc
 secret
 secret.cfg
+secret.py
+**/static/maps/
+**/static/thumbs/
+**/static/previews/
