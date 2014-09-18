@@ -373,7 +373,7 @@ def get_maps_by_status(status):
         page = 1
     maps, pages = search_db(status=status, page=(page-1))
     maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
+    return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page, active_page=status)
 
 
 @app.route("/download")

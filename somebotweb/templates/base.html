@@ -49,9 +49,15 @@
                 <nav class="navbar navbar-inverse" role="navigation">
                     <div class="container">
                         <ul class="nav navbar-nav navbar-left">
-                            <li><a href="/">Recent</a></li>
-                            <li><a href="/s/inrotation">Current Rotation</a></li>
-                            <li><a href="/s/retired">Retired Maps</a></li>
+                            {% set navigation_bar = [
+                                ('/', 'index', 'Recent'),
+                                ('/s/inrotation', 'inrotation', 'Current Rotation'),
+                                ('/s/retired', 'retired', 'Retired Maps'),
+                            ] -%}
+                            {% set active_page = active_page|default('index') -%}
+                            {% for href, id, caption in navigation_bar %}
+                                <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
+                            {% endfor %}
                         </ul>
 
 
