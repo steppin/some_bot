@@ -37,11 +37,11 @@ class Map(db.Model):
     times_tested = db.Column(db.Integer)
     status = db.Column(db.Text)
 
-    def __init__(self, mapname, author, description, status=None):
+    def __init__(self, mapname, author, description, status=None, upload_time=None):
         self.mapname = mapname
         self.author = author
         self.description = description
-        self.upload_time = time.time()
+        self.upload_time = upload_time or time.time()
         self.last_tested = 0
         self.times_tested = 0
         self.status = status
