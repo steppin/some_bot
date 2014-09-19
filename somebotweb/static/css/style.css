@@ -52,3 +52,8 @@ h3, h2 {
   border-bottom: 1px solid #dedede;
   text-align: center;
 }
+.mapname {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
