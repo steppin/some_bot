@@ -1,7 +1,10 @@
 {% if not standalone %}{% extends 'base.html' %}{% endif -%}
 
 {% block content %}
+{# ugh need to get rid of all this standalone branching. #}
+{% if not standalone %}
     <div class="col-md-9 col-md-offset-1" style="padding-bottom:50px; padding-top:100px">
+{% endif -%}
     <div id="mapdiv">
         <div class="row maprow">
         {% for map in maps %}
@@ -20,7 +23,9 @@
                 </div>
              </div>
         {% endfor %}
+{% if not standalone %}
         </div>
+{% endif -%}
 
 
 {% macro paginator(page, pages) -%}
@@ -46,6 +51,7 @@
 {% endif -%}
 </div>
 </div>
+{% if not standalone %}
             <div class="col-md-2" style="padding-top: 200px">
                 <div class="thumbnail">
                     <h3>Test your map</h3>
@@ -94,6 +100,5 @@
             });
 
     </script>
+{% endif -%}
 {% endblock %}
-
-
