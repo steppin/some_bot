@@ -20,39 +20,36 @@
 
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="container-fluid">
-            <div class="navbar-left">
-                <ul class="nav navbar-nav">
-                    <li><a href="/" class="navbar-brand">SomeBot's Brain!</a></li>
-                    {% set navigation_bar = [
-                        ('/', 'index', 'Recent Maps'),
-                        ('/s/inrotation', 'inrotation', 'Current Rotation'),
-                        ('/s/retired', 'retired', 'Retired Maps'),
-                    ] -%}
-                    {% set active_page = active_page|default('index') -%}
-                    {% for href, id, caption in navigation_bar %}
-                        <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
-                    {% endfor %}
-                </ul>
-            </div>
+            <ul class="nav navbar-nav navbar-left">
+                <li><a href="/" class="navbar-brand">SomeBot's Brain!</a></li>
+                {% set navigation_bar = [
+                    ('/', 'index', 'Recent Maps'),
+                    ('/s/inrotation', 'inrotation', 'Current Rotation'),
+                    ('/s/retired', 'retired', 'Retired Maps'),
+                ] -%}
+                {% set active_page = active_page|default('index') -%}
+                {% for href, id, caption in navigation_bar %}
+                    <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
+                {% endfor %}
+            </ul>
 
-            <div class="navbar-right">
-                <ul class="nav navbar-nav">
-                    {% if g.user %}
-                    <li><a href="#">{{ g.email }}</a></li>
-                    <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span></a></li>
-                    {% else %}
-                    <li>
-                        <a href="/login">
-                            <span class="glyphicon glyphicon-log-in"></span> Login
-                        </a>
-                    </li>
-                    {% endif %}
-                    <li><form class="navbar-form navbar-right" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
+            <ul class="nav navbar-nav navbar-right">
+                {% if g.user %}
+                <li><a href="#">{{ g.email }}</a></li>
+                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span></a></li>
+                {% else %}
+                <li>
+                    <a href="/login">
+                        <span class="glyphicon glyphicon-log-in"></span> Login
+                    </a>
+                </li>
+                {% endif %}
+                <li>
+                    <form class="navbar-form" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
                         <input type="text" class="form-control" placeholder="Search" id="search">
-                         </form>
-                    </li>
-                </ul>
-            </div>
+                    </form>
+                </li>
+            </ul>
         </div>
     </nav>
 
