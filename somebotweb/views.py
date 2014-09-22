@@ -253,7 +253,7 @@ def index():
         page = 1
     maps, pages = recent_maps(page=(page-1))
 
-    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=(pages), pages=pages, current_page=page)
+    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=(pages), pages=pages, current_page=page, active_page='index')
 
 
 @app.route('/login')
@@ -342,12 +342,18 @@ def get_map_by_mapname(mapname):
 
 @app.route("/a/<author>")
 def return_maps_by_author(author):
-    # TOOD: doubt pagination is working here
+    page = request.args.get("page", 1)
+    try:
+        page = int(page)
+        if page <= 0:
+            page = 1
+    except:
+        page = 1
     maps, pages = search_db(author=author)
     if not maps:
         maps = recent_maps()
     maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data, paginate=pages, pages=pages)
+    return render_template('showmaps.html', maps=maps_data, paginate=pages, pages=pages, current_page=page)
 
 
 @app.route("/a/<author>/<mapname>")
@@ -476,3 +482,9 @@ def search():
         return jsonify(success=True, html=data)
     else:
         return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
+
+def url_for_other_page(page):
+    args = request.view_args.copy()
+    args['page'] = page
+    return url_for(request.endpoint, **args)
+app.jinja_env.globals['url_for_other_page'] = url_for_other_page

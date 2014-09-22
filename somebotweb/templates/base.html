@@ -27,7 +27,7 @@
                     ('/s/inrotation', 'inrotation', 'Current Rotation'),
                     ('/s/retired', 'retired', 'Retired Maps'),
                 ] -%}
-                {% set active_page = active_page|default('index') -%}
+                {% set active_page = active_page -%}
                 {% for href, id, caption in navigation_bar %}
                     <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
                 {% endfor %}
