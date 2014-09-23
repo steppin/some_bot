@@ -124,7 +124,11 @@ class TagproTestMap(callbacks.Plugin):
         #print r.content
         testurl = r.url
         if testurl == url:
-            irc.reply("I tried to upload the map but the server ("+url+") didn't like it.  Ask my owner to give me better debug output :(")
+            if 'all testing games are full at the moment' in r.content:
+                irc.reply("Sorry, all testing games are full at the moment!");
+            else:
+                print layout, logic, url, r.content, r.status_code
+                irc.reply("I tried to upload the map but the server ("+url+") didn't like it.  Ask my owner to give me better debug output :(")
             return True
         else:
             #irc.reply('{} ({} by {})'.format(testurl, name, author))
@@ -153,7 +157,8 @@ class TagproTestMap(callbacks.Plugin):
                 return
             else:
                 irc.reply("Trying another server..")
-        self.test(irc, msg, args, mapname)
+        url = 'http://tagpro-maptest.koalabeast.com/testmap'
+        self.__test(irc, msg, args, mapname, url)
 
     testeu = wrap(testeu, ['text'])
 
