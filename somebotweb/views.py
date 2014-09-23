@@ -201,9 +201,9 @@ def upload_map():
         if not logic and not layout:
             files = request.files.getlist('file[]')
             for f in files:
-                if f.filename[-5:] == ".json":
+                if os.path.splitext(f.filename)[1] == '.json':
                     logic = f
-                elif f.filename[-4:] == ".png":
+                elif os.path.splitext(f.filename)[1] == '.png':
                     layout = f
 
         if layout and logic:
