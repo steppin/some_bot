@@ -1,3 +1,13 @@
+{% macro navbar()-%}
+    {% for href, id, caption in navigation_bar %}
+        <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
+    {% endfor %}
+{% endmacro %}
+{% set navigation_bar = [
+    ('/', 'index', 'Recent Maps'),
+    ('/s/inrotation', 'inrotation', 'Current Rotation'),
+    ('/s/retired', 'retired', 'Retired Maps'),
+] -%}
 <!DOCTYPE html>
 
 <html lang="en">
@@ -20,36 +30,47 @@
 
     <nav class="navbar navbar-inverse navbar-fixed-top" role="navigation">
         <div class="container-fluid">
-            <ul class="nav navbar-nav navbar-left">
-                <li><a href="/" class="navbar-brand">SomeBot's Brain!</a></li>
-                {% set navigation_bar = [
-                    ('/', 'index', 'Recent Maps'),
-                    ('/s/inrotation', 'inrotation', 'Current Rotation'),
-                    ('/s/retired', 'retired', 'Retired Maps'),
-                ] -%}
-                {% set active_page = active_page -%}
-                {% for href, id, caption in navigation_bar %}
-                    <li{% if id == active_page %} class="active"{% endif %}><a href="{{ href|e }}">{{ caption|e }}</a></li>
-                {% endfor %}
-            </ul>
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button>
+                <a href="/" class="navbar-brand">SomeBot's Brain!</a>
+            </div>
+            <div class="navbar-collapse collapse">
+                <ul class="hidden-md hidden-lg nav navbar-nav navbar-left">
+                    <li class="dropdown">
+                      <a href="#" class="dropdown-toggle" data-toggle="dropdown">Maps<span class="caret"></span></a>
+                      <ul class="dropdown-menu inverse-dropdown" role="menu">
+                          {{ navbar() }}
+                      </ul>
+                    </li>
+                </ul>
+                <ul class="hidden-sm hidden-xs nav navbar-nav navbar-left">
+                    {{ navbar() }}
+                </ul>
 
-            <ul class="nav navbar-nav navbar-right">
-                <li>
-                    <form class="navbar-form" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
+                <ul class="nav navbar-nav navbar-right">
+                    {% if g.user %}
+                    <li><a href="#" title="{{ g.email }}"><span class="glyphicon glyphicon-user"></span></a></li>
+                    <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span></a></li>
+                    {% else %}
+                    <li>
+                        <a href="/login">
+                            <span class="glyphicon glyphicon-log-in"></span> Login
+                        </a>
+                    </li>
+                    {% endif %}
+                </ul>
+                <form class="navbar-right navbar-form" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
+                    <div class="form-group">
+                        <label class="sr-only" for="search">Search maps</label>
                         <input type="text" class="form-control" placeholder="Search" id="search">
-                    </form>
-                </li>
-                {% if g.user %}
-                <li><a href="#">{{ g.email }}</a></li>
-                <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span></a></li>
-                {% else %}
-                <li>
-                    <a href="/login">
-                        <span class="glyphicon glyphicon-log-in"></span> Login
-                    </a>
-                </li>
-                {% endif %}
-            </ul>
+                    </div>
+                </form>
+            </div>
         </div>
     </nav>
 
