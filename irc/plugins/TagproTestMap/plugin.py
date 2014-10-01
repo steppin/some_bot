@@ -77,7 +77,7 @@ class TagproTestMap(callbacks.Plugin):
             #irc.error('I cannot find the map "{}" in my brain!'.format(name))
             irc.reply(resp)
             return
-        (mapid, author) = result
+        (mapid, author) = best_map
         mapdir = '/home/somebot/tagpro/maps'
         layout = os.path.join(mapdir, mapid + '.png')
         logic = os.path.join(mapdir, mapid + '.json')
