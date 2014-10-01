@@ -93,26 +93,27 @@ class plot():
 			"D": [(64, 128, 80), (64, 80, 128), (120, 120, 120)],
 			"L": [(64, 80, 128), (128, 64, 112), (120, 120, 120)]
 		}
+		wall_excep = [('31','45'),('13','45'),('13,22'),('22','31')]
 		adj = paste
 		# If within boundaries
 			# If wall dir corresponds
-				# Exclude wall type duplicates - Experimental 50% Success at catching odd 45s
+				# Exclude wall type duplicates 
 					# Add dir string
 		if y != 0:
 			if self.pixels[x,y-1] in corr_adj["U"]:
-				if ('315' and '45') not in adj:
+				if adj[:2] not in wall_excep[0]:
 					adj += "U"
 		if x != self.max_x-1:
 			if self.pixels[x+1,y] in corr_adj["R"]:
-				if '135' not in adj:
+				if adj[:2] not in wall_excep[1]:
 					adj += "R"
 		if y != self.max_y-1:
 			if self.pixels[x,y+1] in corr_adj["D"]:
-				if '135' not in adj:
+				if adj[:2] not in wall_excep[2]:
 					adj += "D"
 		if x != 0:
 			if self.pixels[x-1,y] in corr_adj["L"]:
-				if '225' and '315' not in adj:
+				if adj[:2] not in wall_excep[3]:
 					adj += "L"
 		return adj
 		
