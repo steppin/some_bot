@@ -8,12 +8,10 @@ WALLS = ["45", "135", "225", "315", "wall"]
 TILE_SIZE = 40
 SIZE_LIMIT = 100*100
 # Sprite directory
-sprites = {}
 sprite_list = listdir("sprites/")
 if 'Thumbs.db' in sprite_list:
 	sprite_list.remove('Thumbs.db')
-for pic in sprite_list:
-	sprites[pic] = Image.open("sprites/"+pic)
+sprites = {pic: Image.open("sprites/"+pic) for pic in sprite_list}
 def usage():
 	print >> sys.stderr, 'Usage: {} PNG JSON [SPLATS] > PREVIEW'.format(
 		sys.argv[0])
@@ -81,11 +79,7 @@ class plot():
 		""".format(self.json["info"]["name"], self.json["info"]["author"],
 		self.max_y, self.max_x, self.max_x*self.max_y, self.max_y*40, self.max_x*40, self.fails)
 	def map_cords(self):
-		cords = {}
-		for w in range(self.max_x):
-			for h in range(self.max_y):
-				cords[(w,h)] = rgbs[self.pixels[w,h]]
-		return cords
+		return {(w,h): rgbs[self.pixels[w,h]] for w in range(self.max_x) for h in range(self.max_y)}
 	def adj_walls(self, x, y, paste):
 		corr_adj = {
 			"U": [(128, 112, 64), (128, 64, 112), (120, 120, 120)],
