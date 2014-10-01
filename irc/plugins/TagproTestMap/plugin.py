@@ -18,7 +18,11 @@ class TagproTestMap(callbacks.Plugin):
     def __init__(self, irc):
         self.__parent = super(TagproTestMap, self)
         self.__parent.__init__(irc)
-        db_name = self.registryValue('dbName')
+        # TODO: better exception and better way to do defaults?
+        try:
+            db_name = self.registryValue('dbName')
+        except:
+            db_name = 'somebot'
         self.db = TagproTestMapDb(db_name)
 
     def die(self):
