@@ -1,33 +1,3 @@
-###
-# Copyright (c) 2013, S Teppin
-# All rights reserved.
-#
-# Redistribution and use in source and binary forms, with or without
-# modification, are permitted provided that the following conditions are met:
-#
-#   * Redistributions of source code must retain the above copyright notice,
-#     this list of conditions, and the following disclaimer.
-#   * Redistributions in binary form must reproduce the above copyright notice,
-#     this list of conditions, and the following disclaimer in the
-#     documentation and/or other materials provided with the distribution.
-#   * Neither the name of the author of this software nor the name of
-#     contributors to this software may be used to endorse or promote products
-#     derived from this software without specific prior written consent.
-#
-# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS "AS IS"
-# AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
-# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
-# ARE DISCLAIMED.  IN NO EVENT SHALL THE COPYRIGHT OWNER OR CONTRIBUTORS BE
-# LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
-# CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
-# SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
-# INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
-# CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
-# ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
-# POSSIBILITY OF SUCH DAMAGE.
-
-###
-
 import supybot.utils as utils
 from supybot.commands import *
 import supybot.plugins as plugins
@@ -39,46 +9,48 @@ import psycopg2
 from random import shuffle
 
 
-
 class TagproTestMap(callbacks.Plugin):
     """This plugin allows you to create test games from irc.
-    Use the "test" command to create a new game."""
+    Use the "test" command to create a new game.
+    """
     threaded = True
 
     def __init__(self, irc):
-        callbacks.Plugin.__init__(self, irc)
-        self.conn = psycopg2.connect("dbname=tagpro user=steppin")
-        self.cur = self.conn.cursor()
+        self.__parent = super(TagproTestMap, self)
+        self.__parent.__init__(irc)
+        db_name = self.registryValue('dbName')
+        self.db = TagproTestMapDb(db_name)
 
     def die(self):
-        self.cur.close()
-        self.conn.close()
+        callbacks.Plugin.die(self)
+        self.db.conn.close()
 
     def listmaps(self, irc, msg, args, search_string):
         """[search_string]
 
         Searches for maps whose names are similar to search_string or that were submitted during week search_string.
         """
-
         if search_string:
-            esc_search_string = search_string.replace('=', '==').replace('%', '=%').replace('_', '=_')
-            self.cur.execute("SELECT name FROM maps WHERE tag = %s OR name ILIKE %s ESCAPE '=' ORDER BY name", (search_string, '%' + esc_search_string + '%'))
+            map_results = self.db.search_map_names(search_string)
         else:
             if ircutils.isChannel(msg.args[0]):
-                irc.reply('Please use a private message to browse the full list.  Alternatively, provide a search string or week number, or visit http://tagpro.imgur.com')
+                irc.reply('Please use a private message to browse the full list.  Alternatively, provide a search string or week number, or visit http://maps.jukejuice.com')
                 return
-            self.cur.execute("SELECT name FROM maps ORDER BY name")
+            map_results = self.db.get_all_map_names()
 
-        count = self.cur.rowcount
-        if count > 0:
-            maps = ', '.join(row[0] for row in self.cur.fetchall())
-            resp = '{} result{}: {}'.format(count, 's' if count > 1 else '', maps)
+        if map_results:
+            num_map_results = len(map_results)
+            maps = ', '.join(map_results)
+            resp = '{} result{}: {}'.format(num_map_results, 's' if num_map_results > 1 else '', maps)
         else:
             resp = ('Sorry, I cannot find "{}".').format(search_string)
 
         irc.reply(resp)
+
     listmaps = wrap(listmaps, [optional('text')])
 
+    # TODO: move this to utils outside both irc and somebotweb and have
+    # them both use it?
     def __test(self, irc, msg, args, mapname, url) :
         """<mapname>
 
@@ -89,15 +61,11 @@ class TagproTestMap(callbacks.Plugin):
 
         # TODO: configure a map directory
         name = mapname
-        self.cur.execute("SELECT tag, comment, author FROM maps WHERE name = %s", (name,))
-        result = self.cur.fetchone()
-        if not result:
-            self.cur.execute("SELECT name, similarity(name, %s) as sml FROM maps WHERE name %% %s ORDER BY sml DESC, name LIMIT 5", (name, name))
-            # TODO(step): there should be a way to avoid this count
-            # check (be more pythonic)
-            count = self.cur.rowcount
-            if count > 0:
-                fuzzies = ', '.join(row[0] for row in self.cur.fetchall())
+        best_map = self.db.get_best_map(name)
+        if not best_map:
+            map_results = self.db.fuzzy_search(name)
+            if map_results:
+                fuzzies = ', '.join(map_results)
                 resp = 'Sorry, I cannot find "{}" in my brain!  Did you mean one of these: {} ?'.format(name, fuzzies)
             else:
                 resp = ('Sorry, I cannot find "{}" in my brain!').format(name)
@@ -105,8 +73,8 @@ class TagproTestMap(callbacks.Plugin):
             #irc.error('I cannot find the map "{}" in my brain!'.format(name))
             irc.reply(resp)
             return
-        (tag, mapid, author) = result
-        mapdir = os.path.join('/home/steppin/tagpro/maps', tag)
+        (mapid, author) = result
+        mapdir = '/home/somebot/tagpro/maps'
         layout = os.path.join(mapdir, mapid + '.png')
         logic = os.path.join(mapdir, mapid + '.json')
         try:
@@ -121,7 +89,6 @@ class TagproTestMap(callbacks.Plugin):
             print e
             irc.reply("I tried to upload the map but I had trouble reaching the server ("+url+")!")
             return True
-        #print r.content
         testurl = r.url
         if testurl == url:
             if 'all testing games are full at the moment' in r.content:
@@ -131,7 +98,6 @@ class TagproTestMap(callbacks.Plugin):
                 irc.reply("I tried to upload the map but the server ("+url+") didn't like it.  Ask my owner to give me better debug output :(")
             return True
         else:
-            #irc.reply('{} ({} by {})'.format(testurl, name, author))
             irc.reply('{} ({})'.format(testurl, name))
 
     def test(self, irc, msg, args, mapname):
@@ -150,6 +116,7 @@ class TagproTestMap(callbacks.Plugin):
 
         Creates a test game with <mapname> on a european server.
         """
+        # TODO: remove justletme.be -- no longer running
         urls = ['http://maptest.newcompte.fr/testmap', 'http://justletme.be:8080/testmap']
         shuffle(urls)
         for url in urls:
@@ -171,23 +138,57 @@ class TagproTestMap(callbacks.Plugin):
 
         # TODO: configure a map directory
         name = mapname
-        self.cur.execute("SELECT preview, author FROM maps WHERE name = %s", (name,))
-        result = self.cur.fetchone()
-        if not result:
+        best_map = self.db.get_best_map(name)
+        if not best_map:
             irc.error('I cannot find the map "{}" in my brain!'.format(name))
             return
-        (preview_id, author) = result
+        (preview_id, author) = best_map
         if not preview_id:
             irc.reply("Sorry, I don't have a preview for that map.")
             return
-        imgur_url = 'http://imgur.com/'
-        preview_url = imgur_url + preview_id + '.png'
-        #irc.reply('{} ({} by {})'.format(preview_url, mapname, author))
+        preview_url = 'http://maps.jukejuice.com/show/{}'.format(preview_id)
         irc.reply('{} ({})'.format(preview_url, mapname))
 
     preview = wrap(preview, ['text'])
 
 
-Class = TagproTestMap
+class TagproTestMapDb(object):
+    def __init__(self, db_string):
+        self.conn = psycopg2.connect(db_string)
 
-# vim:set shiftwidth=4 softtabstop=4 expandtab textwidth=79:
+    def get_all_map_names(self):
+        # TODO: psycopg2 added support for with at some point; move to using that idiom instead
+        cur = self.conn.cursor()
+        try:
+            cur.execute("SELECT mapname FROM map ORDER BY mapname")
+            # TODO: some better way?  gen instead?
+            return [row[0] for row in cur.fetchall()]
+        finally:
+            cur.close()
+
+    def search_map_names(self, search_string):
+        esc_search_string = search_string.replace('=', '==').replace('%', '=%').replace('_', '=_')
+        cur = self.conn.cursor()
+        try:
+           cur.execute("SELECT mapname FROM map WHERE mapname ILIKE %s ESCAPE '=' ORDER BY mapname", ('%' + esc_search_string + '%',))
+           return [row[0] for row in cur.fetchall()]
+        finally:
+           cur.close()
+
+    def get_best_map(self, name):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("SELECT id, author FROM map WHERE lower(mapname) = lower(%s)", (name,))
+            return cur.fetchone()
+        finally:
+            cur.close()
+
+    def fuzzy_search(self, name):
+        cur = self.conn.cursor()
+        try:
+            cur.execute("SELECT mapname, similarity(mapname, %s) as sml FROM map WHERE mapname %% %s ORDER BY sml DESC, mapname LIMIT 5", (name, name))
+            return [row[0] for row in cur.fetchall()]
+        finally:
+            cur.close()
+
+Class = TagproTestMap

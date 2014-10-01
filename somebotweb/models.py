@@ -28,6 +28,7 @@ class Map(db.Model):
 
     id = db.Column(db.Integer, primary_key=True)
 
+    # TODO: make sure mapname gets indexed
     mapname = db.Column(db.Text)
     author = db.Column(db.Text)
     description = db.Column(db.Text)
@@ -72,7 +73,14 @@ class Map(db.Model):
             "mapurl": "/show/"+strid,
             "authorurl": url_for('return_maps_by_author', author=self.author),
             # TODO:  why mapname in here?
+            # TODO: it's to name the downloaded file; we should move to
+            # storing the files in directories (with name id) and then
+            # keeping nice names inside.
             "pngdownload": u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             "jsondownload": u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             }
         return map_data
+
+
+db.Index('mapname_idx', db.func.lower(Map.mapname))
+db.Index('mapname_trgm_idx', Map.mapname, postgresql_ops={'mapname': 'gist_trgm_ops'}, postgresql_using="gist")
