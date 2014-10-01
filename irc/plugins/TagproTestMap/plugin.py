@@ -78,7 +78,7 @@ class TagproTestMap(callbacks.Plugin):
             irc.reply(resp)
             return
         (mapid, author) = best_map
-        mapdir = '/home/somebot/tagpro/maps'
+        mapdir = '/home/somebot/some_bot/somebotweb/static/maps'
         layout = os.path.join(mapdir, '{}.png'.format(mapid))
         logic = os.path.join(mapdir, '{}.json'.format(mapid))
         try:
