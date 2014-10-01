@@ -79,8 +79,8 @@ class TagproTestMap(callbacks.Plugin):
             return
         (mapid, author) = best_map
         mapdir = '/home/somebot/tagpro/maps'
-        layout = os.path.join(mapdir, mapid + '.png')
-        logic = os.path.join(mapdir, mapid + '.json')
+        layout = os.path.join(mapdir, '{}.png'.format(mapid))
+        logic = os.path.join(mapdir, '{}.json'.format(mapid))
         try:
             files = {'logic': open(logic, 'rb'), 'layout': open(layout, 'rb')}
         except IOError:
