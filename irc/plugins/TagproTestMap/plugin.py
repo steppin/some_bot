@@ -22,7 +22,7 @@ class TagproTestMap(callbacks.Plugin):
         try:
             db_name = self.registryValue('dbName')
         except:
-            db_name = 'somebot'
+            db_name = 'dbname=somebot'
         self.db = TagproTestMapDb(db_name)
 
     def die(self):
