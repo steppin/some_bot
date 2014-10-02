@@ -83,7 +83,7 @@
             var mapupload = new Dropzone("#mapupload");
 
             mapupload.on("successmultiple", function(files, data) {
-                if(data.success) {
+                if (data.success) {
                     console.log(data);
                     if($('#autotest')[0].checked) {
                         window.location.replace(data.testurl);
@@ -92,6 +92,7 @@
                         window.location.replace(data.saveurl);
                     }
                 }
+
             });
 
             // When two files are in the queue, start uploading
