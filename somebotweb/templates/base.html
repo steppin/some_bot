@@ -55,12 +55,10 @@
                 <ul class="nav navbar-nav navbar-right">
                     {% if g.user %}
                     <li><a href="#" title="{{ g.email }}"><span class="glyphicon glyphicon-user"></span></a></li>
-                    <li><a href="/logout"><span class="glyphicon glyphicon-log-out"></span></a></li>
+                    <li><a href="/logout" title="log out"><span class="glyphicon glyphicon-log-out"></span></a></li>
                     {% else %}
                     <li>
-                        <a href="/login">
-                            <span class="glyphicon glyphicon-log-in"></span> Login
-                        </a>
+                        <a href="/login" title="log in"><span class="glyphicon glyphicon-log-in"></span></a>
                     </li>
                     {% endif %}
                 </ul>
