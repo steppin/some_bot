@@ -199,8 +199,7 @@ def upload_map():
         # Handle upload by dropzone, not sure how to specify filenames with dropzone
         # it sends just a list of files
         if not logic and not layout:
-            files = request.files.getlist('file[]')
-            for f in files:
+            for f in request.files.itervalues():
                 if os.path.splitext(f.filename)[1].lower() == '.json':
                     logic = f
                 elif os.path.splitext(f.filename)[1].lower() == '.png':
@@ -216,9 +215,11 @@ def upload_map():
                 else:
                     save_url = url_for('save_map', mapid=mapid)
                     return jsonify(saveurl=save_url, success=success)
-        else:
-            abort(404)
+        json_error_response = jsonify(error="Map upload failed!")
+        json_error_response.status_code = 400
+        return json_error_response
     else:
+        # TODO: not sure we really want to do this...
         return render_template("upload.html", map={})
 
 

@@ -57,9 +57,11 @@
                     <h3>Test your map</h3>
                     <div style="text-align:left">
 
-                        <form id="mapupload" action="/upload" method="post" multiple style='height:200px'>
-                            Drop a .json and a .png file here to test your map.
-                            Click to navigate for files.
+                        <form class="dropzone square" id="mapupload" action="/upload" method="post" multiple>
+                            <div class="dz-message">
+                                Drop a .json and a .png file here to test your map.
+                                Click to navigate for files.
+                            </div>
                         </form>
                           <div class="checkbox">
                             <label><input type="checkbox" id="autotest">Autotest uploaded maps</label>
@@ -68,9 +70,10 @@
                 </div>
             </div>
 
-        <script src="{{ url_for('static', filename='js/dropzone.js') }}"></script>
+        <script src="{{ url_for('static', filename='js/dropzone.min.js') }}"></script>
 
         <script>
+            Dropzone.autoDiscover = false;
             Dropzone.options.mapupload = {
               paramName: "file", // The name that will be used to transfer the file
               maxFilesize: 0.5, // MB
@@ -78,28 +81,27 @@
               maxFiles: 2,
               autoProcessQueue: false,
               acceptedFiles: "image/png,.json",
+              addRemoveLinks: true,
+              init: function() {
+                this.on("successmultiple", function(files, data) {
+                    if (data.success) {
+                        if($('#autotest')[0].checked) {
+                            window.location.replace(data.testurl);
+                        }
+                        else {
+                            window.location.replace(data.saveurl);
+                        }
+                    }
+
+                });
+
+                // When two files are in the queue, start uploading
+                this.on("maxfilesreached", function(file) {
+                    this.processQueue();
+                });
+              }
             };
-
             var mapupload = new Dropzone("#mapupload");
-
-            mapupload.on("successmultiple", function(files, data) {
-                if (data.success) {
-                    console.log(data);
-                    if($('#autotest')[0].checked) {
-                        window.location.replace(data.testurl);
-                    }
-                    else {
-                        window.location.replace(data.saveurl);
-                    }
-                }
-
-            });
-
-            // When two files are in the queue, start uploading
-            mapupload.on("maxfilesreached", function(file) {
-                mapupload.processQueue();
-            });
-
     </script>
 {% endif -%}
 {% endblock %}
