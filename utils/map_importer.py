@@ -7,7 +7,7 @@ from PIL import Image
 import previewer
 
 DATABASE = "maps.db"
-MAP_DIRECTORY = "/home/andrew/tagpro/tagpro-maps/somebot-brains/"
+MAP_DIRECTORY = "~/tagpro/tagpro-maps/somebot-brains/"
 
 def connect_db():
     """Connects to the specific database."""
