@@ -309,7 +309,7 @@ def get_json_by_id(mapid):
     INPUT: mapid (integer)
     OUTPUT: Map JSON
     '''
-    m = Map.query.get(mapid)
+    m = Map.query.get_or_404(mapid)
     return m.get_json()
 
 
