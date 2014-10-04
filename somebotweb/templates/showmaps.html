@@ -10,10 +10,10 @@
         {% for map in maps %}
             <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
-                    <h2 class="mapname"><a href="{{ map.mapurl }}" class="searchable">{{ map.mapname }}</a></h2>
+                    <h2 class="mapname one-line"><a href="{{ map.mapurl }}" class="searchable">{{ map.mapname }}</a></h2>
                     <a class="img_helper" href="{{ map.mapurl }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="{{ map.thumburl }}"></a>
                      <div class="caption">
-                        <h3>by: <a href="{{ map.authorurl }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
+                        <h3 class="one-line">by: <a href="{{ map.authorurl }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
                             <a href="{{url_for('test_map', mapid=map.mapid, zone='us')}}" target="_blank" class="btn btn-primary">Test (US)</a>
                             <a href="{{url_for('test_map', mapid=map.mapid, zone='eu')}}" target="_blank" class="btn btn-primary">Test (EU)</a>

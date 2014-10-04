@@ -52,7 +52,7 @@ h3, h2 {
   border-bottom: 1px solid #dedede;
   text-align: center;
 }
-.mapname {
+.one-line {
     overflow: hidden;
     white-space: nowrap;
     text-overflow: ellipsis;
