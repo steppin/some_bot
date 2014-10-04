@@ -20,7 +20,7 @@ def lookup_current_user():
         g.email = session['email']
 
 
-def add_map_to_db(mapname, author, description, commit=True):
+def add_map_to_db(mapname, author, description, status=None, commit=True):
     '''
     Add a map to the sqlalchemy db object
     INPUT: mapname, author, description
@@ -29,7 +29,7 @@ def add_map_to_db(mapname, author, description, commit=True):
     #TODO: Make mapid consistent - it's not handled well right now
     # Sometimes integers are used (looking in db), sometimes strings (filenames)
     '''
-    m = Map(mapname, author, description)
+    m = Map(mapname, author, description, status)
     db.session.add(m)
     db.session.commit()
     print "New map -> [%s] %s by %s" %(m.id, mapname, author)
