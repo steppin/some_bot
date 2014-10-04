@@ -254,7 +254,6 @@ def index():
     '''
     If a GET request is given to /, return recent maps
     '''
-    abort(500)
     page = request.args.get("page", 1)
     try:
         page = int(page)
