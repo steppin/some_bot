@@ -20,6 +20,15 @@ def lookup_current_user():
         g.email = session['email']
 
 
+# TODO: probably no point in having separate templates for each error here...
+@app.errorhandler(404)
+def page_not_found(e):
+    return render_template('404.html'), 404
+
+@app.errorhandler(500)
+def page_not_found(e):
+    return render_template('500.html'), 500
+
 def add_map_to_db(mapname, author, description, status=None, commit=True):
     '''
     Add a map to the sqlalchemy db object
@@ -245,6 +254,7 @@ def index():
     '''
     If a GET request is given to /, return recent maps
     '''
+    abort(500)
     page = request.args.get("page", 1)
     try:
         page = int(page)
