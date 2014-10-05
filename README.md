@@ -26,6 +26,8 @@ Setup
 
         mkdir static/{maps,previews,thumbs}  # TODO: not sure if this is needed anymore
 
+4. create your `secret.py` by following the template in `secret.py.example`
+
 Run dev server
 ----
 
