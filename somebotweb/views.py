@@ -9,7 +9,6 @@ from PIL import Image, ImageOps
 from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
 from werkzeug import secure_filename
 from sqlalchemy import or_
-from test_servers import server_url
 
 import previewer
 
@@ -177,7 +176,7 @@ def get_test_link(mapid, zone='us'):
     Given a map name, grabs logic and layout data from the app's config folders,
     sends post request to test server and returns test url server responds with
     '''
-    test_server = server_url[zone] + 'testmap'
+    test_server = app.config['TEST_SERVERS'][zone]['url'] + 'testmap'
     layout = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.png')
     logic = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.json')
     file_data = {'logic':open(logic).read(), 'layout':open(layout).read()}

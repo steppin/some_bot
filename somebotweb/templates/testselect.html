@@ -1,6 +1,6 @@
 <a href="{{url_for('test_map', mapid=map.mapid, zone='us')}}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
 <select onChange="handleChange({{ map.mapid }}, $(this).val())" class="testselect" data-mapid="{{ map.mapid }}">
-    {% for zone in config['ZONE_LIST'] %}
-        <option value="{{zone}}" data-url="{{url_for('test_map', mapid=map.mapid, zone=zone)}}" target="_blank">{{config.SERVER_DESCRIPTION[zone]}}</option>
+    {% for zone, test_server in config['TEST_SERVERS'].iteritems() %}
+        <option value="{{zone}}" data-url="{{url_for('test_map', mapid=map.mapid, zone=zone)}}" target="_blank">{{test_server['desc']}}</option>
     {% endfor %}
 </select>
