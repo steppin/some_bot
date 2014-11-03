@@ -9,7 +9,7 @@ from PIL import Image, ImageOps
 from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
 from werkzeug import secure_filename
 from sqlalchemy import or_
-from test_servers import server_dict, server_list
+from test_servers import server_dict
 
 import previewer
 
@@ -188,7 +188,7 @@ def get_test_link(mapid, zone='us'):
 
 @app.route("/save/<int:mapid>", methods=['GET'])
 def save_map(mapid):
-    return render_template("showmap.html", map=get_json_by_id(mapid), server_list=server_list)
+    return render_template("showmap.html", map=get_json_by_id(mapid))
 
 
 @app.route("/upload", methods=['GET', 'POST'])
@@ -310,7 +310,7 @@ def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
-    return render_template('showmap.html', map=get_json_by_id(mapid), server_list=server_list)
+    return render_template('showmap.html', map=get_json_by_id(mapid))
 
 
 def get_json_by_id(mapid):
@@ -343,7 +343,7 @@ def test_map(mapid, zone):
 def get_map_by_mapname(mapname):
     m = search_db(mapname=mapname)
     if m:
-        return render_template("showmap.html", map=m.get_json(), server_list=server_list)
+        return render_template("showmap.html", map=m.get_json())
     else:
         maps = recent_maps()
         maps_data = get_data_from_maps(maps)
@@ -371,7 +371,7 @@ def return_map_by_author(author, mapname):
     if author and mapname:
         m = search_db(author=author, mapname=mapname)
         if m:
-            return render_template("showmap.html", map=m.get_json(), server_list=server_list)
+            return render_template("showmap.html", map=m.get_json())
     else:
         maps = recent_maps()
     maps_data = get_data_from_maps(maps)

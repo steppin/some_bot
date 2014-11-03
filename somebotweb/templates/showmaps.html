@@ -15,8 +15,7 @@
                      <div class="caption">
                         <h3 class="one-line">by: <a href="{{ map.authorurl }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
-                            <a href="{{url_for('test_map', mapid=map.mapid, zone='us')}}" target="_blank" class="btn btn-primary">Test (US)</a>
-                            <a href="{{url_for('test_map', mapid=map.mapid, zone='eu')}}" target="_blank" class="btn btn-primary">Test (EU)</a>
+                            {% include 'testselect.html' %}
                             <a href="{{ map.previewurl }}" class="btn btn-danger">Fullsize Preview</a>
                         </div>
                     </div>
@@ -104,4 +103,7 @@
             var mapupload = new Dropzone("#mapupload");
     </script>
 {% endif -%}
+{% endblock %}
+{% block content_scripts %}
+    {% include 'testselectscripts.html' %}
 {% endblock %}
