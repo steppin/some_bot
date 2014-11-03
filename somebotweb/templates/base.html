@@ -79,56 +79,58 @@
     </div>
 
 
-        <footer class="footer">
-            <div class="footer-content">
-                <img src="{{ url_for('static', filename='images/poweredby.png') }}" />
-            </div>
-        </footer>
+    <footer class="footer">
+        <div class="footer-content">
+            <img src="{{ url_for('static', filename='images/poweredby.png') }}" />
+        </div>
+    </footer>
 
 
-        <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
-        <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
-        <!-- Include all compiled plugins (below), or include individual files as needed -->
-        <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
+    <!-- jQuery (necessary for Bootstrap's JavaScript plugins) -->
+    <script src="//ajax.googleapis.com/ajax/libs/jquery/2.1.1/jquery.min.js"></script>
+    <!-- Include all compiled plugins (below), or include individual files as needed -->
+    <script src="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/js/bootstrap.min.js"></script>
     <script>
-            // Search function
+        // Search function
 
-            // Handle search form submission
-            // Write window URL on form submission so searches can be shared
-            $("#searchform").submit( function(event) {
-                query = $("#search").val();
-                clearTimeout(lastTimeout);
-                window.location.replace(window.location.origin+"/search?query="+query);
-                return false;
-            });
+        // Handle search form submission
+        // Write window URL on form submission so searches can be shared
+        $("#searchform").submit( function(event) {
+            query = $("#search").val();
+            clearTimeout(lastTimeout);
+            window.location.replace(window.location.origin+"/search?query="+query);
+            return false;
+        });
 
 
-            // Handle instant search results
-            // Delay is set to 500 milliseconds between keypresses
-            // Standalone set to true so entire page doesn't reload
-            requestDelay = 500;
-            lastTimeout = false;
-            $('body').delegate('#search', 'keyup', function() {
-                query = $("#search").val();
-                if(true) {
-                    if(lastTimeout) {
-                        clearTimeout(lastTimeout);
-                    }
-                    lastTimeout = setTimeout( function () {
-                            $.ajax({
-                                url:"/search",
-                                data:{"query":query, "standalone":true}
-                            }).done(function(data) {
-                                if(data.success) {
-                                    $("#mapdiv").html(data.html);
-                                }
-                            });
-                            lastTimeout = false;
-                        }, requestDelay);
-
+        // Handle instant search results
+        // Delay is set to 500 milliseconds between keypresses
+        // Standalone set to true so entire page doesn't reload
+        requestDelay = 500;
+        lastTimeout = false;
+        $('body').delegate('#search', 'keyup', function() {
+            query = $("#search").val();
+            if(true) {
+                if(lastTimeout) {
+                    clearTimeout(lastTimeout);
                 }
-            });
-        </script>
+                lastTimeout = setTimeout( function () {
+                        $.ajax({
+                            url:"/search",
+                            data:{"query":query, "standalone":true}
+                        }).done(function(data) {
+                            if(data.success) {
+                                $("#mapdiv").html(data.html);
+                            }
+                        });
+                        lastTimeout = false;
+                    }, requestDelay);
+
+            }
+        });
+    </script>
+    {% block content_scripts %}
+    {% endblock %}
 
 
 	</body>

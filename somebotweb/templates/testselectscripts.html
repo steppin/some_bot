@@ -1,0 +1,27 @@
+<script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
+<script>
+    function setZone(zone) {
+        $(".testselect").each( function () {
+            var select = $(this);
+            select.val(zone);
+            var mapid = select.attr("data-mapid");
+            var url = select.find('option[value="' + zone + '"]').attr("data-url");
+            $("#test" + mapid).attr("href", url);
+        });
+
+        $.cookie('zone', zone, { expires: 7 });
+    }
+
+    function handleChange(mapId, zone) {
+        setZone(zone);
+
+        var event = document.createEvent('MouseEvents');
+        event.initEvent('click', true, false);
+        $("#test" + mapId)[0].dispatchEvent(event);
+    }
+
+    var cookieZone = $.cookie('zone');
+    if (cookieZone) {
+        setZone(cookieZone);
+    }
+</script>
