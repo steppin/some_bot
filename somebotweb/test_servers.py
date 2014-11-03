@@ -1,0 +1,2 @@
+server_dict = { 'eu': 'http://maptest.newcompte.fr/', 'us': 'http://tagpro-maptest.koalabeast.com/', 'ca': 'http://maptest2.newcompte.fr/', 'au': 'http://oceanic.newcompte.fr/'}
+server_list = ['us', 'ca', 'eu', 'au']

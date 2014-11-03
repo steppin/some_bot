@@ -9,6 +9,7 @@ from PIL import Image, ImageOps
 from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
 from werkzeug import secure_filename
 from sqlalchemy import or_
+from test_servers import server_dict, server_list
 
 import previewer
 
@@ -167,16 +168,16 @@ def recent_maps(page=0, page_size=18):
     return maps, pages
 
 
-def get_test_link(mapid, eu=False):
+def get_test_link(mapid, zone='us'):
     '''
     INPUT: map id (primary key of db)
-    INPUT: eu (whether to test on european server)
+    INPUT: zone (two-letter identifier for the server)
     OUTPUT: test url from test server
 
     Given a map name, grabs logic and layout data from the app's config folders,
     sends post request to test server and returns test url server responds with
     '''
-    test_server = 'http://tagpro-maptest.koalabeast.com/testmap' if not eu else 'http://maptest.newcompte.fr/testmap'
+    test_server = server_dict[zone] + 'testmap'
     layout = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.png')
     logic = os.path.join(app.config['UPLOAD_DIR'], str(mapid) + '.json')
     file_data = {'logic':open(logic).read(), 'layout':open(layout).read()}
@@ -187,7 +188,7 @@ def get_test_link(mapid, eu=False):
 
 @app.route("/save/<int:mapid>", methods=['GET'])
 def save_map(mapid):
-    return render_template("showmap.html", map=get_json_by_id(mapid))
+    return render_template("showmap.html", map=get_json_by_id(mapid), server_list=server_list)
 
 
 @app.route("/upload", methods=['GET', 'POST'])
@@ -309,7 +310,7 @@ def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
-    return render_template('showmap.html', map=get_json_by_id(mapid))
+    return render_template('showmap.html', map=get_json_by_id(mapid), server_list=server_list)
 
 
 def get_json_by_id(mapid):
@@ -327,8 +328,7 @@ def get_json_by_id(mapid):
 def test_map(mapid, zone):
     if mapid:
         showurl = url_for('save_map', mapid=mapid)
-        eu = zone == "eu"
-        testurl = get_test_link(mapid, eu)
+        testurl = get_test_link(mapid, zone)
         increment_test(mapid)
         if testurl:
             return redirect(testurl)
@@ -343,7 +343,7 @@ def test_map(mapid, zone):
 def get_map_by_mapname(mapname):
     m = search_db(mapname=mapname)
     if m:
-        return render_template("showmap.html", map=m.get_json())
+        return render_template("showmap.html", map=m.get_json(), server_list=server_list)
     else:
         maps = recent_maps()
         maps_data = get_data_from_maps(maps)
@@ -371,7 +371,7 @@ def return_map_by_author(author, mapname):
     if author and mapname:
         m = search_db(author=author, mapname=mapname)
         if m:
-            return render_template("showmap.html", map=m.get_json())
+            return render_template("showmap.html", map=m.get_json(), server_list=server_list)
     else:
         maps = recent_maps()
     maps_data = get_data_from_maps(maps)

@@ -10,8 +10,9 @@
                 <h3>by: <a href="{{ map.authorurl }}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>
                 <div class="buttongroup">
-                    <a href="{{url_for('test_map', mapid=map.mapid, zone='us')}}" target="_blank" class="btn btn-primary">Test (US)</a>
-                    <a href="{{url_for('test_map', mapid=map.mapid, zone='eu')}}" target="_blank" class="btn btn-primary">Test (EU)</a>
+                    {% for server_zone in server_list %}
+                        <a href="{{url_for('test_map', mapid=map.mapid, zone=server_zone)}}" target="_blank" class="btn btn-primary">Test ({{server_zone}})</a>
+                    {% endfor %}
                     <a href="{{ map.previewurl }}" class="btn btn-primary">Fullsize Preview</a>
                     <a href="{{ map.pngdownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download png</a>
                     <a href="{{ map.jsondownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download json</a>
