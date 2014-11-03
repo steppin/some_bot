@@ -20,11 +20,11 @@ Setup
 
 2. create a virtual environment and
 
-    pip install -r requirements.txt
+        pip install -r requirements.txt
 
-3.
+3. create some directories
 
-    mkdir static/{maps,previews,thumbs}  # TODO: not sure if this is needed anymore
+        mkdir static/{maps,previews,thumbs}  # TODO: not sure if this is needed anymore
 
 Run dev server
 ----
