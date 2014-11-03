@@ -29,6 +29,6 @@ Setup
 Run dev server
 ----
 
-**NOTE:** do not expose this to the outside world!
+**NOTE:** do not expose this to the outside world since it exposes a debug console by default!
 
     python manage.py runserver
