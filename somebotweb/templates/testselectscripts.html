@@ -1,11 +1,11 @@
 <script src="//cdnjs.cloudflare.com/ajax/libs/jquery-cookie/1.4.1/jquery.cookie.min.js"></script>
 <script>
     function setZone(zone) {
+        // TODO: this is kind of messy
         $(".testselect").each( function () {
             var select = $(this);
-            select.val(zone);
             var mapid = select.attr("data-mapid");
-            var url = select.find('option[value="' + zone + '"]').attr("data-url");
+            var url = select.find('a[data-zone="' + zone + '"]').attr("data-url");
             $("#test" + mapid).attr("href", url);
         });
 
@@ -15,6 +15,7 @@
     function handleChange(mapId, zone) {
         setZone(zone);
 
+        // click on the "Test" button
         var event = document.createEvent('MouseEvents');
         event.initEvent('click', true, false);
         $("#test" + mapId)[0].dispatchEvent(event);
