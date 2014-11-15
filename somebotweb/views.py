@@ -408,7 +408,7 @@ def download():
     filetype = request.args.get("type", None)
     if mapid and filetype and mapname:
         if filetype == "png":
-            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'), attachment_filename=secure_filename(mapname+".png"))
+            return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'), as_attachment=True, attachment_filename=secure_filename(mapname+".png"))
         elif filetype == "json":
             return send_from_directory(app.config['UPLOAD_DIR'], secure_filename(mapid + '.json'), as_attachment=True, attachment_filename=secure_filename(mapname+".json"))
         else:
