@@ -346,7 +346,6 @@ def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
-    print mapid, g.get('userid')
     return render_template('showmap.html', map=get_json_by_id(mapid),userid=g.get('userid', -1))
 
 @app.route('/delete/<int:mapid>')
