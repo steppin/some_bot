@@ -5,7 +5,12 @@
     <div class="map" id="{{ mapid }}">
         <div class="thumbnail">
             <h2 class='searchable'>{{ map.mapname }}</h2>
-            <a href="{{ map.previewurl }}"><img src="{{ map.previewurl }}" style="max-width:100%; max-height:500px;"></a>
+            {% if userid == map.userid %}
+            <a href="/delete/{{map.mapid}}"><span class="glyphicon glyphicon-remove pull-right" aria-hidden="true"></span></a>
+            {% endif %}
+            <div class="row-fluid">
+            <img onclick="document.location.href = '{{ map.previewurl }}'" src="{{ map.previewurl }}" style="max-height:500px;">
+            </div>
              <div class="caption">
                 <h3>by: <a href="{{ map.authorurl }}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>

@@ -69,7 +69,6 @@ def add_map(layout, logic, userid=-1):
     Generate preview by passing mapid to the previewer
     Generate the thumbnail after the preview has been generated
 
-
     INPUT: layout and logic file objects (where data can be accessed with obj.read())
     OUTPUT: mapid, or -1 if the mapname or author are not present in the file
 
@@ -213,7 +212,6 @@ def upload_map():
     If not, return a 404
     '''
     if request.method == "POST":
-        print g.userid
         layout = request.files.get("layout", None)
         logic = request.files.get("logic", None)
         generate_test = request.args.get("generate_testlink", False)
@@ -350,7 +348,7 @@ def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
-    return render_template('showmap.html', map=get_json_by_id(mapid))
+    return render_template('showmap.html', map=get_json_by_id(mapid),userid=g.get('userid', -1))
 
 @app.route('/delete/<int:mapid>')
 def delete_map(mapid):
