@@ -262,10 +262,9 @@ def paginate(page, page_size, total_pages):
 @app.route('/mymaps', methods=['GET', 'POST'])
 @google.authorized_handler
 def listmaps(resp):
-    print resp
-    user = User.query.filter_by(userid=resp['id'])
-
-    return render_template('index.html')#, maps=)
+    user = User.query.filter_by(id=g.get('userid'))
+    maps = Map.query.filter_by(userid=g.get('userid')).order_by("upload_time desc").all()
+    return render_template('showmaps.html', maps=get_data_from_maps(maps))
 
 @app.route('/', methods=['GET'])
 def index():
@@ -342,12 +341,12 @@ def get_google_oauth_token():
         return (resp['access_token'], '')
 
 
-
 @app.route('/show/<int:mapid>')
 def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
+    print mapid, g.get('userid')
     return render_template('showmap.html', map=get_json_by_id(mapid),userid=g.get('userid', -1))
 
 @app.route('/delete/<int:mapid>')
