@@ -6,15 +6,30 @@ from somebotweb import db
 
 class User(db.Model):
     __tablename__ = 'users'  # 'user' is special in postgres
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column('id', db.Integer, primary_key=True)
     # TODO: Reconsider using Text and instead use String?  Probably some performance differences and ability to index blah blah blah
-    name = db.Column(db.Text)
+    username = db.Column(db.Text)
     email = db.Column(db.Text)
+    maps = db.relationship("Map", backref="user", lazy="dynamic")
 
-    def __init__(self, name, email):
-        self.name = name
+    def __init__(self, username, email):
+        self.username = username
         self.email = email
 
+    def is_authenticated(self):
+        return True
+ 
+    def is_active(self):
+        return True
+ 
+    def is_anonymous(self):
+        return False
+ 
+    def get_id(self):
+        return unicode(self.id)
+ 
+    def __repr__(self):
+        return '<User %r>' % (self.name)
 
 class Map(db.Model):
     # TODO: package instead of module
@@ -37,8 +52,9 @@ class Map(db.Model):
     last_tested = db.Column(db.Float)
     times_tested = db.Column(db.Integer)
     status = db.Column(db.Text)
+    userid = db.Column(db.Integer, db.ForeignKey('users.id'))
 
-    def __init__(self, mapname, author, description, status=None, upload_time=None):
+    def __init__(self, mapname, author, description, userid=-1, status=None, upload_time=None):
         self.mapname = mapname
         self.author = author
         self.description = description
@@ -46,9 +62,10 @@ class Map(db.Model):
         self.last_tested = 0
         self.times_tested = 0
         self.status = status
+        self.userid = userid
 
     def __repr__(self):
-        return "<Map [%s] %s - %s>" %(str(self.id), self.mapname, self.author)
+        return "<Map [%s] %s - %s - userid: %s>" %(str(self.id), self.mapname, self.author, self.userid)
 
     def get_json(self):
         # TODO: this just returns a python dict, not json :/
@@ -78,6 +95,7 @@ class Map(db.Model):
             # keeping nice names inside.
             "pngdownload": u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             "jsondownload": u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
+            "userid": self.userid,
             }
         return map_data
 

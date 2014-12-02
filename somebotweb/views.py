@@ -18,7 +18,7 @@ def lookup_current_user():
     if 'google_oauth' in session:
         g.user = session['google_oauth']
         g.email = session['email']
-
+        g.userid = session['id']
 
 # TODO: probably no point in having separate templates for each error here...
 @app.errorhandler(404)
@@ -29,7 +29,7 @@ def page_not_found(e):
 def page_not_found(e):
     return render_template('500.html'), 500
 
-def add_map_to_db(mapname, author, description, status=None, commit=True):
+def add_map_to_db(mapname, author, description, userid=-1, status=None):
     '''
     Add a map to the sqlalchemy db object
     INPUT: mapname, author, description
@@ -38,14 +38,25 @@ def add_map_to_db(mapname, author, description, status=None, commit=True):
     #TODO: Make mapid consistent - it's not handled well right now
     # Sometimes integers are used (looking in db), sometimes strings (filenames)
     '''
-    m = Map(mapname, author, description, status)
+    m = Map(mapname, author, description, status=status, userid=userid)
     db.session.add(m)
     db.session.commit()
     print "New map -> [%s] %s by %s" %(m.id, mapname, author)
     return m
 
 
-def add_map(layout, logic):
+def delete_map_from_db(mapid, email):
+    map_ = Map.query.filter_by(id=mapid).first()
+    user = User.query.filter_by(email=email).first()
+    if map_ and user:
+        currentuser = g.userid
+        if currentuser == user.id and map_.userid == user.id:
+            print "Deleting map", mapid
+            Map.query.filter_by(id=mapid).delete()
+            db.session.commit()
+
+
+def add_map(layout, logic, userid=-1):
     '''
     This is the main function for adding maps to the database
     It handles all the functions necessary for taking logic and layout data
@@ -71,7 +82,7 @@ def add_map(layout, logic):
     mapname = logic_data.get('info', {}).get('name', 'No name')
     author = logic_data.get('info', {}).get('author', 'No author')
     description = logic_data.get('info', {}).get('description', 'No description')
-    pam = add_map_to_db(mapname, author, description)
+    pam = add_map_to_db(mapname, author, description, userid=userid)
     mapid = str(pam.id)
 
     layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
@@ -202,6 +213,7 @@ def upload_map():
     If not, return a 404
     '''
     if request.method == "POST":
+        print g.userid
         layout = request.files.get("layout", None)
         logic = request.files.get("logic", None)
         generate_test = request.args.get("generate_testlink", False)
@@ -216,7 +228,7 @@ def upload_map():
                     layout = f
 
         if layout and logic:
-            mapid = add_map(layout, logic)
+            mapid = add_map(layout, logic,userid=g.get('userid', -1))
             success = mapid >= 0
             if success:
                 if generate_test:
@@ -249,6 +261,13 @@ def paginate(page, page_size, total_pages):
         return range(page-page_size/2+1, min(page+page_size/2+2, total_pages))
     '''
 
+@app.route('/mymaps', methods=['GET', 'POST'])
+@google.authorized_handler
+def listmaps(resp):
+    print resp
+    user = User.query.filter_by(userid=resp['id'])
+
+    return render_template('index.html')#, maps=)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -271,12 +290,23 @@ def index():
 def login():
     return google.authorize(callback=url_for('authorized', _external=True))
 
-
 @app.route('/logout')
 def logout():
     session.pop('google_oauth', None)
     return redirect(url_for('index'))
 
+def add_user_to_db(email):
+    u = User(email=email, username=None)
+    db.session.add(u)
+    db.session.commit()
+    print "New User -> [%s] %s %s" %(u.id, u.username, u.email)
+    return u
+
+def get_user_from_db(email=None, userid=None):
+    if email:
+        return User.query.filter_by(email=email).first()
+    else:
+        return User.query.filter_by(userid=userid).first()
 
 @app.route('/login/authorized')
 @google.authorized_handler
@@ -294,7 +324,16 @@ def authorized(resp):
         email = google.get('userinfo').data['email']
     except KeyError:
         email = None
-    session['email'] = email
+
+    if email:
+        user = User.query.filter_by(email=email).first()
+        if not user:
+            user = add_user_to_db(email)
+        else:
+            user = get_user_from_db(email)
+        session['id'] = user.id
+        session['email'] = user.email
+
     return redirect(url_for('index'))
 
 
@@ -305,6 +344,7 @@ def get_google_oauth_token():
         return (resp['access_token'], '')
 
 
+
 @app.route('/show/<int:mapid>')
 def show_map(mapid):
     '''
@@ -312,6 +352,10 @@ def show_map(mapid):
     '''
     return render_template('showmap.html', map=get_json_by_id(mapid))
 
+@app.route('/delete/<int:mapid>')
+def delete_map(mapid):
+    delete_map_from_db(mapid, g.email)
+    return index()
 
 def get_json_by_id(mapid):
     '''
@@ -418,7 +462,7 @@ def download():
         return abort(404)
 
 
-def search_db(query=None, mapname=None, author=None, status=None, page=0, page_size=30, order="upload_time desc"):
+def search_db(query=None, mapname=None, author=None, status=None, userid=None, page=0, page_size=30, order="upload_time desc"):
     '''
     Search the sqlachemy db object database
     INPUT: query or mapname and author
@@ -428,10 +472,11 @@ def search_db(query=None, mapname=None, author=None, status=None, page=0, page_s
     '''
     maps = []
 
-    if author and mapname:
+    if userid:
+        maps = Map.query.filter_by(userid=userid)
+    elif author and mapname:
         maps = Map.query.filter(Map.author.ilike(author)).filter(Map.mapname.ilike(mapname)).first()
         return maps
-
     elif author and not mapname:
         maps = Map.query.filter(Map.author.ilike(author))
     elif mapname and not author:
