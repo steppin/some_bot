@@ -118,8 +118,9 @@ def generate_preview(mapid):
     '''
     layout = os.path.join(app.config['UPLOAD_DIR'], mapid + '.png')
     logic = os.path.join(app.config['UPLOAD_DIR'], mapid + '.json')
-    map_ = previewer.Map(layout, logic)
-    preview = map_.preview()
+    #map_ = previewer.Map(layout, logic)
+    #preview = map_.preview()
+    preview = previewer.preview45(layout, logic)
     with open(os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png'), 'w') as f:
         f.write(preview.getvalue())
 

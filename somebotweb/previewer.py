@@ -11,6 +11,8 @@ import os.path
 import cStringIO
 import fractions
 import itertools
+import os
+
 
 from PIL import Image, ImageDraw
 
@@ -27,7 +29,6 @@ def usage():
 
 def resource(f):
     return os.path.join(RESOURCE_DIR, f)
-
 
 class Splat():
     def __init__(self, color, radius):
@@ -71,7 +72,7 @@ class Map():
         'speedpadblue': (115, 115, 255),
         'portal': (202, 192, 0),
         'bluespawn': (0, 0, 155),
-        'redspawn': (155, 0, 0)
+        'redspawn': (155, 0, 0),
     }
     coord_map = {colormap['speedpad']: (0, 0, speedpad),
                  colormap['speedpadred']: (0, 0, speedpad_red),
@@ -89,7 +90,8 @@ class Map():
                  colormap['redendzone']: (5, 1, None),
                  colormap['redspawn']: (6, 2, None),
                  colormap['bluespawn']: (6, 3, None),
-                 colormap['tile']: (2, 2, None)}
+                 colormap['tile']: (2, 2, None),
+                 }
 
     # Directions are N,S,E,W
     wall_dirs = {(True, True, True, True): (4, 4),
@@ -315,6 +317,129 @@ class Map():
         self._preview.save(temp, 'PNG')
         return temp
 
+def preview45(png_path, json_path):
+    data = json.load(open(json_path))
+    png = Image.open(png_path)
+    # PIL Initialization
+    print "Current directory: ", os.getcwd()
+    sprite_list = os.listdir("./sprites/")
+    rgb_png = png.convert('RGB')
+    WIDTH, HEIGHT = png.size
+    img = Image.new("RGB", (WIDTH*40,HEIGHT*40), "white")
+    pixels = rgb_png.load()
+    # Variables / Constants
+    map = {}
+    sprites = {}
+    WALLS = ["45", "135", "225", "315", "wall"]
+    fails = 0
+    # Remove Thumbs Database which is added when listdir is called
+    if 'Thumbs.db' in sprite_list:
+            sprite_list.remove('Thumbs.db')
+     
+    # Create Dictionary w/ Sprite names as keys and their respective image objects as values
+    for pic in sprite_list:
+            sprites[pic] = Image.open("sprites/"+pic)
+     
+    def adj_walls(x, y, paste):
+            """Find adjacent walls to a wall when given a coordinate in image and wall type.
+            Returns wall type and string of adjacent walls for correct sprite."""
+            # Dictionary of walls which correspond to a direction
+            corr_adj = {
+                    "U": [(128, 112, 64), (128, 64, 112), (120, 120, 120)],
+                    "R": [(128, 112, 64), (64, 128, 80), (120, 120, 120)],
+                    "D": [(64, 128, 80), (64, 80, 128), (120, 120, 120)],
+                    "L": [(64, 80, 128), (128, 64, 112), (120, 120, 120)]
+            }
+            adj = paste
+            # If within boundaries
+                    # If wall dir corresponds
+                            # Exclude wall type duplicates - Experimental 50% Success at catching odd 45s
+                                    # Add dir string
+            if y != 0:
+                    if pixels[x,y-1] in corr_adj["U"]:
+                            if ('315' and '45') not in adj:
+                                    adj += "U"
+            if x != WIDTH-1:
+                    if pixels[x+1,y] in corr_adj["R"]:
+                            if '135' not in adj:
+                                    adj += "R"
+            if y != HEIGHT-1:
+                    if pixels[x,y+1] in corr_adj["D"]:
+                            if '135' not in adj:
+                                    adj += "D"
+            if x != 0:
+                    if pixels[x-1,y] in corr_adj["L"]:
+                            if '225' and '315' not in adj:
+                                    adj += "L"
+            return adj
+    # Key of rgb values which correspond to correct sprite
+    rgbs = {
+            (0, 0, 0): "black",
+            (120, 120, 120): "wall",
+            (55, 55, 55): "spike",
+            (255, 0, 0): "redflag",
+            (0, 0, 255): "blueflag",
+            (128, 128, 0): "yellowflag",
+            (212, 212, 212): "floor",
+            (0, 117, 0): "gate",
+            (185, 122, 87): "button",
+            (0, 255, 0): "topspeed",
+            (255, 255, 0): "boost",
+            (255, 128, 0): "bomb",
+            (220, 186, 186): "red_speed_tile",
+            (187, 184, 221): "blue_speed_tile",
+            (202, 192, 0): "portaloff",
+            (155, 0,  0): "redball",
+            (0, 0, 155): "blueball",
+            (255, 115, 115): "red_boost",
+            (115, 115, 255): "blue_boost",
+            (185, 0, 0): "red_endzone",
+            (25, 0, 148): "blue_endzone",
+            (128, 112, 64): "45",
+            (64, 128, 80): "135",
+            (64, 80, 128): "225",
+            (128, 64, 112): "315"
+    }
+    # Create dictionary of each point in rgb as key and what rgb value as value
+    for w in range(WIDTH):
+            for h in range(HEIGHT):
+                    map[(w,h)] = rgbs[pixels[w,h]]
+     
+    # Determine base sprite for coordinate from its value in map.
+    # If sprite is gate replace if default state of red, blue, or on.
+    # If sprite is a portal replace w/ active portal if destination.
+    # If sprite is wall find corresponding sprite for adjacent walls.
+    # Paste sprite onto new image. Exception for odd 45s.
+    for item in map:
+            paste = map[item]
+            if paste == 'gate':
+                    cord_key = "%d,%d" % (item[0], item[1])
+                    if cord_key in data['fields']:
+                            if data['fields'][cord_key]['defaultState'] != 'off':
+                                    paste = data['fields'][cord_key]['defaultState']+"_gate"
+            if paste == 'portaloff':
+                    cord_key = "%d,%d" % (item[0], item[1])
+                    try:
+                            if "destination" in data['portals'][cord_key]:
+                                    paste = "portal"
+                    except KeyError:
+                            pass
+            if paste in WALLS:
+                    paste = adj_walls(item[0], item[1], paste)
+            if paste+'.png' in sprites:    
+                    img.paste(sprites[paste+'.png'],(item[0]*40,item[1]*40))
+            else:
+                    fails += 1
+     
+    # Add all marsballs specified in json
+    if 'marsballs' in data:
+            for mars in range(len(data['marsballs'])):
+                    img.paste(sprites['marsball.png'],(data['marsballs'][mars]['x']*40, data['marsballs'][mars]['y']*40))
+     
+    # SAVE AND DISPLAY REPLACE WITH SOME_BOT FUNCTIONALITIES
+    temp = cStringIO.StringIO()
+    img.save(temp, "png")
+    return temp
 
 def main():
     if len(sys.argv) < 3:
