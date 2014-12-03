@@ -351,7 +351,7 @@ def show_map(mapid):
 @app.route('/delete/<int:mapid>')
 def delete_map(mapid):
     delete_map_from_db(mapid, g.email)
-    return index()
+    return redirect(url_for('index'))
 
 def get_json_by_id(mapid):
     '''
@@ -529,13 +529,14 @@ def search():
     maps_data = get_data_from_maps(maps)
 
     if standalone:
-        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=(pages), pages=pages, current_page=page)
+        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=(pages), pages=pages, current_page=page, query=query)
         return jsonify(success=True, html=data)
     else:
-        return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page)
+        return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page, query=query)
 
-def url_for_other_page(page):
+def url_for_other_page(page, query=None):
     args = request.view_args.copy()
     args['page'] = page
+    args['query'] = query
     return url_for(request.endpoint, **args)
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
