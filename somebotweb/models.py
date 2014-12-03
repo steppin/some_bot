@@ -9,7 +9,7 @@ class User(db.Model):
     __tablename__ = 'users'  # 'user' is special in postgres
     id = db.Column('id', db.Integer, primary_key=True)
     # TODO: Reconsider using Text and instead use String?  Probably some performance differences and ability to index blah blah blah
-    username = db.Column(db.Text)
+    username = db.Column(db.Text, unique=True)
     email = db.Column(db.Text)
 
     def __init__(self, username, email):
@@ -36,14 +36,16 @@ class Comment(db.Model):
     id = db.Column('id', db.Integer, primary_key=True)
     mapid = db.Column(db.Integer, db.ForeignKey('map.id'))
     userid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    username = db.Column(db.Text)
     text = db.Column(db.Text)
     time = db.Column(db.DateTime, default=datetime.datetime.utcnow)
 
-    def __init__(self, mapid, userid, text):
+    def __init__(self, mapid, userid, username, text):
         self.mapid = mapid
         self.userid = userid
+        self.username = username
         self.text = text
-
+        
 class Map(db.Model):
     # TODO: package instead of module
     # TODO: nicer docstrings

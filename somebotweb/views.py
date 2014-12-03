@@ -3,15 +3,42 @@ import time
 import requests
 import simplejson as json
 from functools import wraps
+import datetime
 
 from . import app, db, google
 from .models import User, Map, Comment
 from PIL import Image, ImageOps
-from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
+from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash, render_template_string
 from werkzeug import secure_filename
 from sqlalchemy import or_
 
 import previewer
+
+
+@app.template_filter()
+def timesince(dt, default="just now"):
+    """
+    Shamelessly stolen from flask's snippets
+    Returns string representing "time since" e.g.
+    3 days ago, 5 hours ago etc.
+    """
+
+    now = datetime.datetime.utcnow()
+    diff = now - dt
+    
+    periods = (
+        (diff.days / 365, "year", "years"),
+        (diff.days / 30, "month", "months"),
+        (diff.days / 7, "week", "weeks"),
+        (diff.days, "day", "days"),
+        (diff.seconds / 3600, "hour", "hours"),
+        (diff.seconds / 60, "minute", "minutes"),
+        (diff.seconds, "second", "seconds"),
+    )
+    for period, singular, plural in periods:        
+        if period:
+            return "%d %s" % (period, singular if period == 1 else plural)
+    return default
 
 @app.before_request
 def lookup_current_user():
@@ -20,6 +47,7 @@ def lookup_current_user():
         g.user = session['google_oauth']
         g.email = session['email']
         g.userid = session['id']
+        g.username = get_user_from_db(userid=g.userid).username
 
 # TODO: probably no point in having separate templates for each error here...
 @app.errorhandler(404)
@@ -54,6 +82,7 @@ def delete_map_from_db(mapid, email):
         if currentuser == user.id and map_.userid == user.id:
             print "Deleting map", mapid
             Map.query.filter_by(id=mapid).delete()
+            Comment.query.filter_by(mapid=mapid).delete()
             db.session.commit()
 
 
@@ -259,6 +288,13 @@ def paginate(page, page_size, total_pages):
         return range(page-page_size/2+1, min(page+page_size/2+2, total_pages))
     '''
 
+@app.route("/profile")
+@google.authorized_handler
+def profile(resp):
+    if request.args.get("username"):
+        update_user(userid=g.userid, username=request.args.get("username"))
+    return render_template("profile.html", username=g.get("username", "Enter a username"))
+
 @app.route('/mymaps', methods=['GET', 'POST'])
 @google.authorized_handler
 def listmaps(resp):
@@ -292,6 +328,16 @@ def logout():
     session.pop('google_oauth', None)
     return redirect(url_for('index'))
 
+def update_user(userid, username):
+    print "Updating user...", userid, username
+    if User.query.filter_by(username=username).count() == 0:
+        user = User.query.filter_by(id=userid).first()
+        user.username = username
+        db.session.merge(user)
+        db.session.commit()
+        return True
+    return False
+
 def add_user_to_db(email):
     u = User(email=email, username=None)
     db.session.add(u)
@@ -303,7 +349,7 @@ def get_user_from_db(email=None, userid=None):
     if email:
         return User.query.filter_by(email=email).first()
     else:
-        return User.query.filter_by(userid=userid).first()
+        return User.query.filter_by(id=userid).first()
 
 @app.route('/login/authorized')
 @google.authorized_handler
@@ -346,7 +392,7 @@ def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
-    return render_template('showmap.html', map=get_json_by_id(mapid),userid=g.get('userid', -1))
+    return render_template('showmap.html', map=get_json_by_id(mapid), userid=g.get('userid', -1), comments=get_comments(mapid))
 
 @app.route('/delete/<int:mapid>')
 def delete_map(mapid):
@@ -370,19 +416,31 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+def get_comments(mapid):
+    comments = Comment.query.filter_by(mapid=mapid).order_by('time desc').all()
+    return comments
+
+def render_comments(mapid):
+    comments = get_comments(mapid)
+    template = '''
+    {% for comment in comments %}
+        <li class="list-group-item" style="word-break: break-all;">{{comment.time|timesince}}&nbsp;<b>{{ comment.username }}</b> - {{comment.text}}</li>
+    {% endfor %}'''
+    return render_template_string(template, comments=comments)
+
 @app.route("/comment", methods=['GET', 'POST'])
 @login_required
 def insert_comment():
     text = request.args.get("text", "")
-    print "Got a comment!", text
     if text and g.get('userid', None):
         userid = g.get("userid", None)
         mapid = request.args.get("mapid", -1)
+        username = g.get('username')
         print "New comment: ", mapid, userid, text
-        c = Comment(mapid, userid, text)
+        c = Comment(mapid, userid, username, text)
         db.session.add(c)
         db.session.commit()
-    return jsonify({})
+    return jsonify({'comments':render_comments(mapid)})
 
 
 @app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
