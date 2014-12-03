@@ -74,6 +74,8 @@ h3, h2 {
     background-color: #000;
 }
 
+
+
 .map .hide-til-hover {
     display: none;
 }
@@ -82,5 +84,8 @@ h3, h2 {
 }
 
 .voted {
+  color:#d43f3a;
+}
+.newcomment {
   color:#d43f3a;
 }

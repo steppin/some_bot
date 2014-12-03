@@ -51,12 +51,20 @@
         {% for map in maps %}
             <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
-                    {% if user %}
-                    <a class="pull-left vote " mapid='{{map.mapid}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up hide-til-hover {{ has_voted( map.mapid, user.id) }}"></span></a>
-                    {% endif %}
                     {% if user.id == map.userid %}
-                         <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove pull-right"></span></a>
+                         <div class="pull-left">
+                         <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove"></span></a>
+                         </div>
                     {% endif %}
+                    <div class="pull-right">
+                    {% if user %}
+                        {% if user.id == map.userid %}
+                             {% if map.newcomments == 1%}
+                                <span class="glyphicon glyphicon-comment newcomment"></span>
+                             {% endif %}
+                         {% endif %}
+                    <a class="vote " mapid='{{map.mapid}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.mapid, user.id) }}"></span></a>{% endif %}<span class="map_votes">{{ map.votes }}</span></div>
+
                     <h2 class="mapname one-line"><a href="{{ map.mapurl }}" class="searchable">{{ map.mapname }}</a></h2>
                     <a class="img_helper" href="{{ map.mapurl }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="{{ map.thumburl }}"></a>
                      <div class="caption">
@@ -69,7 +77,6 @@
                 </div>
              </div>
         {% endfor %}
-    }
 {% if not standalone %}
         </div>
 {% endif -%}
@@ -160,9 +167,14 @@
         }).done(function(data) {
             if(data.vote_status == true) {
                 element.children().addClass('voted');
+                new_count = parseInt(element.siblings().text())+1;
+                element.siblings(".map_votes").text(new_count);
             }
             else {
                 element.children().removeClass('voted');
+                new_count = parseInt(element.siblings().text())-1;
+                element.siblings(".map_votes").text(new_count);
+
             }
         });
     });

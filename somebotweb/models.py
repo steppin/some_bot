@@ -57,6 +57,12 @@ class Comment(db.Model):
         self.username = username
         self.text = text
 
+    def alert_map(self):
+        m = Map.query.filter_by(id=self.mapid).first()
+        m.newcomments = 1
+        db.session.add(m)
+        db.session.commit()
+
 class Map(db.Model):
     # TODO: package instead of module
     # TODO: nicer docstrings
@@ -80,6 +86,7 @@ class Map(db.Model):
     status = db.Column(db.Text)
     userid = db.Column(db.Integer, db.ForeignKey('users.id'))
     votes = db.Column(db.Integer, default=0)
+    newcomments = db.Column(db.Integer, default=0)
 
     def __init__(self, mapname, author, description, userid=-1, status=None, upload_time=None):
         self.mapname = mapname
@@ -123,6 +130,8 @@ class Map(db.Model):
             "pngdownload": u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             "jsondownload": u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
             "userid": self.userid,
+            "votes": self.votes,
+            "newcomments": self.newcomments
             }
         return map_data
 
@@ -151,6 +160,9 @@ class Map(db.Model):
             return "#d43f3a"
         else:
             return "#428bca"
+
+    def clear_comment(self):
+        self.newcomments = 0
 
 db.Index('mapname_idx', db.func.lower(Map.mapname))
 db.Index('mapname_trgm_idx', Map.mapname, postgresql_ops={'mapname': 'gist_trgm_ops'}, postgresql_using="gist")

@@ -350,7 +350,6 @@ def index():
         page = 1
     maps, pages = recent_maps(page=(page-1))
     user = get_user_from_db(userid=g.get('userid'))
-    print user, user.username
     return render_template('showmaps.html', maps=get_data_from_maps(maps), user=user, paginate=(pages), pages=pages, current_page=page, active_page='index')
 
 @app.route('/login')
@@ -429,6 +428,11 @@ def show_map(mapid):
     user = {}
     if g.get("userid") > 0:
         user = get_user_from_db(userid=g.get("userid"))
+        m = Map.query.filter_by(id=mapid).first()
+        if m.userid == user.id:
+            m.newcomments = 0
+            db.session.add(m)
+            db.session.commit()
     return render_template('showmap.html', user=user, map=get_json_by_id(mapid), comments=get_comments(mapid))
 
 @app.route('/delete/<int:mapid>')
@@ -475,10 +479,10 @@ def insert_comment():
         username = g.get('username')
         print "New comment: ", mapid, userid, text
         c = Comment(mapid, userid, username, text)
+        c.alert_map()
         db.session.add(c)
         db.session.commit()
     return jsonify({'comments':render_comments(mapid)})
-
 
 @app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
 @app.route("/maptest/<int:mapid>/", defaults={'zone': 'us'})

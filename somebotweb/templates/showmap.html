@@ -11,8 +11,19 @@
     <div class="map" id="{{ map.mapid }}">
         <div class="thumbnail">
             {% if user.id == map.userid %}
-                 <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove pull-right" aria-hidden="true"></span></a>
+                <div class="pull-left">
+                     <a href="/delete/{{map.mapid}}"><span class="glyphicon glyphicon-remove"></span></a>
+                </div>
             {% endif %}
+                <div class="pull-right">
+                {% if user %}
+                    <a class="vote " mapid='{{map.mapid}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.mapid, user.id) }}"></span></a>
+                {% endif %}
+                    <span class="map_votes">{{ map.votes }}</span>
+                </div>
+
+
+
             <h2 class='searchable'>{{ map.mapname }}</h2>
             <div class="row-fluid">
             <img onclick="document.location.href = '{{ map.previewurl }}'" src="{{ map.previewurl }}" style="max-height:500px;">
@@ -67,5 +78,26 @@ $(document).ready(function() {
     });
 });
 </script>
+    <script>
+    $(".vote").click(function(event) {
+        event.preventDefault();
+        element = $(this);
+        $.ajax({
+            url:"/vote",
+            data:{"userid":$(this).attr("userid"), "mapid":$(this).attr("mapid")}
+        }).done(function(data) {
+            if(data.vote_status == true) {
+                element.children().addClass('voted');
+                new_count = parseInt(element.siblings().text())+1;
+                element.siblings(".map_votes").text(new_count);
+            }
+            else {
+                element.children().removeClass('voted');
+                new_count = parseInt(element.siblings().text())-1;
+                element.siblings(".map_votes").text(new_count);
 
+            }
+        });
+    });
+    </script>
 {% endblock %}
