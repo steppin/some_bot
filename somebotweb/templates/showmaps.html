@@ -51,8 +51,11 @@
         {% for map in maps %}
             <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
+                    {% if user %}
+                    <a class="pull-left vote " mapid='{{map.mapid}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up hide-til-hover {{ has_voted( map.mapid, user.id) }}"></span></a>
+                    {% endif %}
                     {% if user.id == map.userid %}
-                         <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove pull-right" aria-hidden="true"></span></a>
+                         <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove pull-right"></span></a>
                     {% endif %}
                     <h2 class="mapname one-line"><a href="{{ map.mapurl }}" class="searchable">{{ map.mapname }}</a></h2>
                     <a class="img_helper" href="{{ map.mapurl }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="{{ map.thumburl }}"></a>
@@ -147,6 +150,25 @@
             };
             var mapupload = new Dropzone("#mapupload");
     </script>
+    <script>
+    $(".vote").click(function(event) {
+        event.preventDefault();
+        element = $(this);
+        $.ajax({
+            url:"/vote",
+            data:{"userid":$(this).attr("userid"), "mapid":$(this).attr("mapid")}
+        }).done(function(data) {
+            if(data.vote_status == true) {
+                element.children().addClass('voted');
+            }
+            else {
+                element.children().removeClass('voted');
+            }
+        });
+    });
+    </script>
+
+
 {% endif -%}
 {% endblock %}
 {% block content_scripts %}

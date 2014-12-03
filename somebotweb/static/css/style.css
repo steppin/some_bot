@@ -80,3 +80,7 @@ h3, h2 {
 .map:hover .hide-til-hover {
     display: inline;
 }
+
+.voted {
+  color:#d43f3a;
+}

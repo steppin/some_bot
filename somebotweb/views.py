@@ -47,7 +47,8 @@ def lookup_current_user():
         g.user = session['google_oauth']
         g.email = session['email']
         g.userid = session['id']
-        g.username = get_user_from_db(userid=g.userid).username
+        user = get_user_from_db(userid=g.userid)
+        g.username = user.username
 
 # TODO: probably no point in having separate templates for each error here...
 @app.errorhandler(404)
@@ -321,6 +322,20 @@ def listmaps(resp):
     test_servers = config.TEST_SERVERS
     return render_template('showmaps.html', profile=True,  user=user, maps=get_data_from_maps(maps), textures=textures, servers=test_servers)
 
+@app.route("/vote")
+@google.authorized_handler
+def vote(resp):
+    mapid = request.args.get("mapid", -1)
+    userid = request.args.get("userid", -1)
+    if userid > 0 and mapid > 0:
+        m = Map.query.filter_by(id=mapid).first()
+        vote_status = m.vote(userid)
+        print vote_status
+        return jsonify(vote_status=vote_status)
+    else:
+        return jsonify(vote_status=False)
+
+
 @app.route('/', methods=['GET'])
 def index():
     '''
@@ -335,6 +350,7 @@ def index():
         page = 1
     maps, pages = recent_maps(page=(page-1))
     user = get_user_from_db(userid=g.get('userid'))
+    print user, user.username
     return render_template('showmaps.html', maps=get_data_from_maps(maps), user=user, paginate=(pages), pages=pages, current_page=page, active_page='index')
 
 @app.route('/login')
@@ -410,7 +426,10 @@ def show_map(mapid):
     '''
     Show a single map given by mapid
     '''
-    return render_template('showmap.html', map=get_json_by_id(mapid), userid=g.get('userid', -1), comments=get_comments(mapid))
+    user = {}
+    if g.get("userid") > 0:
+        user = get_user_from_db(userid=g.get("userid"))
+    return render_template('showmap.html', user=user, map=get_json_by_id(mapid), comments=get_comments(mapid))
 
 @app.route('/delete/<int:mapid>')
 def delete_map(mapid):
@@ -640,3 +659,11 @@ def url_for_other_page(page, query=None):
     args['query'] = query
     return url_for(request.endpoint, **args)
 app.jinja_env.globals['url_for_other_page'] = url_for_other_page
+
+def has_voted(mapid, userid):
+    m = Map.query.filter_by(id=mapid).first().has_voted(userid)
+    if m:
+        return "voted"
+    else:
+        return ""
+app.jinja_env.globals['has_voted'] = has_voted
