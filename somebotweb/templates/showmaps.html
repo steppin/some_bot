@@ -51,6 +51,9 @@
         {% for map in maps %}
             <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
                 <div class="thumbnail">
+                    {% if user.id == map.userid %}
+                         <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove pull-right" aria-hidden="true"></span></a>
+                    {% endif %}
                     <h2 class="mapname one-line"><a href="{{ map.mapurl }}" class="searchable">{{ map.mapname }}</a></h2>
                     <a class="img_helper" href="{{ map.mapurl }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="{{ map.thumburl }}"></a>
                      <div class="caption">

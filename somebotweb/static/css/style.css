@@ -73,3 +73,10 @@ h3, h2 {
 .inverse-dropdown>li>a:hover>.divider {
     background-color: #000;
 }
+
+.map .hide-til-hover {
+    display: none;
+}
+.map:hover .hide-til-hover {
+    display: inline;
+}

@@ -10,10 +10,10 @@
 <div id="mapdiv">
     <div class="map" id="{{ map.mapid }}">
         <div class="thumbnail">
-            <h2 class='searchable'>{{ map.mapname }}</h2>
-            {% if userid == map.userid %}
-            <a href="/delete/{{map.mapid}}"><span class="glyphicon glyphicon-remove pull-right" aria-hidden="true"></span></a>
+            {% if user.id == map.userid %}
+                 <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove pull-right" aria-hidden="true"></span></a>
             {% endif %}
+            <h2 class='searchable'>{{ map.mapname }}</h2>
             <div class="row-fluid">
             <img onclick="document.location.href = '{{ map.previewurl }}'" src="{{ map.previewurl }}" style="max-height:500px;">
             </div>
