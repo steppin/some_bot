@@ -2,9 +2,10 @@ import os
 import time
 import requests
 import simplejson as json
+from functools import wraps
 
 from . import app, db, google
-from .models import User, Map
+from .models import User, Map, Comment
 from PIL import Image, ImageOps
 from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
 from werkzeug import secure_filename
@@ -128,9 +129,8 @@ def generate_preview(mapid):
     '''
     layout = os.path.join(app.config['UPLOAD_DIR'], mapid + '.png')
     logic = os.path.join(app.config['UPLOAD_DIR'], mapid + '.json')
-    #map_ = previewer.Map(layout, logic)
-    #preview = map_.preview()
-    preview = previewer.preview45(layout, logic)
+    map_ = previewer.plot(layout, logic)
+    preview = map_.draw()
     with open(os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png'), 'w') as f:
         f.write(preview.getvalue())
 
@@ -362,6 +362,28 @@ def get_json_by_id(mapid):
     m = Map.query.get_or_404(mapid)
     return m.get_json()
 
+def login_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if g.user is None:
+            return redirect(url_for('login', next=request.url))
+        return f(*args, **kwargs)
+    return decorated_function
+
+@app.route("/comment", methods=['GET', 'POST'])
+@login_required
+def insert_comment():
+    text = request.args.get("text", "")
+    print "Got a comment!", text
+    if text and g.get('userid', None):
+        userid = g.get("userid", None)
+        mapid = request.args.get("mapid", -1)
+        print "New comment: ", mapid, userid, text
+        c = Comment(mapid, userid, text)
+        db.session.add(c)
+        db.session.commit()
+    return jsonify({})
+
 
 @app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
 @app.route("/maptest/<int:mapid>/<zone>")
@@ -498,6 +520,7 @@ def get_data_from_maps(maps):
     '''
     for m in maps:
         yield m.get_json()
+
 
 
 @app.route("/search")
