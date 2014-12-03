@@ -1,4 +1,5 @@
 import time
+import datetime
 
 from flask import url_for
 
@@ -10,7 +11,6 @@ class User(db.Model):
     # TODO: Reconsider using Text and instead use String?  Probably some performance differences and ability to index blah blah blah
     username = db.Column(db.Text)
     email = db.Column(db.Text)
-    maps = db.relationship("Map", backref="user", lazy="dynamic")
 
     def __init__(self, username, email):
         self.username = username
@@ -30,6 +30,19 @@ class User(db.Model):
  
     def __repr__(self):
         return '<User %r>' % (self.name)
+
+class Comment(db.Model):
+    __tablename__ = 'comments'
+    id = db.Column('id', db.Integer, primary_key=True)
+    mapid = db.Column(db.Integer, db.ForeignKey('map.id'))
+    userid = db.Column(db.Integer, db.ForeignKey('users.id'))
+    text = db.Column(db.Text)
+    time = db.Column(db.DateTime, default=datetime.datetime.utcnow)
+
+    def __init__(self, mapid, userid, text):
+        self.mapid = mapid
+        self.userid = userid
+        self.text = text
 
 class Map(db.Model):
     # TODO: package instead of module

@@ -1,8 +1,14 @@
 {% extends "base.html" %}
+
+{% block content_scripts %}
+    {% include 'testselectscripts.html' %}
+{% endblock %}
+
+
 {% block content %}
 <div class="col-md-8 col-md-offset-2" style="padding-bottom:50px; padding-top:100px">
 <div id="mapdiv">
-    <div class="map" id="{{ mapid }}">
+    <div class="map" id="{{ map.mapid }}">
         <div class="thumbnail">
             <h2 class='searchable'>{{ map.mapname }}</h2>
             {% if userid == map.userid %}
@@ -24,10 +30,39 @@
         </div>
     </div>
 </div>
+<div id="comments" class="col-sm-8 col-sm-offset-2">
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <form id="add_comment">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="text" placeholder="Leave a comment">
+                    <span class="input-group-btn">
+                          <button class="btn btn-primary" type="button">Send</button>
+                    </span>
+                </div>
+            </form>
+        </div>
+        <ul class="list-group" id="commentLog" style="height: 250px; overflow: scroll;overflow-x: hidden;">
+            {% for comment in comments %}
+                <li class="list-group-item" style="word-break: break-all;">{{comment.time}}<b>{{ comment.userid }}</b> - {{comment.text}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
 </div>
 
+<script>
+$(document).ready(function() {
+    $('#add_comment').submit( function(event) {
+        event.preventDefault();
+        $.ajax({
+            url:"/comment",
+            data:{"text":$("#text").val(), "userid":'{{ userid }}', "mapid":'{{ map.mapid }}'}
+        }).done(function(data) {
+            $("#text").val('');
+        });
+    });
+});
+</script>
 
-{% endblock %}
-{% block content_scripts %}
-    {% include 'testselectscripts.html' %}
 {% endblock %}
