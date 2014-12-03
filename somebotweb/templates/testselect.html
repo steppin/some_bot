@@ -1,5 +1,9 @@
 <div class="btn-group">
-    <a href="{{url_for('test_map', mapid=map.mapid)}}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
+    {% if user %}
+    <a href="{{url_for('test_map', mapid=map.mapid, zone= user.test_server) }}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
+    {% else %}
+    <a href="{{url_for('test_map', mapid=map.mapid) }}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
+    {% endif %}
     <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
         <span class="caret"></span>
         <span class="sr-only">Toggle Dropdown</span>

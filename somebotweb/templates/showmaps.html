@@ -1,10 +1,51 @@
 {% if not standalone %}{% extends 'base.html' %}{% endif -%}
 
+
 {% block content %}
 {# ugh need to get rid of all this standalone branching. #}
 {% if not standalone %}
     <div class="col-md-9 col-md-offset-1" style="padding-bottom:50px; padding-top:100px">
 {% endif -%}
+
+{% if profile %}
+<div class="row" style="padding-bottom:50px;">
+   <div class="col-sm-4 col-sm-offset-4 col-xs-10 col-xs-offset-1">
+        <div class="panel panel-default">
+            <div class="panel-heading">
+                <form id="settings_form" method="POST" action="/mymaps">
+                    <label for="username">Display Name</label>
+                        <input type="text" id="username" class="form-control" name="username" placeholder="{{ user.username }}">
+                        <label for="texture_pack">Preferred Texture Pack</label>
+                        <select class="form-control" id="texture_pack" name="texture_pack">
+                            {% for texture in textures %}
+                                {% if user.texture_pack == texture %}
+                                    <option value="{{texture}}" selected>{{texture}}</option>
+                                {% else %}
+                                    <option value="{{texture}}">{{texture}}</option>
+                                {% endif %}   
+                            {% endfor %}
+                        </select>
+                        <label for="test_server">Preferred Test Server</label>
+                        <select class="form-control" id="test_server" name="test_server">
+                            {% for server, desc in servers.iteritems() %}
+                                {% if user.test_server == server %}
+                                    <option value="{{server}}" selected>{{ desc.get('desc') }}</option>
+                                {% else %}
+                                    <option value="{{server}}">{{ desc.get('desc') }}</option>
+                                {% endif %}
+                            {% endfor %}
+                        </select>
+                        <div class="text-center" style="padding-top:10px">
+                            <button class="btn btn-primary" type="submit">Save Changes</button>                    
+                        </div>
+                </form>
+
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+
     <div id="mapdiv">
         <div class="row maprow">
         {% for map in maps %}
@@ -22,6 +63,7 @@
                 </div>
              </div>
         {% endfor %}
+    }
 {% if not standalone %}
         </div>
 {% endif -%}

@@ -13,7 +13,7 @@ from werkzeug import secure_filename
 from sqlalchemy import or_
 
 import previewer
-
+import config
 
 @app.template_filter()
 def timesince(dt, default="just now"):
@@ -108,11 +108,22 @@ def add_map(layout, logic, userid=-1):
     being generated - some map previews can take a really long time to generate
     '''
     logic_data = json.loads(logic.read())
+
+    if userid > 0:
+        user = get_user_from_db(userid=userid)
+        author = user.username
+        texture_pack = user.texture_pack
+    else:
+        author = logic_data.get('info', {}).get('author', 'No author')
+        texture_pack = "Vanilla"
+
+
     mapname = logic_data.get('info', {}).get('name', 'No name')
-    author = logic_data.get('info', {}).get('author', 'No author')
     description = logic_data.get('info', {}).get('description', 'No description')
     pam = add_map_to_db(mapname, author, description, userid=userid)
     mapid = str(pam.id)
+
+
 
     layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
     layout.save(layoutpath)
@@ -121,7 +132,7 @@ def add_map(layout, logic, userid=-1):
     with open(logicpath, "wb") as f:
         f.write( json.dumps(logic_data, logicpath))
 
-    generate_preview(mapid)
+    generate_preview(mapid, texture_pack)
     generate_thumb(mapid)
 
     # TODO check if map actually was inserted correctly
@@ -146,7 +157,7 @@ def increment_test(mapid):
     db.session.commit()
 
 
-def generate_preview(mapid):
+def generate_preview(mapid, texture="Vanilla"):
     '''
     INPUT: mapid
     OUTPUT: None
@@ -158,7 +169,7 @@ def generate_preview(mapid):
     '''
     layout = os.path.join(app.config['UPLOAD_DIR'], mapid + '.png')
     logic = os.path.join(app.config['UPLOAD_DIR'], mapid + '.json')
-    map_ = previewer.plot(layout, logic)
+    map_ = previewer.plot(layout, logic, texture)
     preview = map_.draw()
     with open(os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png'), 'w') as f:
         f.write(preview.getvalue())
@@ -288,19 +299,27 @@ def paginate(page, page_size, total_pages):
         return range(page-page_size/2+1, min(page+page_size/2+2, total_pages))
     '''
 
-@app.route("/profile")
-@google.authorized_handler
-def profile(resp):
-    if request.args.get("username"):
-        update_user(userid=g.userid, username=request.args.get("username"))
-    return render_template("profile.html", username=g.get("username", "Enter a username"))
-
 @app.route('/mymaps', methods=['GET', 'POST'])
 @google.authorized_handler
 def listmaps(resp):
-    user = User.query.filter_by(id=g.get('userid'))
+    user = User.query.filter_by(id=g.get('userid')).first()
+    if request.method == "POST":
+        username = request.form.get('username')
+        test_server = request.form.get('test_server')
+        texture_pack = request.form.get('texture_pack')
+        if username and username != user.username:
+            user.username = username
+        if test_server != user.test_server:
+            user.test_server = test_server
+        if texture_pack != user.texture_pack:
+            user.texture_pack = texture_pack
+        db.session.commit()
+
+    user = User.query.filter_by(id=g.get('userid')).first()
     maps = Map.query.filter_by(userid=g.get('userid')).order_by("upload_time desc").all()
-    return render_template('showmaps.html', maps=get_data_from_maps(maps))
+    textures = os.listdir(previewer.RESOURCE_DIR)
+    test_servers = config.TEST_SERVERS
+    return render_template('showmaps.html', profile=True,  user=user, maps=get_data_from_maps(maps), textures=textures, servers=test_servers)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -315,9 +334,8 @@ def index():
     except:
         page = 1
     maps, pages = recent_maps(page=(page-1))
-
-    return render_template('showmaps.html', maps=get_data_from_maps(maps), paginate=(pages), pages=pages, current_page=page, active_page='index')
-
+    user = get_user_from_db(userid=g.get('userid'))
+    return render_template('showmaps.html', maps=get_data_from_maps(maps), user=user, paginate=(pages), pages=pages, current_page=page, active_page='index')
 
 @app.route('/login')
 def login():
@@ -328,7 +346,7 @@ def logout():
     session.pop('google_oauth', None)
     return redirect(url_for('index'))
 
-def update_user(userid, username):
+def update_username(userid, username):
     print "Updating user...", userid, username
     if User.query.filter_by(username=username).count() == 0:
         user = User.query.filter_by(id=userid).first()
@@ -444,6 +462,7 @@ def insert_comment():
 
 
 @app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
+@app.route("/maptest/<int:mapid>/", defaults={'zone': 'us'})
 @app.route("/maptest/<int:mapid>/<zone>")
 def test_map(mapid, zone):
     if mapid:

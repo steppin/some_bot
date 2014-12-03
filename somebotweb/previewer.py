@@ -50,7 +50,7 @@ rgbs = {
     (128, 64, 112): "315"
 }
 
-def resource(filepath=None, texture="vanilla", sprite_dir=False):
+def resource(filepath=None, texture="Vanilla", sprite_dir=False):
     if sprite_dir:
         sprite_path = os.path.join(RESOURCE_DIR, texture, "sprites")
         if not os.path.isdir(sprite_path):
@@ -58,7 +58,12 @@ def resource(filepath=None, texture="vanilla", sprite_dir=False):
         return sprite_path
     return os.path.join(RESOURCE_DIR, texture, filepath)
 
-def dissect(texture='vanilla', write_dir=True):
+def init_textures():
+    for texture in os.listdir(RESOURCE_DIR):
+        path = os.path.join(RESOURCE_DIR, texture)
+        dissect(path)
+
+def dissect(texture='Vanilla', write_dir=True):
     '''Input tiles.png of texture pack and return dictionary of PIL objects of sprites
     w/ appropriate names
     DOES NOT UTILIZE V2 GRAPHICS AND ALL OF TEXTURE PACK'''
@@ -164,9 +169,9 @@ def dissect(texture='vanilla', write_dir=True):
         return sprites
 
 class plot():
-    def __init__(self, pngpath, jsonpath):
-        sprite_list = os.listdir(resource(sprite_dir=True))
-        self.sprites = {pic: Image.open(os.path.join(resource(sprite_dir=True), pic)) for pic in sprite_list}
+    def __init__(self, pngpath, jsonpath, texture="Vanilla"):
+        sprite_list = os.listdir(resource(texture=texture, sprite_dir=True))
+        self.sprites = {pic: Image.open(os.path.join(resource(texture=texture, sprite_dir=True), pic)) for pic in sprite_list}
 
         if 'http' in pngpath:
             png_handle = cStringIO.StringIO(urllib.urlopen(pngpath).read())

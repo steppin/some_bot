@@ -11,6 +11,8 @@ class User(db.Model):
     # TODO: Reconsider using Text and instead use String?  Probably some performance differences and ability to index blah blah blah
     username = db.Column(db.Text, unique=True)
     email = db.Column(db.Text)
+    texture_pack = db.Column(db.Text, default="vanilla")
+    test_server = db.Column(db.Text, default="us")
 
     def __init__(self, username, email):
         self.username = username
@@ -45,7 +47,7 @@ class Comment(db.Model):
         self.userid = userid
         self.username = username
         self.text = text
-        
+
 class Map(db.Model):
     # TODO: package instead of module
     # TODO: nicer docstrings
