@@ -42,8 +42,8 @@
 </div>
 </div>
 <div class="col-md-2">
-  <div class="thumbnail">
     {% if map.userid == user.id %}
+  <div class="thumbnail">
     <div class="btn-group-vertical">
     <div class="btn-group">
         <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
@@ -66,16 +66,16 @@
         {% else %}
             <a href="#" class="btn btn-primary btn-danger" id="feedback">Feedback Disallowed</a>
         {% endif %}
-    {% endif %}
     </div>
+    {% endif %}
     </div>
 </div>
 </div>
 
 {% if map.feedback_allowed %}
-<div id="comments" class="col-sm-8 col-sm-offset-2">
+<div id="comments" class="col-sm-8 col-sm-offset-2" style="padding-bottom:50px;">
 {% else %}
-<div id="comments" class="col-sm-8 col-sm-offset-2" hidden>
+<div id="comments" class="col-sm-8 col-sm-offset-2" style="padding-bottom:50px;" hidden>
 {% endif %}
 
     <div class="panel panel-default">
@@ -91,7 +91,7 @@
         </div>
         <ul class="list-group" id="commentLog" style="height: 250px; overflow: scroll;overflow-x: hidden;">
             {% for comment in comments %}
-                <li class="list-group-item" style="word-break: break-all;">{{comment.time|timesince}}&nbsp;<b>{{ comment.username }}</b> - {{comment.text}}</li>
+                <li class="list-group-item" style="word-break: break-all;">{{comment.time|timesince}}&nbsp;<b>{{ comment.username }}</b> - {{ comment.text|urlize(40)}}</li>
             {% endfor %}
         </ul>
     </div>
@@ -102,15 +102,17 @@
 $(document).ready(function() {
     $('#add_comment').submit( function(event) {
         event.preventDefault();
-        $.ajax({
-            url:"/comment",
-            data:{"text":$("#text").val(), "userid":'{{ userid }}', "mapid":'{{ map.id }}'}
-        }).done(function(data) {
-            $("#text").val('');
-            $("li.list-group-item").remove();
-            console.log(comments);
-            $("ul.list-group").append(data['comments']);
-        });
+        if($("#text").val() != "") {
+            $.ajax({
+                url:"/comment",
+                data:{"text":$("#text").val(), "userid":'{{ userid }}', "mapid":'{{ map.id }}'}
+            }).done(function(data) {
+                $("#text").val('');
+                $("li.list-group-item").remove();
+                console.log(comments);
+                $("ul.list-group").append(data['comments']);
+            });
+        }
     });
 });
 </script>

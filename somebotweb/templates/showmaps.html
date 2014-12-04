@@ -65,7 +65,7 @@
                     <a class="vote hide-til-hover" mapid='{{map.id}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.id, user.id) }}"></span></a>{% endif %}<span class="map_votes">{{ map.votes }}</span></div>
 
                     <h2 class="mapname one-line"><a href="/show/{{ map.id }}" class="searchable">{{ map.mapname }}</a></h2>
-                    <a class="img_helper" href="/show/{{ map.id }}" title="Uploaded: {{ map.upload_time|timesince }}"><img class="img_vertical" src="/static/thumbs/{{map.id}}.png"></a>
+                    <a class="img_helper" href="/show/{{ map.id }}" title="Uploaded: {{ map.upload_time|timesince }} ago"><img class="img_vertical" src="/static/thumbs/{{map.id}}.png"></a>
                      <div class="caption">
                         <h3 class="one-line">by: <a href="/a/{{map.author}}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
