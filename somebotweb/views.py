@@ -4,6 +4,8 @@ import requests
 import simplejson as json
 from functools import wraps
 import datetime
+import base64
+import cStringIO
 
 from . import app, db, google
 from .models import User, Map, Comment, Vote
@@ -48,7 +50,6 @@ def lookup_current_user():
         g.email = session['email']
         g.userid = session['id']
         user = get_user_from_db(userid=g.userid)
-        g.username = user.username
 
 # TODO: probably no point in having separate templates for each error here...
 @app.errorhandler(404)
@@ -117,23 +118,23 @@ def add_map(layout, logic, userid=-1):
     #TODO: Maybe make this asynchronous so the user doesn't wait on the map preview
     being generated - some map previews can take a really long time to generate
     '''
-    logic_data = json.loads(logic.read())
+    if type(logic) == type({}):
+        logic_data = logic
+    else:
+        logic_data = json.loads(logic.read())
 
     if userid > 0:
         user = get_user_from_db(userid=userid)
         author = user.username
         texture_pack = user.texture_pack
     else:
-        author = logic_data.get('info', {}).get('author', 'No author')
+        author = logic_data.get('info', {}).get('author', 'Anonymous')
         texture_pack = "Vanilla"
-
-
+        
     mapname = logic_data.get('info', {}).get('name', 'No name')
     description = logic_data.get('info', {}).get('description', 'No description')
     pam = add_map_to_db(mapname, author, description, userid=userid)
     mapid = str(pam.id)
-
-
 
     layoutpath = os.path.join(app.config['UPLOAD_DIR'], mapid+'.png')
     layout.save(layoutpath)
@@ -281,7 +282,7 @@ def upload_map():
                     layout = f
 
         if layout and logic:
-            mapid = add_map(layout, logic,userid=g.get('userid', -1))
+            mapid = add_map(layout, logic, userid=g.get('userid', -1))
             success = mapid >= 0
             if success:
                 if generate_test:
@@ -348,6 +349,47 @@ def listmaps(resp):
     textures = os.listdir(previewer.RESOURCE_DIR)
     test_servers = config.TEST_SERVERS
     return render_template('showmaps.html', profile=True,  user=user, maps=maps, textures=textures, servers=test_servers)
+
+@app.route("/editorsave", methods=['POST'])
+def save_from_editor():
+    if request.method == "POST":
+        logic = request.form.get("logic")
+        layout = request.form.get("layout")
+        if layout and logic:
+            logic = json.loads(logic)
+            layout = base64.b64decode(layout)
+            layout = Image.open(cStringIO.StringIO(layout))
+            add_map(layout, logic, g.get('userid', -1))
+            return jsonify({'message':True})
+        return jsonify({'message':False})
+    return jsonify({'message':False})
+    
+@app.route("/editor")
+def edit():
+    username = "Anonymous"
+    if g.get("userid", -1) > 0:
+        user = get_user_from_db(userid=g.userid)
+        username = user.username
+    return render_template("mapeditor.html", username=username)
+
+@app.route("/editortest", methods=['GET', 'POST'])
+def test_from_editor():
+    if request.method == "POST":
+        if g.userid > 0:
+            user = get_user_from_db(userid=g.userid)
+            test_server = user.test_server
+        else:
+            test_server = 'us'
+        test_server = app.config['TEST_SERVERS'][test_server]['url'] + 'testmap'   
+        layout = request.form.get("layout", None)
+        logic = request.form.get("logic", None)
+        file_data = {'logic':logic, 'layout':base64.b64decode(layout)}
+        r = requests.post(test_server, files=file_data)
+        return jsonify({'location':r.url})
+    
+@app.route("/editorstyle")
+def get_texture_pack():
+    return ('static', 'textures/tiles.png')
 
 @app.route("/vote")
 @google.authorized_handler
@@ -441,11 +483,12 @@ def authorized(resp):
     if email:
         user = User.query.filter_by(email=email).first()
         if not user:
-            user = add_user_to_db(email)
+            user = add_user_to_db(email=email)
         else:
-            user = get_user_from_db(email)
+            user = get_user_from_db(email=email)
         session['id'] = user.id
         session['email'] = user.email
+        session['username'] = user.username
 
     return redirect(url_for('index'))
 

@@ -1,0 +1,189 @@
+{% extends 'base.html' %}
+{% block content %}
+    <div id="texture_pack_url" url="{{ url_for('static', filename='tagpro-map-editor/default-skin-v2.png') }}" hidden></div>
+    <title>TagPro Map Editor</title>
+		<script src="{{ url_for('static', filename='tagpro-map-editor/generatepng.js') }}"></script>
+		<script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>
+		<script src="{{ url_for('static', filename='tagpro-map-editor/jquery-2.1.0.min.js') }}"></script>
+		<script src="{{ url_for('static', filename='tagpro-map-editor/jquery-ui-1.10.4.custom.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>
+
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/style.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/bootstrap.min.css') }}">
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/ui-lightness/jquery-ui-1.10.4.custom.min.css') }}">
+<div style="position:fixed;left:0;top:51px;bottom:0;width:320px;overflow-y:scroll;overflow-x:hidden;padding-top:10px;">
+    <div class="form-group">
+      <div class="btn-group btn-group-justified">
+        <div class="btn-group">
+          <button id='clear' class='btn btn-default' title="Clear map"><span class="glyphicon glyphicon-remove"></span> Clear</button>
+        </div>
+        <div class="btn-group">
+          <button id='save' class='btn btn-default' title="Save map to cache"><span class="glyphicon glyphicon-save"></span> Save</button>
+        </div>
+        <div class="btn-group" style="">
+          <button class='btn btn-default' id="test" title="Test map" style="border-top-right-radius:4px;border-bottom-right-radius:4px;" data-toggle="dropdown"><span class="glyphicon glyphicon-play"></span>Test</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="row">
+        <div class="col-xs-4">
+          <div id="undoRedo" class="btn-group btn-group-justified" role="toolbar">
+            <a id="undo" class="btn btn-default" title="Undo"><span class="glyphicon glyphicon-share-alt" style="-moz-transform: scale(-1, 1); -webkit-transform: scale(-1, 1); -o-transform: scale(-1, 1); -ms-transform: scale(-1, 1); transform: scale(-1, 1);"></span></a>
+            <a id="redo" class="btn btn-default" title="Redo"><span class="glyphicon glyphicon-share-alt"></span></a>
+          </div>
+        </div>
+
+        <div class="col-xs-4">
+          <div id="zoom" class="btn-group btn-group-justified" role="toolbar">
+            <a id="zoomOut" class="btn btn-default" title="Zoom out"><span class="glyphicon glyphicon-zoom-out"></span></a>
+            <a id="zoomIn" class="btn btn-default" title="Zoom in"><span class="glyphicon glyphicon-zoom-in"></span></a>
+          </div>
+        </div>
+
+        <div class="col-xs-4">
+          <button class="btn btn-default btn-block" title="Save map" data-target="#importExport" data-toggle="modal">
+            <span class="glyphicon glyphicon-save"></span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <div class="input-group">
+        <span class="input-group-addon">Map Size:</span>
+        <input type="number" class="form-control" placeholder="Width" id="resizeWidth">
+        <span class="input-group-addon">by</span>
+        <input type="number" class="form-control" placeholder="Height" id="resizeHeight">
+        <span class="input-group-btn">
+          <button id="resize" class="btn btn-default" title="Resize the map to the entered dimensions.">
+            <span class="glyphicon glyphicon-resize-full"></span>
+          </button>
+        </span>
+      </div>
+    </div>
+
+    <div class="form-group" style="margin-bottom: 5px;">
+      <div id="tools" role="toolbar">
+        <div class="btn-group btn-group-justified">
+          <a id="toolPencil" class="btn btn-default btn-sm" title="Pencil - paint a single pixel."><span class="glyphicon glyphicon-pencil"></span></a>
+
+          <a id="toolBrush" class="btn btn-default btn-sm" title="Brush - paint a 3x3 area."><span class="glyphicon glyphicon-th-large"></span></a>
+
+          <a id="toolLine" class="btn btn-default btn-sm" title="Line - click and drag to draw a line."><span class="glyphicon glyphicon-minus"></span></a>
+
+          <a id="toolRectFill" class="btn btn-default btn-sm" title="Filled rectangle - draw a filled rectangle"><span class="glyphicon glyphicon-stop"></span></a>
+
+          <a id="toolRectOutline" class="btn btn-default btn-sm" title="Outlined rectange - draw an outlined rectangle"><span class="glyphicon glyphicon-unchecked"></span></a>
+
+          <a id="toolCircleFill" class="btn btn-default btn-sm" title="Filled circle - draw a filled circle"><span class="glyphicon glyphicon-record"></span></a>
+
+          <a id="toolCircleOutline" class="btn btn-default btn-sm" title="Outlined circle - draw an outlined circle"><span class="glyphicon glyphicon-remove-circle"></span></a>
+
+          <a id="toolFill" class="btn btn-default btn-sm" title="Fill - fill an entire area"><span class="glyphicon glyphicon-tint"></span></a>
+
+          <a id="toolWire" class="btn btn-default btn-sm" title="Wire - select an emitter (buttons, portals) and then click on the receiver(s) (gates, bombs, portals) to complete the link"><span class="glyphicon glyphicon-wrench"></span></a>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <select id="symmetry" class="form-control">
+        <option selected>No Symmetry</option>
+        <option value="Horizontal">Horizontal Symmetry</option>
+        <option value="Vertical">Vertical Symmetry</option>
+        <option value="4-Way">4-Way Symmetry</option>
+        <option value="Rotational">Rotational Symmetry</option>
+      </select>
+    </div>
+
+    <div id="palette">
+    </div>
+  
+    <p><a href="https://github.com/PeterReid/tagpro-map-editor">Source</a></p>
+    </div>
+
+  <div style='position:fixed;top:51px;bottom:0;right:0;left:325px;overflow: scroll;white-space: nowrap;' id='map'>
+  </div>
+
+  <canvas width="200" height="200" id='importCanvas' style='display:none'></canvas>
+
+  <div class="modal fade" id="importExport" tabindex="-1" role="dialog" aria-labelledby="importExportLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title" id="importExportLabel">Import/Export Map</h4>
+        </div>
+
+        <div class="modal-body">
+          <p>To import a map, drag and drop its .png and .json files into their respective areas and then click Import.</p>
+          <p>To export a map, click Export and then click the PNG and JSON buttons to download the files.</p>
+          <div class="form-group">
+            <div class="row">
+              <div class="col-xs-6">
+                <a class="dropArea" draggable="true" id="pngDrop" download="map.png" href="#">PNG</a>
+              </div>
+              <div class="col-xs-6">
+                <a class="dropArea" draggable="true" id="jsonDrop" download="map.json" href="#">JSON</a>
+              </div>
+            </div>
+          </div>
+          <div class="form-group">
+            <div class="btn-group btn-group-justified">
+              <a id="import" class="btn btn-default" title="Import map"><span class="glyphicon glyphicon-import"></span> Import</a>
+              <a id="export" class="btn btn-default" title="Export map"><span class="glyphicon glyphicon-export"></span> Export</a>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="mapName">Map Name</label>
+            <input type="text" class="form-control" id="mapName" placeholder="Untitled">
+          </div>
+          <div class="form-group">
+            <label for="author">Author Name</label>
+            <input type="text" class="form-control" id="author" placeholder="{{ username }}">
+          </div>
+        </div>
+
+        <div class="modal-footer">
+
+          <button type="button" id="saveToJJ" class="btn btn-primary btn-success">Save to JJ</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal" id="closeModal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div id="resizeDialog" title="Resize" style='display:none'>
+    <table>
+      <tr>
+        <td></td>
+        <td style='text-align:center'>
+          <input type='checkbox' id='resizeAnchorTop'/>
+        </td>
+        <td></td>
+      </tr>
+      <tr>
+        <td><input type='checkbox' id='resizeAnchorLeft'/></td>
+        <td style='text-align:center'>
+          
+        </td>
+        <td><input type='checkbox' id='resizeAnchorRight'/></td>
+      </tr>
+      <tr>
+        <td></td>
+        <td style='text-align:center'>
+          <input type='checkbox' id='resizeAnchorBottom'/>
+        </td>
+        <td></td>
+      </tr>
+    </table>
+    <div>
+      Width: <input type='text' id='resizeWidthTo' style='width:4em' /> Height: <input type='text' id='resizeHeightTo' style='width:4em' />
+    </div>
+  </div>
+
+  <script type="text/javascript" src="{{ url_for('static', filename='tagpro-map-editor/map.js') }}"></script>
+
+{% endblock %}

@@ -33,7 +33,7 @@
                     {% include 'testselect.html' %}
                     <a href="/static/previews/{{map.id}}.png" class="btn btn-primary">Fullsize Preview</a>
                     <a href="/download?mapname={{map.mapname}}&type=png&mapid={{map.id}}" download="{{ map.mapname }}" class="btn btn-primary">png</a>
-                    <a href="/download?mapname={{mapname}}&type=json&mapid={{mapid}}" download="{{ map.mapname }}" class="btn btn-primary">json</a>
+                    <a href="/download?mapname={{map.mapname}}&type=json&mapid={{map.id}}" download="{{ map.mapname }}" class="btn btn-primary">json</a>
                     <a href="/editor/{{map.id}}"class="btn btn-primary">Remix this map</a>
                 </div>
             </div>
