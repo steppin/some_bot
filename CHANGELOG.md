@@ -1,6 +1,6 @@
-# H1 CHANGELOG December, 2014
+#H1 CHANGELOG December, 2014
 
-# H4 ADDITIONS
+#H6 ADDITIONS
 
 * Login functionality to database (email only used for uniqueness)
   * Uses google (need gmail account) to handle authentication
@@ -23,7 +23,7 @@
 * Added link to /r/tagpromapsharing
 
 
-# H4 BUG FIXES
+#H6 BUG FIXES
 * When searching, pagination now works properly (bringing you to page 2 with query, rather than new maps)
 * Altered the 'showmap' page - before the image link would take up too much space
 ..* The image link doesn't show, but clicking a map image will bring you to the full size preview
