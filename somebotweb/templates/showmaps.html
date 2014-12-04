@@ -6,7 +6,6 @@
 {% if not standalone %}
     <div class="col-md-9 col-md-offset-1" style="padding-bottom:50px; padding-top:100px">
 {% endif -%}
-
     {% if profile %}
     <div class="row" style="padding-bottom:50px;">
        <div class="col-sm-4 col-sm-offset-4 col-xs-10 col-xs-offset-1">
@@ -39,7 +38,6 @@
                                 <button class="btn btn-primary" type="submit">Save Changes</button>                    
                             </div>
                     </form>
-
                 </div>
             </div>
         </div>
@@ -49,13 +47,14 @@
     <div id="mapdiv">
         <div class="row maprow">
         {% for map in maps %}
-            <div class="col-lg-4 col-md-6 map" id="{{ map.id }}">
+            <div class="col-lg-4 col-md-6 map" id="map_{{ map.id }}">
                 <div class="thumbnail">
-                    {% if user.id == map.userid %}
                          <div class="pull-left">
-                         <a href="/delete/{{map.id}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove"></span></a>
+                            v{{map.version}}
+                            {% if user.id == map.userid %}
+                                <a class="delete_map hide-til-hover" mapid="{{map.id}}"><span class="glyphicon glyphicon-remove"></span></a>
+                            {% endif %}
                          </div>
-                    {% endif %}
                     <div class="pull-right">
                     {% if user %}
                         {% if user.id == map.userid %}
@@ -66,7 +65,7 @@
                     <a class="vote hide-til-hover" mapid='{{map.id}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.id, user.id) }}"></span></a>{% endif %}<span class="map_votes">{{ map.votes }}</span></div>
 
                     <h2 class="mapname one-line"><a href="/show/{{ map.id }}" class="searchable">{{ map.mapname }}</a></h2>
-                    <a class="img_helper" href="/show/{{ map.id }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="/static/thumbs/{{map.id}}.png"></a>
+                    <a class="img_helper" href="/show/{{ map.id }}" title="Uploaded: {{ map.upload_time|timesince }}"><img class="img_vertical" src="/static/thumbs/{{map.id}}.png"></a>
                      <div class="caption">
                         <h3 class="one-line">by: <a href="/a/{{map.author}}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
@@ -178,6 +177,22 @@
             }
         });
     });
+
+    $(".delete_map").click(function(event) {
+        event.preventDefault();
+        mapid = $(this).attr("mapid")
+        $.ajax({
+            url:"/delete",
+            data:{"mapid":mapid}
+        }).done(function(data) {
+            console.log(data);
+            if(data.delete_status == true) {
+
+                $("#map_"+mapid).fadeOut();
+            }
+        });
+    });
+
     </script>
 
 

@@ -10,7 +10,7 @@ from sqlalchemy.orm import relationship, backref
 class Vote(db.Model):
     __tablename__ = 'votes'
     id = db.Column('id', db.Integer, primary_key=True)
-    mapid = db.Column('mapid', db.ForeignKey('map.id'))
+    mapid = db.Column('mapid', db.ForeignKey('maps.id'))
     userid = db.Column('userid', db.ForeignKey('users.id'))
 
     def __init__(self, mapid, userid):
@@ -46,8 +46,9 @@ class User(db.Model):
 
 class Comment(db.Model):
     __tablename__ = 'comments'
+
     id = db.Column('id', db.Integer, primary_key=True)
-    mapid = db.Column(db.Integer, db.ForeignKey('map.id'))
+    mapid = db.Column(db.Integer, db.ForeignKey('maps.id'))
     userid = db.Column(db.Integer, db.ForeignKey('users.id'))
     username = db.Column(db.Text)
     text = db.Column(db.Text)
@@ -66,8 +67,7 @@ class Comment(db.Model):
         db.session.commit()
 
 class Map(db.Model):
-    # TODO: package instead of module
-    # TODO: nicer docstrings
+    __tablename__ = 'maps'
     '''
     The map schema
     To make a map, we need a mapname, and author, and a description
@@ -81,7 +81,7 @@ class Map(db.Model):
     mapname = db.Column(db.Text)
     author = db.Column(db.Text)
     description = db.Column(db.Text)
-    upload_time = db.Column(db.Float)
+    upload_time = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     # TODO: sql alchemdy doesn't have some date type?
     last_tested = db.Column(db.Float)
     times_tested = db.Column(db.Integer)
@@ -90,20 +90,42 @@ class Map(db.Model):
     votes = db.Column(db.Integer, default=0)
     newcomments = db.Column(db.Integer, default=0)
     feedback_allowed = db.Column(db.Integer, default=1)
-    is_primary_version = db.Column(db.Integer, default=0)
+    is_primary_version = db.Column(db.Integer, default=1)
     remixes = relationship("Map")
-    parent_id = db.Column(db.Integer, db.ForeignKey('map.id'))
-
+    parent_id = db.Column(db.Integer, db.ForeignKey('maps.id'))
+    version = db.Column(db.Integer, default=1)
 
     def __init__(self, mapname, author, description, userid=-1, status=None, upload_time=None):
         self.mapname = mapname
         self.author = author
         self.description = description
-        self.upload_time = upload_time or time.time()
         self.last_tested = 0
         self.times_tested = 0
         self.status = status
-        self.userid = userid
+        if userid > 0:
+            self.userid = userid
+            self.is_primary_version = 1
+        if(author != "Anonymous" and mapname != "Untitled" and userid>0):
+            query = Map.query.filter_by(mapname=mapname, author=author, userid=self.userid)
+            if query.count() > 0:
+                print query.all()
+                parent = query.order_by("upload_time desc").first()
+                print "There are previous versions of this"
+                print "Pv: ", parent.version
+                print "parent id: ", parent.parent_id
+
+                self.version = parent.version+1
+                parent.is_primary_version = 0
+                self.parent_id = parent.id
+
+            maps = query.all()
+            for m in maps:
+                if m.is_primary_version:
+                    m.is_primary_version = 0
+                    db.session.add(m)
+            if len(maps) > 0:
+                db.session.commit()
+            self.is_primary_version = 1
 
     def __repr__(self):
         return "<Map [%s] %s - %s - userid: %s>" %(str(self.id), self.mapname, self.author, self.userid)
@@ -115,6 +137,7 @@ class Map(db.Model):
     def vote(self, userid):
         already_voted = self.has_voted(userid)
         vote_status = None
+        if self.votes is None: self.votes = 0
         if not already_voted:
             v = Vote(self.id, userid)
             db.session.add(v)
@@ -138,7 +161,25 @@ class Map(db.Model):
         self.newcomments = 0
 
     def versions(self):
-        return range(10)
+        if(self.mapname != "Untitled" and self.author != "Anonymous"):
+            versions = Map.query.filter_by(mapname=self.mapname, author=self.author, userid=self.userid).order_by("upload_time asc").all()
+            return reversed(zip(range(1,100), versions))
+        else:
+            return []
+
+    def set_primary(self):
+        if self.is_primary_version:
+            return True
+        else:
+            maps = Map.query.filter_by(userid=self.userid, mapname=self.mapname, author=self.author, is_primary_version=1).all()
+            for m in maps:
+                print m, m.version, m.is_primary_version
+                m.is_primary_version = 0
+                db.session.add(m)
+            self.is_primary_version = 1
+            db.session.add(self)
+            db.session.commit()
+            return True
 
     def toggle_feedback(self):
         status = None

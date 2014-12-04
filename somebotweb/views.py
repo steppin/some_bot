@@ -6,7 +6,7 @@ from functools import wraps
 import datetime
 
 from . import app, db, google
-from .models import User, Map, Comment
+from .models import User, Map, Comment, Vote
 from PIL import Image, ImageOps
 from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash, render_template_string
 from werkzeug import secure_filename
@@ -71,21 +71,30 @@ def add_map_to_db(mapname, author, description, userid=-1, status=None):
     m = Map(mapname, author, description, status=status, userid=userid)
     db.session.add(m)
     db.session.commit()
+    if userid > 0:
+        m.vote(userid)
     print "New map -> [%s] %s by %s" %(m.id, mapname, author)
     return m
 
-
-def delete_map_from_db(mapid, email):
+def delete_map_from_db(mapid, user):
     map_ = Map.query.filter_by(id=mapid).first()
-    user = User.query.filter_by(email=email).first()
     if map_ and user:
         currentuser = g.userid
         if currentuser == user.id and map_.userid == user.id:
             print "Deleting map", mapid
-            Map.query.filter_by(id=mapid).delete()
             Comment.query.filter_by(mapid=mapid).delete()
+            Vote.query.filter_by(mapid=mapid).delete()
+            m = Map.query.filter_by(id=mapid).first()
+            if m.is_primary_version:
+                if m.parent_id:
+                    p = get_map_by_id(m.parent_id)
+                    p.is_primary_version = 1
+                    db.session.add(p)
+            db.session.delete(m)
             db.session.commit()
-
+            return True
+        return False
+    return False
 
 def add_map(layout, logic, userid=-1):
     '''
@@ -211,8 +220,9 @@ def recent_maps(page=0, page_size=18):
     INPUT: All optional - author, page_size (number of entries), and offset for pagination
     OUTPUT: Map objects ordered by upload_time descending
     '''
-    total = Map.query.count()
-    maps = Map.query.order_by("upload_time desc").offset(page_size*page).limit(page_size).all()
+    query = Map.query.filter_by(is_primary_version=1)
+    total = query.count()
+    maps = query.order_by("upload_time desc").offset(page_size*page).limit(page_size).all()
     pages = None
     if total > page_size:
         pages = paginate(page, 9, total/page_size+2)
@@ -347,11 +357,19 @@ def vote(resp):
     if userid > 0 and mapid > 0:
         m = Map.query.filter_by(id=mapid).first()
         vote_status = m.vote(userid)
-        print vote_status
         return jsonify(vote_status=vote_status)
     else:
         return jsonify(vote_status=False)
 
+@app.route("/set_primary")
+@google.authorized_handler
+def set_primary(resp):
+    mapid = request.args.get("mapid", -1)
+    m = get_map_by_id(mapid)
+    status = False
+    if m.userid == g.userid:
+        status = m.set_primary()
+    return jsonify(primary_status=status)
 
 @app.route('/', methods=['GET'])
 def index():
@@ -454,10 +472,12 @@ def show_map(mapid):
             db.session.commit()
     return render_template('showmap.html', user=user, map=get_map_by_id(mapid), comments=get_comments(mapid))
 
-@app.route('/delete/<int:mapid>')
-def delete_map(mapid):
-    delete_map_from_db(mapid, g.email)
-    return redirect(url_for('index'))
+@app.route('/delete')
+def delete_map():
+    mapid = request.args.get("mapid")
+    user = get_user_from_db(email=g.email)
+    status = delete_map_from_db(mapid, user)
+    return jsonify(delete_status=status)
 
 def get_json_by_id(mapid):
     '''
@@ -620,6 +640,8 @@ def search_db(query=None, mapname=None, author=None, status=None, userid=None, p
         querystring = "%"+query +"%"
         maps = Map.query.filter(or_(Map.author.ilike(querystring), Map.mapname.ilike(querystring)))
 
+    maps = maps.filter_by(is_primary_version=1)
+
     total = maps.count()
     maps = maps.order_by(order).offset(page_size*page).limit(page_size).all()
     pages = []
@@ -663,6 +685,8 @@ def search():
         maps, pages = search_db(query=query, page=(page-1))
     else:
         maps, pages = recent_maps()
+
+
 
     if standalone:
         data = render_template('showmaps.html', maps=maps, standalone=True, paginate=(pages), pages=pages, current_page=page, query=query)

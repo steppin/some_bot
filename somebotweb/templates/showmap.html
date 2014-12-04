@@ -6,14 +6,14 @@
 
 
 {% block content %}
-<div class="row">
-<div class="col-md-8 col-md-offset-2" style="padding-bottom:50px; padding-top:100px">
+<div class="row" style="padding-bottom:50px; padding-top:100px">
+<div class="col-md-8 col-md-offset-2" >
 <div id="mapdiv">
-    <div class="map" id="{{ map.id }}">
+    <div class="map" id="map_{{ map.id }}">
         <div class="thumbnail">
             {% if user.id == map.userid %}
                 <div class="pull-left">
-                     <a href="/delete/{{map.id}}"><span class="glyphicon glyphicon-remove"></span></a>
+                     <a class="delete_map hide-til-hover" mapid="{{map.id}}"><span class="glyphicon glyphicon-remove"></span></a>
                 </div>
             {% endif %}
                 <div class="pull-right">
@@ -30,35 +30,36 @@
                 <h3>by: <a href="/a/{{map.author}}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>
                 <div class="buttongroup">
-
-
                     {% include 'testselect.html' %}
                     <a href="/static/previews/{{map.id}}.png" class="btn btn-primary">Fullsize Preview</a>
                     <a href="/download?mapname={{map.mapname}}&type=png&mapid={{map.id}}" download="{{ map.mapname }}" class="btn btn-primary">png</a>
                     <a href="/download?mapname={{mapname}}&type=json&mapid={{mapid}}" download="{{ map.mapname }}" class="btn btn-primary">json</a>
+                    <a href="/editor/{{map.id}}"class="btn btn-primary">Remix this map</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 </div>
-<div class="col-md-2" style="padding-top:100px">
+<div class="col-md-2">
   <div class="thumbnail">
     {% if map.userid == user.id %}
+    <div class="btn-group-vertical">
     <div class="btn-group">
-        <a href="{{url_for('test_map', mapid=map.id, zone= user.test_server) }}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Version</a>
         <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-            <span class="caret"></span>
-            <span class="sr-only">Toggle Dropdown</span>
+            Version {{map.version}} <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu" data-mapid="{{map.id}}">
-            {% for version in map.versions() %}
-                <li><a href="#" onclick="" data-url="" data-zone="">{{version}}</a></li>
+            {% for index, vermap in map.versions() %}
+                <li><a href="/show/{{vermap.id}}" onclick="" data-url="" data-zone="">v{{index}}</a></li>
             {% endfor %}
         </ul>
         </div>
         {% if not map.is_primary_version %}
-            <a href="#" class="btn btn-primary">Make primary version</a>
+            <a href="#" class="btn btn-primary" id="set_primary">Make primary version</a>
+        {% else %}
+            <a href="#" class="btn btn-primary btn-success" id="set_primary">Is primary version</a>
+        
         {% endif %}
         {% if map.feedback_allowed %}
             <a href="#" class="btn btn-primary" id="feedback">Feedback Allowed</a>
@@ -66,6 +67,7 @@
             <a href="#" class="btn btn-primary btn-danger" id="feedback">Feedback Disallowed</a>
         {% endif %}
     {% endif %}
+    </div>
     </div>
 </div>
 </div>
@@ -115,6 +117,8 @@ $(document).ready(function() {
 
 
     <script>
+
+
     $("#feedback").click(function(event) {
         element = $(this);
         $.ajax({
@@ -135,9 +139,38 @@ $(document).ready(function() {
             }
         });
     });
-    </script>
 
+    $("#set_primary").click(function(event) {
+        element = $(this);
+        $.ajax({
+            url:"/set_primary",
+            data:{"mapid":'{{map.id}}'},
+        }).done(function(data) {
+            console.log(data);
+            if(data.primary_status == true) {
+                $("#set_primary").addClass("btn-success");
+            }
+        });
+    });
+    </script>
     <script>
+
+    $(".delete_map").click(function(event) {
+        event.preventDefault();
+        mapid = $(this).attr("mapid")
+        $.ajax({
+            url:"/delete",
+            data:{"mapid":mapid}
+        }).done(function(data) {
+            console.log(data);
+            if(data.delete_status == true) {
+                $("#map_"+mapid).fadeOut();
+                document.location = "/";
+            }
+        });
+    });
+
+
     $(".vote").click(function(event) {
         event.preventDefault();
         element = $(this);
