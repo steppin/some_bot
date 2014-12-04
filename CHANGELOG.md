@@ -19,7 +19,7 @@
 * Versioning - when you submit a map with the same map name, it will be added as a version to your map
   * This lets you upload 10 maps with the same name, making minors changes, and not clog up the recent page
   * If you go to your profile, you will see all the maps that you've submitted
-* Primary mode: Pick which version you want to have displayed
+* Primary map: pick which version is displayed
 * Added link to /r/tagpromapsharing
 
 
