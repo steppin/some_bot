@@ -5,6 +5,8 @@ from flask import url_for
 
 from somebotweb import db
 
+from sqlalchemy.orm import relationship, backref
+
 class Vote(db.Model):
     __tablename__ = 'votes'
     id = db.Column('id', db.Integer, primary_key=True)
@@ -87,6 +89,11 @@ class Map(db.Model):
     userid = db.Column(db.Integer, db.ForeignKey('users.id'))
     votes = db.Column(db.Integer, default=0)
     newcomments = db.Column(db.Integer, default=0)
+    feedback_allowed = db.Column(db.Integer, default=1)
+    is_primary_version = db.Column(db.Integer, default=0)
+    remixes = relationship("Map")
+    parent_id = db.Column(db.Integer, db.ForeignKey('map.id'))
+
 
     def __init__(self, mapname, author, description, userid=-1, status=None, upload_time=None):
         self.mapname = mapname
@@ -100,40 +107,6 @@ class Map(db.Model):
 
     def __repr__(self):
         return "<Map [%s] %s - %s - userid: %s>" %(str(self.id), self.mapname, self.author, self.userid)
-
-    def get_json(self):
-        # TODO: this just returns a python dict, not json :/
-        '''
-        Input: map from database - given by Map class from sqlalchemy
-        Output: Map formatted in JSON
-        '''
-        strid = str(self.id)
-
-        map_data = {
-            'mapid': self.id,
-            'mapname': self.mapname,
-            'author': self.author,
-            'description': self.description,
-            'status': self.status,
-            'jsonurl': "/static/maps/"+strid+'.json',
-            'uploaddate': time.strftime('%Y-%m-%d', time.localtime(self.upload_time)),
-            'pngurl': "/static/maps/"+strid+'.png',
-            'previewurl': "/static/previews/"+strid+'.png',
-            'thumburl': "/static/thumbs/"+strid+'.png',
-            'times_tested': self.times_tested,
-            "mapurl": "/show/"+strid,
-            "authorurl": url_for('return_maps_by_author', author=self.author),
-            # TODO:  why mapname in here?
-            # TODO: it's to name the downloaded file; we should move to
-            # storing the files in directories (with name id) and then
-            # keeping nice names inside.
-            "pngdownload": u"/download?mapname={mapname}&type=png&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
-            "jsondownload": u"/download?mapname={mapname}&type=json&mapid={mapid}".format(mapname=self.mapname, mapid=strid),
-            "userid": self.userid,
-            "votes": self.votes,
-            "newcomments": self.newcomments
-            }
-        return map_data
 
     def has_voted(self, userid):
         voted = Vote.query.filter_by(userid=userid, mapid=self.id).count()
@@ -163,6 +136,20 @@ class Map(db.Model):
 
     def clear_comment(self):
         self.newcomments = 0
+
+    def versions(self):
+        return range(10)
+
+    def toggle_feedback(self):
+        status = None
+        if self.feedback_allowed:
+            self.feedback_allowed = 0
+            status = False
+        else:
+            self.feedback_allowed = 1
+            status = True
+        return status
+
 
 db.Index('mapname_idx', db.func.lower(Map.mapname))
 db.Index('mapname_trgm_idx', Map.mapname, postgresql_ops={'mapname': 'gist_trgm_ops'}, postgresql_using="gist")

@@ -237,9 +237,13 @@ def get_test_link(mapid, zone='us'):
     return r.url
 
 
+def get_map_by_id(mapid):
+    return Map.query.filter_by(id=mapid).first()
+
 @app.route("/save/<int:mapid>", methods=['GET'])
 def save_map(mapid):
-    return render_template("showmap.html", map=get_json_by_id(mapid))
+    user = get_user_from_db(userid=g.get("userid", -1))
+    return render_template("showmap.html", user=user, map=get_map_by_id(mapid))
 
 
 @app.route("/upload", methods=['GET', 'POST'])
@@ -300,6 +304,19 @@ def paginate(page, page_size, total_pages):
         return range(page-page_size/2+1, min(page+page_size/2+2, total_pages))
     '''
 
+@app.route("/feedback")
+@google.authorized_handler
+def toggle_feedback(resp):
+    status = None
+    mapid = request.args.get("mapid", 0)
+    if mapid:
+        m = get_map_by_id(mapid)
+        if m.userid == g.userid:
+            status = m.toggle_feedback()
+            db.session.add(m)
+            db.session.commit()
+    return jsonify(feedback_status=status)
+
 @app.route('/mymaps', methods=['GET', 'POST'])
 @google.authorized_handler
 def listmaps(resp):
@@ -320,7 +337,7 @@ def listmaps(resp):
     maps = Map.query.filter_by(userid=g.get('userid')).order_by("upload_time desc").all()
     textures = os.listdir(previewer.RESOURCE_DIR)
     test_servers = config.TEST_SERVERS
-    return render_template('showmaps.html', profile=True,  user=user, maps=get_data_from_maps(maps), textures=textures, servers=test_servers)
+    return render_template('showmaps.html', profile=True,  user=user, maps=maps, textures=textures, servers=test_servers)
 
 @app.route("/vote")
 @google.authorized_handler
@@ -350,7 +367,7 @@ def index():
         page = 1
     maps, pages = recent_maps(page=(page-1))
     user = get_user_from_db(userid=g.get('userid'))
-    return render_template('showmaps.html', maps=get_data_from_maps(maps), user=user, paginate=(pages), pages=pages, current_page=page, active_page='index')
+    return render_template('showmaps.html', maps=maps, user=user, paginate=(pages), pages=pages, current_page=page, active_page='index')
 
 @app.route('/login')
 def login():
@@ -379,10 +396,12 @@ def add_user_to_db(email):
     return u
 
 def get_user_from_db(email=None, userid=None):
+    user = {}
     if email:
         return User.query.filter_by(email=email).first()
-    else:
+    if userid > 0:
         return User.query.filter_by(id=userid).first()
+    return user
 
 @app.route('/login/authorized')
 @google.authorized_handler
@@ -433,7 +452,7 @@ def show_map(mapid):
             m.newcomments = 0
             db.session.add(m)
             db.session.commit()
-    return render_template('showmap.html', user=user, map=get_json_by_id(mapid), comments=get_comments(mapid))
+    return render_template('showmap.html', user=user, map=get_map_by_id(mapid), comments=get_comments(mapid))
 
 @app.route('/delete/<int:mapid>')
 def delete_map(mapid):
@@ -447,7 +466,7 @@ def get_json_by_id(mapid):
     OUTPUT: Map JSON
     '''
     m = Map.query.get_or_404(mapid)
-    return m.get_json()
+    return m
 
 def login_required(f):
     @wraps(f)
@@ -505,10 +524,8 @@ def test_map(mapid, zone):
 def get_map_by_mapname(mapname):
     m = search_db(mapname=mapname)
     if m:
-        return render_template("showmap.html", map=m.get_json())
+        return render_template("showmap.html", map=m)
     else:
-        maps = recent_maps()
-        maps_data = get_data_from_maps(maps)
         return redirect(url_for('index'))
 
 
@@ -524,8 +541,8 @@ def return_maps_by_author(author):
     maps, pages = search_db(author=author)
     if not maps:
         maps = recent_maps()
-    maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data, paginate=pages, pages=pages, current_page=page)
+    user = get_user_from_db(userid=g.get("userid", -1))
+    return render_template('showmaps.html', maps=maps, user=user, paginate=pages, pages=pages, current_page=page)
 
 
 @app.route("/a/<author>/<mapname>")
@@ -533,11 +550,10 @@ def return_map_by_author(author, mapname):
     if author and mapname:
         m = search_db(author=author, mapname=mapname)
         if m:
-            return render_template("showmap.html", map=m.get_json())
+            return render_template("showmap.html", map=m)
     else:
         maps = recent_maps()
-    maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data)
+        return render_template('showmaps.html', maps=maps_data)
 
 
 @app.route("/s/<status>")
@@ -550,8 +566,7 @@ def get_maps_by_status(status):
     except:
         page = 1
     maps, pages = search_db(status=status, page=(page-1))
-    maps_data = get_data_from_maps(maps)
-    return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page, active_page=status)
+    return render_template('showmaps.html', maps=maps, paginate=(pages), pages=pages, current_page=page, active_page=status)
 
 
 @app.route("/download")
@@ -619,7 +634,7 @@ def get_data_from_maps(maps):
     OUTPUT: list of JSON objects
     '''
     for m in maps:
-        yield m.get_json()
+        yield m
 
 
 
@@ -649,13 +664,11 @@ def search():
     else:
         maps, pages = recent_maps()
 
-    maps_data = get_data_from_maps(maps)
-
     if standalone:
-        data = render_template('showmaps.html', maps=maps_data, standalone=True, paginate=(pages), pages=pages, current_page=page, query=query)
+        data = render_template('showmaps.html', maps=maps, standalone=True, paginate=(pages), pages=pages, current_page=page, query=query)
         return jsonify(success=True, html=data)
     else:
-        return render_template('showmaps.html', maps=maps_data, paginate=(pages), pages=pages, current_page=page, query=query)
+        return render_template('showmaps.html', maps=maps, paginate=(pages), pages=pages, current_page=page, query=query)
 
 def url_for_other_page(page, query=None):
     args = request.view_args.copy()

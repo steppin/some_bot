@@ -6,42 +6,76 @@
 
 
 {% block content %}
+<div class="row">
 <div class="col-md-8 col-md-offset-2" style="padding-bottom:50px; padding-top:100px">
 <div id="mapdiv">
-    <div class="map" id="{{ map.mapid }}">
+    <div class="map" id="{{ map.id }}">
         <div class="thumbnail">
             {% if user.id == map.userid %}
                 <div class="pull-left">
-                     <a href="/delete/{{map.mapid}}"><span class="glyphicon glyphicon-remove"></span></a>
+                     <a href="/delete/{{map.id}}"><span class="glyphicon glyphicon-remove"></span></a>
                 </div>
             {% endif %}
                 <div class="pull-right">
                 {% if user %}
-                    <a class="vote " mapid='{{map.mapid}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.mapid, user.id) }}"></span></a>
+                    <a class="vote " mapid='{{map.id}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.id, user.id) }}"></span></a>
                 {% endif %}
                     <span class="map_votes">{{ map.votes }}</span>
                 </div>
-
-
-
             <h2 class='searchable'>{{ map.mapname }}</h2>
             <div class="row-fluid">
-            <img onclick="document.location.href = '{{ map.previewurl }}'" src="{{ map.previewurl }}" style="max-height:500px;">
+            <img onclick="document.location.href = '/static/previews/{{map.id}}.png'" src="/static/previews/{{map.id}}.png" style="max-height:500px;">
             </div>
              <div class="caption">
-                <h3>by: <a href="{{ map.authorurl }}" class='searchable'>{{ map.author }}</a></h3>
+                <h3>by: <a href="/a/{{map.author}}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>
                 <div class="buttongroup">
+
+
                     {% include 'testselect.html' %}
-                    <a href="{{ map.previewurl }}" class="btn btn-primary">Fullsize Preview</a>
-                    <a href="{{ map.pngdownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download png</a>
-                    <a href="{{ map.jsondownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download json</a>
+                    <a href="/static/previews/{{map.id}}.png" class="btn btn-primary">Fullsize Preview</a>
+                    <a href="/download?mapname={{map.mapname}}&type=png&mapid={{map.id}}" download="{{ map.mapname }}" class="btn btn-primary">png</a>
+                    <a href="/download?mapname={{mapname}}&type=json&mapid={{mapid}}" download="{{ map.mapname }}" class="btn btn-primary">json</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
+</div>
+<div class="col-md-2" style="padding-top:100px">
+  <div class="thumbnail">
+    {% if map.userid == user.id %}
+    <div class="btn-group">
+        <a href="{{url_for('test_map', mapid=map.id, zone= user.test_server) }}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Version</a>
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            <span class="caret"></span>
+            <span class="sr-only">Toggle Dropdown</span>
+        </button>
+        <ul class="dropdown-menu" role="menu" data-mapid="{{map.id}}">
+            {% for version in map.versions() %}
+                <li><a href="#" onclick="" data-url="" data-zone="">{{version}}</a></li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% if not map.is_primary_version %}
+            <a href="#" class="btn btn-primary">Make primary version</a>
+        {% endif %}
+        {% if map.feedback_allowed %}
+            <a href="#" class="btn btn-primary" id="feedback">Feedback Allowed</a>
+        {% else %}
+            <a href="#" class="btn btn-primary btn-danger" id="feedback">Feedback Disallowed</a>
+        {% endif %}
+    {% endif %}
+    </div>
+</div>
+</div>
+
+{% if map.feedback_allowed %}
 <div id="comments" class="col-sm-8 col-sm-offset-2">
+{% else %}
+<div id="comments" class="col-sm-8 col-sm-offset-2" hidden>
+{% endif %}
+
     <div class="panel panel-default">
         <div class="panel-heading">
             <form id="add_comment">
@@ -68,7 +102,7 @@ $(document).ready(function() {
         event.preventDefault();
         $.ajax({
             url:"/comment",
-            data:{"text":$("#text").val(), "userid":'{{ userid }}', "mapid":'{{ map.mapid }}'}
+            data:{"text":$("#text").val(), "userid":'{{ userid }}', "mapid":'{{ map.id }}'}
         }).done(function(data) {
             $("#text").val('');
             $("li.list-group-item").remove();
@@ -78,6 +112,31 @@ $(document).ready(function() {
     });
 });
 </script>
+
+
+    <script>
+    $("#feedback").click(function(event) {
+        element = $(this);
+        $.ajax({
+            url:"/feedback",
+            data:{"mapid":'{{map.id}}'},
+        }).done(function(data) {
+            console.log(data);
+            if(data.feedback_status == true) {
+                $("#feedback").removeClass("btn-danger");
+                $("#comments").show();
+                $("#feedback").text("Feedback Allowed");
+            }
+            else if (data.feedback_status == false){
+                $("#feedback").addClass("btn-danger");
+                $("#comments").hide();
+                $("#feedback").text("Feedback Disallowed");
+
+            }
+        });
+    });
+    </script>
+
     <script>
     $(".vote").click(function(event) {
         event.preventDefault();

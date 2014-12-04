@@ -7,53 +7,53 @@
     <div class="col-md-9 col-md-offset-1" style="padding-bottom:50px; padding-top:100px">
 {% endif -%}
 
-{% if profile %}
-<div class="row" style="padding-bottom:50px;">
-   <div class="col-sm-4 col-sm-offset-4 col-xs-10 col-xs-offset-1">
-        <div class="panel panel-default">
-            <div class="panel-heading">
-                <form id="settings_form" method="POST" action="/mymaps">
-                    <label for="username">Display Name</label>
-                        <input type="text" id="username" class="form-control" name="username" placeholder="{{ user.username }}">
-                        <label for="texture_pack">Preferred Texture Pack</label>
-                        <select class="form-control" id="texture_pack" name="texture_pack">
-                            {% for texture in textures %}
-                                {% if user.texture_pack == texture %}
-                                    <option value="{{texture}}" selected>{{texture}}</option>
-                                {% else %}
-                                    <option value="{{texture}}">{{texture}}</option>
-                                {% endif %}   
-                            {% endfor %}
-                        </select>
-                        <label for="test_server">Preferred Test Server</label>
-                        <select class="form-control" id="test_server" name="test_server">
-                            {% for server, desc in servers.iteritems() %}
-                                {% if user.test_server == server %}
-                                    <option value="{{server}}" selected>{{ desc.get('desc') }}</option>
-                                {% else %}
-                                    <option value="{{server}}">{{ desc.get('desc') }}</option>
-                                {% endif %}
-                            {% endfor %}
-                        </select>
-                        <div class="text-center" style="padding-top:10px">
-                            <button class="btn btn-primary" type="submit">Save Changes</button>                    
-                        </div>
-                </form>
+    {% if profile %}
+    <div class="row" style="padding-bottom:50px;">
+       <div class="col-sm-4 col-sm-offset-4 col-xs-10 col-xs-offset-1">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <form id="settings_form" method="POST" action="/mymaps">
+                        <label for="username">Display Name</label>
+                            <input type="text" id="username" class="form-control" name="username" placeholder="{{ user.username }}">
+                            <label for="texture_pack">Preferred Texture Pack</label>
+                            <select class="form-control" id="texture_pack" name="texture_pack">
+                                {% for texture in textures %}
+                                    {% if user.texture_pack == texture %}
+                                        <option value="{{texture}}" selected>{{texture}}</option>
+                                    {% else %}
+                                        <option value="{{texture}}">{{texture}}</option>
+                                    {% endif %}   
+                                {% endfor %}
+                            </select>
+                            <label for="test_server">Preferred Test Server</label>
+                            <select class="form-control" id="test_server" name="test_server">
+                                {% for server, desc in servers.iteritems() %}
+                                    {% if user.test_server == server %}
+                                        <option value="{{server}}" selected>{{ desc.get('desc') }}</option>
+                                    {% else %}
+                                        <option value="{{server}}">{{ desc.get('desc') }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <div class="text-center" style="padding-top:10px">
+                                <button class="btn btn-primary" type="submit">Save Changes</button>                    
+                            </div>
+                    </form>
 
+                </div>
             </div>
         </div>
     </div>
-</div>
-{% endif %}
+    {% endif %}
 
     <div id="mapdiv">
         <div class="row maprow">
         {% for map in maps %}
-            <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
+            <div class="col-lg-4 col-md-6 map" id="{{ map.id }}">
                 <div class="thumbnail">
                     {% if user.id == map.userid %}
                          <div class="pull-left">
-                         <a href="/delete/{{map.mapid}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove"></span></a>
+                         <a href="/delete/{{map.id}}" class='hide-til-hover'><span class="glyphicon glyphicon-remove"></span></a>
                          </div>
                     {% endif %}
                     <div class="pull-right">
@@ -63,15 +63,15 @@
                                 <span class="glyphicon glyphicon-comment newcomment"></span>
                              {% endif %}
                          {% endif %}
-                    <a class="vote " mapid='{{map.mapid}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.mapid, user.id) }}"></span></a>{% endif %}<span class="map_votes">{{ map.votes }}</span></div>
+                    <a class="vote hide-til-hover" mapid='{{map.id}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.id, user.id) }}"></span></a>{% endif %}<span class="map_votes">{{ map.votes }}</span></div>
 
-                    <h2 class="mapname one-line"><a href="{{ map.mapurl }}" class="searchable">{{ map.mapname }}</a></h2>
-                    <a class="img_helper" href="{{ map.mapurl }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="{{ map.thumburl }}"></a>
+                    <h2 class="mapname one-line"><a href="/show/{{ map.id }}" class="searchable">{{ map.mapname }}</a></h2>
+                    <a class="img_helper" href="/show/{{ map.id }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="/static/thumbs/{{map.id}}.png"></a>
                      <div class="caption">
-                        <h3 class="one-line">by: <a href="{{ map.authorurl }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
+                        <h3 class="one-line">by: <a href="/a/{{map.author}}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
                             {% include 'testselect.html' %}
-                            <a href="{{ map.previewurl }}" class="btn btn-danger">Fullsize Preview</a>
+                            <a href="/static/previews/{{map.id}}.png" class="btn btn-danger">Fullsize Preview</a>
                         </div>
                     </div>
                 </div>
