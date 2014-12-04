@@ -3,10 +3,10 @@
 # H4 ADDITIONS
 
 * Login functionality to database (email only used for uniqueness)
-..* Uses google (need gmail account) to handle authentication
-..* Set username by clicking the dude next to the login button
-..* Logging in gives uploaded maps "ownership"
-..* When submitting maps and logged in, the map's author will change to your username
+  * Uses google (need gmail account) to handle authentication
+  * Set username by clicking the dude next to the login button
+  * Logging in gives uploaded maps "ownership"
+  * When submitting maps and logged in, the map's author will change to your username
 
 * Ability to delete maps that you uploaded when logged in
 * Ability to pick texture pack that your maps are rendered in
@@ -17,8 +17,8 @@
 * Ability to allow / disallow feedback on map
 * Map Voting
 * Versioning - when you submit a map with the same map name, it will be added as a version to your map
-..* This lets you upload 10 maps with the same name, making minors changes, and not clog up the recent page
-..* If you go to your profile, you will see all the maps that you've submitted
+  * This lets you upload 10 maps with the same name, making minors changes, and not clog up the recent page
+  * If you go to your profile, you will see all the maps that you've submitted
 * Primary mode: Pick which version you want to have displayed
 * Added link to /r/tagpromapsharing
 
