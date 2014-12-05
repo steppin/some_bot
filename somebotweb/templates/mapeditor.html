@@ -1,12 +1,16 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div id="texture_pack_url" url="{{ texture_url }}" hidden></div>
+
+  {% for name, path in filepaths %}
+    <div id="{{ name }}" url="url('{{ path }}')" hidden></div>
+  {% endfor %}
+  
     <title>TagPro Map Editor</title>
 		<script src="{{ url_for('static', filename='tagpro-map-editor/generatepng.js') }}"></script>
 		<script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>
 		<script src="{{ url_for('static', filename='tagpro-map-editor/jquery-2.1.0.min.js') }}"></script>
 		<script src="{{ url_for('static', filename='tagpro-map-editor/jquery-ui-1.10.4.custom.min.js') }}"></script>
-    <script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>
+    <script src="{{ url_for('static', filename='tagpro-map-editor/bootstrap.min.js') }}"></script>
 
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/style.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/bootstrap.min.css') }}">
@@ -187,6 +191,8 @@
   {% if remix %}
   <div id="remix" mapid="{{mapid}}"hidden></div>
   {% endif %}
+
+
 
   <script type="text/javascript" src="{{ url_for('static', filename='tagpro-map-editor/map.js') }}"></script>
 

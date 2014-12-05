@@ -347,6 +347,9 @@ def listmaps(resp):
     user = User.query.filter_by(id=g.get('userid')).first()
     maps = Map.query.filter_by(userid=g.get('userid')).order_by("upload_time desc").all()
     textures = os.listdir(previewer.RESOURCE_DIR)
+    textures = sorted(textures, key=lambda x: x[0].lower())
+
+
     test_servers = config.TEST_SERVERS
     return render_template('showmaps.html', profile=True,  user=user, maps=maps, textures=textures, servers=test_servers)
 
@@ -368,18 +371,30 @@ def save_from_editor():
 def edit():
     mapid = request.args.get("mapid", 0)
     username = "Anonymous"
-    texture_pack = "Vanilla"
+    texture = "Vanilla"
     if g.get("userid", -1) > 0:
         user = get_user_from_db(userid=g.userid)
         username = user.username
-        texture_pack = user.texture_pack
+        texture = user.texture_pack
 
-    texture_url = url_for('static', filename="textures/%s/tiles.png" %(texture_pack))
+    files = ['tiles', 'speedpad', 'speedpadblue', 'speedpadred', 'portal']
+    filepaths = []
+    for name in files:
+        path = os.path.join('textures',texture,name+".png")
+        if os.path.isfile(path):
+            pass
+        else:
+            path = os.path.join('textures',"Vanilla",name+".png")
+        data = (name, url_for('static', filename=os.path.join('textures',texture,name+".png")))
+        print data
+        filepaths.append( data )
+
+    filepaths.append( ("walltiles", url_for('static', filename="tagpro-map-editor/default-skin-v2.png")))
 
     if mapid > 0:
-        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid, texture_url=texture_url)
+        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid, filepaths=filespaths)
     else:
-        return render_template("mapeditor.html", username=username, remix=False, texture_url=texture_url)
+        return render_template("mapeditor.html", username=username, remix=False, filepaths=filepaths)
 
 @app.route('/remix')
 def remix_data():
