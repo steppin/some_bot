@@ -1,6 +1,6 @@
-# H1 CHANGELOG December, 2014
+# CHANGELOG December, 2014
 
-# H4 ADDITIONS
+### ADDITIONS
 
 * Login functionality to database (email only used for uniqueness)
   * Uses google (need gmail account) to handle authentication
