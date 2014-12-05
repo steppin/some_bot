@@ -1,6 +1,6 @@
-# H1 CHANGELOG December, 2014
+# CHANGELOG December, 2014
 
-# H4 ADDITIONS
+### ADDITIONS
 
 * Login functionality to database (email only used for uniqueness)
   * Uses google (need gmail account) to handle authentication
@@ -21,9 +21,12 @@
   * If you go to your profile, you will see all the maps that you've submitted
 * Primary mode: Pick which version you want to have displayed
 * Added link to /r/tagpromapsharing
+* Integrated Map Editor into juke juice - save directly to juke juice, remix maps from juke juice in the editor
+* Your selected texture will be available in the map editor
 
 
-# H4 BUG FIXES
+
+#### BUG FIXES
 * When searching, pagination now works properly (bringing you to page 2 with query, rather than new maps)
 * Altered the 'showmap' page - before the image link would take up too much space
 ..* The image link doesn't show, but clicking a map image will bring you to the full size preview
