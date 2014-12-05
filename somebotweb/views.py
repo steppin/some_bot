@@ -386,15 +386,14 @@ def edit():
         else:
             path = os.path.join('textures',"Vanilla",name+".png")
         data = (name, url_for('static', filename=os.path.join('textures',texture,name+".png")))
-        print data
         filepaths.append( data )
 
     filepaths.append( ("walltiles", url_for('static', filename="tagpro-map-editor/default-skin-v2.png")))
 
     if mapid > 0:
-        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid, filepaths=filespaths)
+        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid, filepaths=filepaths, active_page='editor')
     else:
-        return render_template("mapeditor.html", username=username, remix=False, filepaths=filepaths)
+        return render_template("mapeditor.html", username=username, remix=False, filepaths=filepaths, active_page='editor')
 
 @app.route('/remix')
 def remix_data():
@@ -409,7 +408,7 @@ def remix_data():
 @app.route("/editortest", methods=['GET', 'POST'])
 def test_from_editor():
     if request.method == "POST":
-        if g.userid > 0:
+        if g.get('userid', -1) > 0:
             user = get_user_from_db(userid=g.userid)
             test_server = user.test_server
         else:
@@ -439,7 +438,7 @@ def set_primary(resp):
     mapid = request.args.get("mapid", -1)
     m = get_map_by_id(mapid)
     status = False
-    if m.userid == g.userid:
+    if m.userid == g.get('userid', 0):
         status = m.set_primary()
     return jsonify(primary_status=status)
 
@@ -585,10 +584,14 @@ def render_comments(mapid):
 @login_required
 def insert_comment():
     text = request.args.get("text", "")
+    mapid = request.args.get("mapid", -1)
+    
     if text and g.get('userid', None):
         userid = g.get("userid", None)
-        mapid = request.args.get("mapid", -1)
-        username = g.get('username')
+        username = g.get('username', None)
+        if not username:
+            user = get_user_from_db(userid=userid)
+            username = user.username
         print "New comment: ", mapid, userid, text
         c = Comment(mapid, userid, username, text)
         c.alert_map()
@@ -730,8 +733,18 @@ def get_data_from_maps(maps):
     '''
     for m in maps:
         yield m
-
-
+@app.route("/top", defaults={'days': 7})
+@app.route("/top/<int:days>")
+def top(days):
+    min_date = datetime.datetime.utcnow() - datetime.timedelta(days=days)
+    maps = Map.query.filter(Map.upload_time >= min_date).order_by("votes desc").limit(36)
+    user = {}
+    if g.get("userid"):
+        user = get_user_from_db(userid=g.userid)
+    message="Top maps of last %s day%s"%( ( ('','') if days == 1 else (days, 's')))
+    if days > 10000:
+        days = 1
+    return render_template("showmaps.html", maps=maps, user=user, active_page='top', message=message, next_days=days*4)
 
 @app.route("/search")
 def search():

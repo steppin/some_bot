@@ -41,7 +41,6 @@
 </div>
 </div>
 <div class="col-md-2">
-    {% if map.userid == user.id %}
   <div class="thumbnail">
     <div class="btn-group-vertical">
     <div class="btn-group">
@@ -54,6 +53,7 @@
             {% endfor %}
         </ul>
         </div>
+    {% if map.userid == user.id %}
         {% if not map.is_primary_version %}
             <a href="#" class="btn btn-primary" id="set_primary">Make primary version</a>
         {% else %}
@@ -65,8 +65,8 @@
         {% else %}
             <a href="#" class="btn btn-primary btn-danger" id="feedback">Feedback Disallowed</a>
         {% endif %}
-    </div>
     {% endif %}
+    </div>
     </div>
 </div>
 </div>
@@ -104,7 +104,7 @@ $(document).ready(function() {
         if($("#text").val() != "") {
             $.ajax({
                 url:"/comment",
-                data:{"text":$("#text").val(), "userid":'{{ userid }}', "mapid":'{{ map.id }}'}
+                data:{"text":$("#text").val(), "userid":'{{ user.id }}', "mapid":'{{ map.id }}'}
             }).done(function(data) {
                 $("#text").val('');
                 $("li.list-group-item").remove();
@@ -113,6 +113,20 @@ $(document).ready(function() {
             });
         }
     });
+
+    function checkForComments() {
+        $.ajax({
+            url:"/comment",
+            data:{"mapid":'{{ map.id }}'}
+        }).done(function(data) {
+            $("#text").val('');
+            $("li.list-group-item").remove();
+            $("ul.list-group").append(data['comments']);
+        });        
+    }
+
+    setInterval(checkForComments, 10000);
+
 });
 </script>
 
