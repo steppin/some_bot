@@ -78,12 +78,14 @@
                     </li>
                     {% endif %}
                 </ul>
+                {% if active_page != "editor" %}
                 <form class="navbar-right navbar-form" type="submit" onSubmit="$(this).attr('action', '/search?query='+$('#search').val());" role="search" id="searchform">
                     <div class="form-group">
                         <label class="sr-only" for="search">Search maps</label>
                         <input type="text" class="form-control" placeholder="Search" id="search">
                     </div>
                 </form>
+                {% endif %}
             </div>
         </div>
     </nav>
@@ -93,8 +95,7 @@
                 {% endblock %}
     </div>
 
-
-    <footer class="footer">
+    <footer class="footer" id="jjlogo">
         <div class="footer-content">
             <img src="{{ url_for('static', filename='images/poweredby.png') }}" />
         </div>

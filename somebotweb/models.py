@@ -44,6 +44,12 @@ class User(db.Model):
     def __repr__(self):
         return '<User %r>' % (self.username)
 
+    def recent_maps(self, count):
+        recent = Map.query.filter_by(userid=self.id).order_by("upload_time desc").limit(count).all()
+        print recent
+        return recent
+        
+
 class Comment(db.Model):
     __tablename__ = 'comments'
 

@@ -362,8 +362,8 @@ def save_from_editor():
             logic = json.loads(logic)
             layout = base64.b64decode(layout)
             layout = Image.open(cStringIO.StringIO(layout))
-            add_map(layout, logic, g.get('userid', -1))
-            return jsonify({'message':True})
+            mid = add_map(layout, logic, g.get('userid', -1))
+            return jsonify({'message':True, 'location':"/show/"+mid})
         return jsonify({'message':False})
     return jsonify({'message':False})
     
@@ -389,15 +389,19 @@ def edit():
         filepaths.append( data )
 
     filepaths.append( ("walltiles", url_for('static', filename="tagpro-map-editor/default-skin-v2.png")))
+    u = {}
+    if g.get("userid", 0) > 0:
+        u = get_user_from_db(userid=g.userid)
 
     if mapid > 0:
-        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid, filepaths=filepaths, active_page='editor')
+        return render_template("mapeditor.html", username=username, remix=True, user=u, mapid=mapid, filepaths=filepaths, active_page='editor')
     else:
-        return render_template("mapeditor.html", username=username, remix=False, filepaths=filepaths, active_page='editor')
+        return render_template("mapeditor.html", username=username, remix=False, user=u, filepaths=filepaths, active_page='editor')
 
 @app.route('/remix')
 def remix_data():
     mapid = request.args.get('mapid', -1)
+    print mapid
     if mapid > 0:
         pngpath = os.path.join(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'))
         jsonpath = os.path.join(app.config['UPLOAD_DIR'], secure_filename(mapid + '.json'))
@@ -773,13 +777,15 @@ def search():
     else:
         maps, pages = recent_maps()
 
-
+    u = {}
+    if g.get("userid") > 0:
+        u = get_user_from_db(userid=g.userid)
 
     if standalone:
-        data = render_template('showmaps.html', maps=maps, standalone=True, paginate=(pages), pages=pages, current_page=page, query=query)
+        data = render_template('showmaps.html', maps=maps, user=u, standalone=True, paginate=(pages), pages=pages, current_page=page, query=query)
         return jsonify(success=True, html=data)
     else:
-        return render_template('showmaps.html', maps=maps, paginate=(pages), pages=pages, current_page=page, query=query)
+        return render_template('showmaps.html', maps=maps, paginate=(pages), pages=pages, current_page=page, query=query, user=u)
 
 def url_for_other_page(page, query=None):
     args = request.view_args.copy()

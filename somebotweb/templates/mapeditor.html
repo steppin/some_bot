@@ -6,13 +6,12 @@
   {% endfor %}
   
     <title>TagPro Map Editor</title>
-		<script src="{{ url_for('static', filename='tagpro-map-editor/generatepng.js') }}"></script>
-		<script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>
-		<script src="{{ url_for('static', filename='tagpro-map-editor/jquery-2.1.0.min.js') }}"></script>
-		<script src="{{ url_for('static', filename='tagpro-map-editor/jquery-ui-1.10.4.custom.min.js') }}"></script>
-        <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
+    <script src="{{ url_for('static', filename='tagpro-map-editor/generatepng.js') }}"></script>
+    <script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>
+    <script src="{{ url_for('static', filename='tagpro-map-editor/jquery-ui-1.10.4.custom.min.js') }}"></script>
+
+    <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/style.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/bootstrap.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/ui-lightness/jquery-ui-1.10.4.custom.min.css') }}">
 <div style="position:fixed;left:0;top:51px;bottom:0;width:320px;overflow-y:scroll;overflow-x:hidden;padding-top:10px;">
     <div class="form-group">
@@ -105,6 +104,7 @@
     </div>
   
     <p><a href="https://github.com/PeterReid/tagpro-map-editor">Source</a></p>
+
     </div>
 
   <div style='position:fixed;top:51px;bottom:0;right:0;left:325px;overflow: scroll;white-space: nowrap;' id='map'>
@@ -148,8 +148,19 @@
             <input type="text" class="form-control" id="author" placeholder="{{ username }}">
           </div>
         </div>
-
         <div class="modal-footer">
+          {% if user.id > 0 %}
+          <div class="btn-group">
+            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            Edit your maps <span class="caret"></span>
+            </button>
+            <ul class="dropdown-menu" role="menu">
+              {% for map in user.recent_maps(10) %}
+                  <li><a href="#" class='editmap' mapid="{{map.id}}">{{map.mapname}} - v{{map.version}} </a></li>
+              {% endfor %}
+            </ul>
+          </div>
+          {% endif %}
 
           <button type="button" id="saveToJJ" class="btn btn-primary btn-success">Save to JJ</button>
           <button type="button" class="btn btn-primary" data-dismiss="modal" id="closeModal">Close</button>
@@ -158,6 +169,18 @@
     </div>
   </div>
   
+
+  <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-hidden="true" style="margin-top:300px">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title">Loading your map...</h4>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <div id="resizeDialog" title="Resize" style='display:none'>
     <table>
       <tr>
