@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 {% block content %}
-    <div id="texture_pack_url" url="{{ url_for('static', filename='tagpro-map-editor/default-skin-v2.png') }}" hidden></div>
+    <div id="texture_pack_url" url="{{ texture_url }}" hidden></div>
     <title>TagPro Map Editor</title>
 		<script src="{{ url_for('static', filename='tagpro-map-editor/generatepng.js') }}"></script>
 		<script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>

@@ -368,13 +368,20 @@ def save_from_editor():
 def edit():
     mapid = request.args.get("mapid", 0)
     username = "Anonymous"
+    texture_pack = "Vanilla"
     if g.get("userid", -1) > 0:
         user = get_user_from_db(userid=g.userid)
         username = user.username
+        texture_pack = user.texture_pack
+
+
+    print texture_pack
+    texture_url = url_for('static', filename="textures/%s/tiles.png" %(user.texture_pack))
+
     if mapid > 0:
-        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid)
+        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid, texture_url=texture_url)
     else:
-        return render_template("mapeditor.html", username=username, remix=False)
+        return render_template("mapeditor.html", username=username, remix=False, texture_url=texture_url)
 
 @app.route('/remix')
 def remix_data():
@@ -401,10 +408,6 @@ def test_from_editor():
         r = requests.post(test_server, files=file_data)
         return jsonify({'location':r.url})
     
-@app.route("/editorstyle")
-def get_texture_pack():
-    return ('static', 'textures/tiles.png')
-
 @app.route("/vote")
 @google.authorized_handler
 def vote(resp):
