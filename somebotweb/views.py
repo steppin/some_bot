@@ -741,6 +741,7 @@ def top(days):
     user = {}
     if g.get("userid"):
         user = get_user_from_db(userid=g.userid)
+
     message="Top maps of last %s day%s"%( ( ('','') if days == 1 else (days, 's')))
     if days > 10000:
         days = 1
