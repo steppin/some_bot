@@ -21,6 +21,9 @@
   * If you go to your profile, you will see all the maps that you've submitted
 * Primary mode: Pick which version you want to have displayed
 * Added link to /r/tagpromapsharing
+* Integrated Map Editor into juke juice - save directly to juke juice, remix maps from juke juice in the editor
+* Your selected texture will be available in the map editor
+
 
 
 # H4 BUG FIXES
