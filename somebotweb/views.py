@@ -374,9 +374,7 @@ def edit():
         username = user.username
         texture_pack = user.texture_pack
 
-
-    print texture_pack
-    texture_url = url_for('static', filename="textures/%s/tiles.png" %(user.texture_pack))
+    texture_url = url_for('static', filename="textures/%s/tiles.png" %(texture_pack))
 
     if mapid > 0:
         return render_template("mapeditor.html", username=username, remix=True, mapid=mapid, texture_url=texture_url)
