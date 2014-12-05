@@ -26,7 +26,7 @@
 
 
 
-# H4 BUG FIXES
+#### BUG FIXES
 * When searching, pagination now works properly (bringing you to page 2 with query, rather than new maps)
 * Altered the 'showmap' page - before the image link would take up too much space
 ..* The image link doesn't show, but clicking a map image will bring you to the full size preview
