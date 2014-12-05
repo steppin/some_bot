@@ -75,7 +75,7 @@
         <ul class="dropdown-menu" role="menu" data-mapid="{{map.id}}">
             {% for remix in map.get_remixes() %}
                 {% if remix.id != map.id %}
-                <li><a href="/show/{{remix.id}}" class="btn btn-primary" id="set_primary" title="uploaded {{ remix.upload_time|timesince}} ago">By {{remix.author}} (v{{remix.version}})</a></li>
+                <li><a href="/show/{{remix.id}}" id="set_primary" title="uploaded {{ remix.upload_time|timesince}} ago">By {{remix.author}} (v{{remix.version}})</a></li>
                 {% endif %}
             {% endfor %}
         </ul>

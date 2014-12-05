@@ -389,7 +389,7 @@ def edit():
         filepaths.append( data )
 
     filepaths.append( ("walltiles", url_for('static', filename="tagpro-map-editor/default-skin-v2.png")))
-    u = {}
+    u = {'id':0}
     if g.get("userid", 0) > 0:
         u = get_user_from_db(userid=g.userid)
 
