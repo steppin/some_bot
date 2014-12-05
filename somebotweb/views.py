@@ -130,7 +130,7 @@ def add_map(layout, logic, userid=-1):
     else:
         author = logic_data.get('info', {}).get('author', 'Anonymous')
         texture_pack = "Vanilla"
-        
+
     mapname = logic_data.get('info', {}).get('name', 'No name')
     description = logic_data.get('info', {}).get('description', 'No description')
     pam = add_map_to_db(mapname, author, description, userid=userid)
@@ -366,11 +366,25 @@ def save_from_editor():
     
 @app.route("/editor")
 def edit():
+    mapid = request.args.get("mapid", 0)
     username = "Anonymous"
     if g.get("userid", -1) > 0:
         user = get_user_from_db(userid=g.userid)
         username = user.username
-    return render_template("mapeditor.html", username=username)
+    if mapid > 0:
+        return render_template("mapeditor.html", username=username, remix=True, mapid=mapid)
+    else:
+        return render_template("mapeditor.html", username=username, remix=False)
+
+@app.route('/remix')
+def remix_data():
+    mapid = request.args.get('mapid', -1)
+    if mapid > 0:
+        pngpath = os.path.join(app.config['UPLOAD_DIR'], secure_filename(mapid + '.png'))
+        jsonpath = os.path.join(app.config['UPLOAD_DIR'], secure_filename(mapid + '.json'))
+        with open(jsonpath) as f:
+            jsondata = json.loads(f.read())
+        return jsonify({"pngdata":"/static/maps/"+secure_filename(mapid+".png"), "jsondata":json.dumps(jsondata)})
 
 @app.route("/editortest", methods=['GET', 'POST'])
 def test_from_editor():

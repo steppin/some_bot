@@ -4,7 +4,6 @@
     {% include 'testselectscripts.html' %}
 {% endblock %}
 
-
 {% block content %}
 <div class="row" style="padding-bottom:50px; padding-top:100px">
 <div class="col-md-8 col-md-offset-2" >
@@ -34,7 +33,7 @@
                     <a href="/static/previews/{{map.id}}.png" class="btn btn-primary">Fullsize Preview</a>
                     <a href="/download?mapname={{map.mapname}}&type=png&mapid={{map.id}}" download="{{ map.mapname }}" class="btn btn-primary">png</a>
                     <a href="/download?mapname={{map.mapname}}&type=json&mapid={{map.id}}" download="{{ map.mapname }}" class="btn btn-primary">json</a>
-                    <a href="/editor/{{map.id}}"class="btn btn-primary">Remix this map</a>
+                    <a href="/editor?mapid={{map.id}}"class="btn btn-primary">Remix this map</a>
                 </div>
             </div>
         </div>
@@ -119,8 +118,6 @@ $(document).ready(function() {
 
 
     <script>
-
-
     $("#feedback").click(function(event) {
         element = $(this);
         $.ajax({

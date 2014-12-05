@@ -184,6 +184,10 @@
     </div>
   </div>
 
+  {% if remix %}
+  <div id="remix" mapid="{{mapid}}"hidden></div>
+  {% endif %}
+
   <script type="text/javascript" src="{{ url_for('static', filename='tagpro-map-editor/map.js') }}"></script>
 
 {% endblock %}
