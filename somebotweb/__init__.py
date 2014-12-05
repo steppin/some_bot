@@ -43,8 +43,8 @@ google = oauth.remote_app(
 db = SQLAlchemy(app)
 
 # TODO: is there a better place for us to init the db?
-from . import models
+import models
 db.create_all()
 db.session.commit()
 
-from . import views
+import views

@@ -61,7 +61,10 @@ def resource(filepath=None, texture="Vanilla", sprite_dir=False):
 def init_textures():
     for texture in os.listdir(RESOURCE_DIR):
         path = os.path.join(RESOURCE_DIR, texture)
-        dissect(path)
+        try:
+            dissect(path)
+        except:
+            print "Error: ", path
 
 def dissect(texture='Vanilla', write_dir=True):
     '''Input tiles.png of texture pack and return dictionary of PIL objects of sprites
@@ -74,6 +77,7 @@ def dissect(texture='Vanilla', write_dir=True):
     speedpad_blue = Image.open(resource('speedpadblue.png', texture=texture))
     speedpad_red = Image.open(resource('speedpadred.png', texture=texture))
     portal = Image.open(resource('portal.png', texture=texture))
+
     sprite_dir = resource(sprite_dir=True, texture=texture)
 
     crop_cords = {
