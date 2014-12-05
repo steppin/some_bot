@@ -191,6 +191,9 @@ class Map(db.Model):
             status = True
         return status
 
+    def get_remixes(self):
+        remixes = Map.query.filter_by(mapname=self.mapname).order_by("upload_time desc").limit(10).all()
+        return remixes
 
 db.Index('mapname_idx', db.func.lower(Map.mapname))
 db.Index('mapname_trgm_idx', Map.mapname, postgresql_ops={'mapname': 'gist_trgm_ops'}, postgresql_using="gist")

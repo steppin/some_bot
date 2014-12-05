@@ -43,13 +43,13 @@
 <div class="col-md-2">
   <div class="thumbnail">
     <div class="btn-group-vertical">
-    <div class="btn-group">
+        <div class="btn-group">
         <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
             Version {{map.version}} <span class="caret"></span>
         </button>
         <ul class="dropdown-menu" role="menu" data-mapid="{{map.id}}">
             {% for index, vermap in map.versions() %}
-                <li><a href="/show/{{vermap.id}}" onclick="" data-url="" data-zone="">v{{index}}</a></li>
+                <li><a href="/show/{{vermap.id}}">v{{index}}</a></li>
             {% endfor %}
         </ul>
         </div>
@@ -66,6 +66,22 @@
             <a href="#" class="btn btn-primary btn-danger" id="feedback">Feedback Disallowed</a>
         {% endif %}
     {% endif %}
+
+
+       <div class="btn-group">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            Remixes <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu" data-mapid="{{map.id}}">
+            {% for remix in map.get_remixes() %}
+                {% if remix.id != map.id %}
+                <li><a href="/show/{{remix.id}}" class="btn btn-primary" id="set_primary" title="uploaded {{ remix.upload_time|timesince}} ago">By {{remix.author}} (v{{remix.version}})</a></li>
+                {% endif %}
+            {% endfor %}
+        </ul>
+        </div>
+
+
     </div>
     </div>
 </div>
