@@ -131,8 +131,11 @@
                                 Click to navigate for files.
                             </div>
                         </form>
+                        <div class="buttongroup">
                           <div class="checkbox">
                             <label><input type="checkbox" id="autotest">Autotest uploaded maps</label>
+                        </div>
+                        <a class="btn btn-primary" id="removeMaps">Remove Maps</a>
                         </div>
                     </div>
                 </div>
@@ -141,35 +144,58 @@
         <script src="{{ url_for('static', filename='js/dropzone.min.js') }}"></script>
 
         <script>
+            $("#removeMaps").fadeOut();
+
             Dropzone.autoDiscover = false;
             Dropzone.options.mapupload = {
-              paramName: "file", // The name that will be used to transfer the file
-              maxFilesize: 0.5, // MB
-              uploadMultiple: true,
-              maxFiles: 2,
-              autoProcessQueue: false,
-              acceptedFiles: "image/png,.json",
-              addRemoveLinks: true,
-              init: function() {
-                this.on("successmultiple", function(files, data) {
-                    if (data.success) {
-                        if($('#autotest')[0].checked) {
-                            window.location.replace(data.testurl);
+                paramName: "file", // The name that will be used to transfer the file
+                maxFilesize: 0.5, // MB
+                uploadMultiple: true,
+                maxFiles: 2,
+                autoProcessQueue: false,
+                acceptedFiles: "image/png,.json",
+                addRemoveLinks: true,
+                dictDefaultMessage: "Drag a png and json to upload",
+                init: function() {
+                    this.on("successmultiple", function(files, data) {
+                        if (data.success) {
+                            console.log(data);
+                            console.log(data.url);
+                            if(data.url !== undefined) {
+                                location.assign(data.url);
+                            }
                         }
-                        else {
-                            window.location.replace(data.saveurl);
-                        }
+                    });
+
+                    // When two files are in the queue, start uploading
+                    this.on("maxfilesreached", function(file) {
+                        this.processQueue();
+                    });
+                },
+                error: function(file, response) {
+                    $("#removeMaps").fadeIn();
+                    if($.type(response) === "string")
+                        var message = response; //dropzone sends it's own error messages in string
+                    else
+                        var message = response.error;
+                    file.previewElement.classList.add("dz-error");
+                    _ref = file.previewElement.querySelectorAll("[data-dz-errormessage]");
+                    _results = [];
+                    for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+                        node = _ref[_i];
+                        _results.push(node.textContent = message);
                     }
+                    return _results;
+                }   
 
-                });
-
-                // When two files are in the queue, start uploading
-                this.on("maxfilesreached", function(file) {
-                    this.processQueue();
-                });
-              }
             };
             var mapupload = new Dropzone("#mapupload");
+
+            $("#removeMaps").click(function () {
+                mapupload.removeAllFiles();
+                $("#removeMaps").fadeOut();
+            })
+
     </script>
     <script>
     $(".vote").click(function(event) {

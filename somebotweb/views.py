@@ -287,16 +287,22 @@ def upload_map():
             if success:
                 if generate_test:
                     test_url = get_test_link(mapid)
-                    return jsonify(testurl=test_url, success=success)
+                    return jsonify(url=test_url, success=success)
                 else:
-                    save_url = url_for('save_map', mapid=mapid)
-                    return jsonify(saveurl=save_url, success=success)
-        json_error_response = jsonify(error="Map upload failed!")
-        json_error_response.status_code = 400
-        return json_error_response
+                    save_url = url_for('show_map', mapid=mapid)
+                    print save_url
+                    return jsonify(url=save_url, success=success)
+            else:
+                json_error_response = jsonify(error="Error adding map to database")
+                json_error_response.status_code = 400
+        else:
+            json_error_response = jsonify(error="Logic and Layout not present")
+            json_error_response.status_code = 400
     else:
-        # TODO: not sure we really want to do this...
-        return render_template("upload.html", map={})
+        json_error_response = jsonify(error="Uploads must be posted")
+        json_error_response.status_code = 400
+
+    return json_error_response
 
 
 def paginate(page, page_size, total_pages):
@@ -525,7 +531,6 @@ def authorized(resp):
 
     return redirect(url_for('index'))
 
-
 @google.tokengetter
 def get_google_oauth_token():
     if 'google_oauth' in session:
@@ -533,7 +538,7 @@ def get_google_oauth_token():
         return (resp['access_token'], '')
 
 
-@app.route('/show/<int:mapid>')
+@app.route('/show/<int:mapid>', methods=['GET'])
 def show_map(mapid):
     '''
     Show a single map given by mapid
@@ -608,7 +613,7 @@ def insert_comment():
 @app.route("/maptest/<int:mapid>/<zone>")
 def test_map(mapid, zone):
     if mapid:
-        showurl = url_for('save_map', mapid=mapid)
+        showurl = url_for('show_map', mapid=mapid)
         testurl = get_test_link(mapid, zone)
         increment_test(mapid)
         if testurl:
