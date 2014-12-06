@@ -66,6 +66,17 @@
                             <li><a href="/top/365">Year</a></li>
                       </ul>
                   </li>
+
+                    <li class="dropdown {% if active_page == 'most_tested' %}active{% endif %}">
+                        <a href="/top/7?tested=true" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">Tested <span class="caret"></span></a>
+                        <ul class="dropdown-menu" role="menu">
+                            <li><a href="/top/1?tested=true">Day</a></li>
+                            <li><a href="/top/7?tested=true">Week</a></li>
+                            <li><a href="/top/30?tested=true">Month</a></li>
+                            <li><a href="/top/90?tested=true">3 Months</a></li>
+                            <li><a href="/top/365?tested=true">Year</a></li>
+                      </ul>
+                  </li>
                 </ul>
 
                 <ul class="nav navbar-nav navbar-right">

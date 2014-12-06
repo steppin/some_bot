@@ -760,16 +760,23 @@ def get_data_from_maps(maps):
 @app.route("/top", defaults={'days': 7})
 @app.route("/top/<int:days>")
 def top(days):
+    tested = request.args.get('tested', False)
     min_date = datetime.datetime.utcnow() - datetime.timedelta(days=days)
-    maps = Map.query.filter(Map.upload_time >= min_date).order_by("votes desc").limit(36)
+    if tested == 'true':
+        maps = Map.query.filter(Map.upload_time >= min_date).order_by("times_tested desc").limit(36)
+        message="Most tested of last %s day%s"%( ( ('','') if days == 1 else (days, 's')))
+        active_page = 'most_tested'
+    else:
+        maps = Map.query.filter(Map.upload_time >= min_date).order_by("votes desc").limit(36)
+        message="Top maps of last %s day%s"%( ( ('','') if days == 1 else (days, 's')))
+        active_page = 'top'
     user = {}
     if g.get("userid"):
         user = get_user_from_db(userid=g.userid)
 
-    message="Top maps of last %s day%s"%( ( ('','') if days == 1 else (days, 's')))
     if days > 10000:
         days = 1
-    return render_template("showmaps.html", maps=maps, user=user, active_page='top', message=message, next_days=days*4)
+    return render_template("showmaps.html", maps=maps, user=user, active_page=active_page, message=message, next_days=days*4)
 
 @app.route("/search")
 def search():
