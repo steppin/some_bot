@@ -577,6 +577,21 @@ def login_required(f):
         return f(*args, **kwargs)
     return decorated_function
 
+@app.route("/update_description")
+def update_description():
+    mapid = request.args.get("mapid", 0)
+    userid = request.args.get("userid", 0)
+    description = request.args.get("description")
+    print mapid, userid, description
+    if mapid > 0 and userid > 0:
+        m = get_map_by_id(mapid)
+        userid = int(userid)
+        if m.userid == userid:
+            m.description = description
+            db.session.add(m)
+            db.session.commit()
+    return jsonify({}) 
+
 def get_comments(mapid):
     comments = Comment.query.filter_by(mapid=mapid).order_by('time desc').all()
     return comments
