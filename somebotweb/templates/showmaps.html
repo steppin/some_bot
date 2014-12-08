@@ -7,11 +7,11 @@
     <div class="col-md-9 col-md-offset-1" style="padding-bottom:50px; padding-top:100px">
 {% endif -%}
 
-    {% if active_page == "top" %}
+    {% if active_page == "top" or active_page == "most_tested"%}
     <div class="row" style="padding-bottom:50px;">
         <div class="col-sm-4 col-sm-offset-4 col-xs-10 col-xs-offset-1">
                 <div style="text-align:center">
-                <a class="btn btn-success btn-lg" href="/top/{{next_days}}" style="text-align:center; font-size:22px">
+                <a class="btn btn-success btn-lg" href="/top/{{next_days}}{% if active_page=='most_tested' %}?tested=true{%endif%}" style="text-align:center; font-size:22px">
                     {{ message }}
                 </a>
                 </div>
@@ -86,6 +86,9 @@
                         <div class="buttongroup">
                             {% include 'testselect.html' %}
                             <a href="/static/previews/{{map.id}}.png" class="btn btn-danger">Fullsize Preview</a>
+                        </div>
+                        <div class="pull-left" style="margin-top:-10px" title="times tested">
+                            <span>{{ map.times_tested }}</span>
                         </div>
                     </div>
                 </div>
