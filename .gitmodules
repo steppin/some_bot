@@ -4,3 +4,6 @@
 [submodule "tagpro-map-editor"]
 	path = tagpro-map-editor
 	url = git@github.com:MercuryRising/tagpro-map-editor.git
+[submodule "somebotweb/static/tagpro-map-editor"]
+	path = somebotweb/static/tagpro-map-editor
+	url = git@github.com:MercuryRising/tagpro-map-editor.git
