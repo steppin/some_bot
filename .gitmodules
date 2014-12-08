@@ -1,3 +1,6 @@
-[submodule "somebotweb/static/tagpro-map-editor"]
-	path = somebotweb/static/tagpro-map-editor
+[submodule "somebotweb/static/tagprome"]
+	path = somebotweb/static/tagprome
 	url = git@github.com:PeterReid/tagpro-map-editor.git
+[submodule "tagpro-map-editor"]
+	path = tagpro-map-editor
+	url = git@github.com:MercuryRising/tagpro-map-editor.git
