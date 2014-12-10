@@ -135,7 +135,6 @@ $(document).ready(function() {
             }).done(function(data) {
                 $("#text").val('');
                 $("li.list-group-item").remove();
-                console.log(comments);
                 $("ul.list-group").append(data['comments']);
             });
         }
@@ -146,7 +145,6 @@ $(document).ready(function() {
             url:"/comment",
             data:{"mapid":'{{ map.id }}'}
         }).done(function(data) {
-            $("#text").val('');
             $("li.list-group-item").remove();
             $("ul.list-group").append(data['comments']);
         });        
