@@ -62,7 +62,7 @@
         {% for map in maps %}
             <div class="col-lg-4 col-md-6 map" id="map_{{ map.id }}">
                 <div class="thumbnail">
-                         <div class="pull-left">
+                         <div class="pull-left" title="Map Version">
                          {% if map.version > 1 %}
                                 v{{map.version}}
                                 {% endif %}
@@ -70,7 +70,7 @@
                                 <a class="delete_map hide-til-hover" mapid="{{map.id}}"><span class="glyphicon glyphicon-remove"></span></a>
                             {% endif %}
                          </div>
-                    <div class="pull-right">
+                    <div class="pull-right" title="Votes">
                     {% if user %}
                         {% if user.id == map.userid %}
                              {% if map.newcomments == 1%}
@@ -87,7 +87,7 @@
                             {% include 'testselect.html' %}
                             <a href="/static/previews/{{map.id}}.png" class="btn btn-danger">Fullsize Preview</a>
                         </div>
-                        <div class="pull-left" style="margin-top:-10px" title="times tested">
+                        <div class="pull-left" style="margin-top:-13px; margin-left:-10px" title="# of Tests">
                             <span>{{ map.times_tested }}</span>
                         </div>
                     </div>
