@@ -1,12 +1,12 @@
 import os
 from collections import OrderedDict
-DEBUG = False
+DEBUG = True
 SQLALCHEMY_DATABASE_URI = "postgres:///{}".format(os.environ.get("SOMEBOT_DB", "somebot"))
 MAX_CONTENT_LENGTH = 512 * 1024  # 512KB
 TEST_SERVERS = OrderedDict([
     ('us', {
         'url': 'http://tagpro-maptest.koalabeast.com/',
-        'desc': 'Los Angeles',
+        'desc': 'Los Angeles (US)',
     }),
     ('ca', {
         'url': 'http://maptest2.newcompte.fr/',

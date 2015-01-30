@@ -1,12 +1,16 @@
 <div class="btn-group">
-    <a href="{{url_for('test_map', mapid=map.mapid)}}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
+    {% if user %}
+    <a href="{{url_for('test_map', mapid=map.id, zone= user.test_server) }}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
+    {% else %}
+    <a href="{{url_for('test_map', mapid=map.id) }}" target="_blank" class="btn btn-primary" id="test{{ map.id }}">Test</a>
+    {% endif %}
     <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
         <span class="caret"></span>
         <span class="sr-only">Toggle Dropdown</span>
     </button>
-    <ul class="testselect dropdown-menu" role="menu" data-mapid="{{map.mapid}}">
+    <ul class="testselect dropdown-menu" role="menu" data-mapid="{{map.id}}">
         {% for zone, test_server in config['TEST_SERVERS'].iteritems() %}
-            <li><a href="#" onclick="handleChange('{{map.mapid}}', '{{zone}}')" data-url="{{url_for('test_map', mapid=map.mapid, zone=zone)}}" data-zone="{{zone}}">{{test_server['desc']}}</a></li>
+            <li><a href="#" onclick="handleChange('{{map.mapid}}', '{{zone}}')" data-url="{{url_for('test_map', mapid=map.id, zone=zone)}}" data-zone="{{zone}}">{{test_server['desc']}}</a></li>
         {% endfor %}
     </ul>
 </div>

@@ -1,22 +1,76 @@
 {% if not standalone %}{% extends 'base.html' %}{% endif -%}
 
+
 {% block content %}
 {# ugh need to get rid of all this standalone branching. #}
 {% if not standalone %}
     <div class="col-md-9 col-md-offset-1" style="padding-bottom:50px; padding-top:100px">
 {% endif -%}
+    {% if profile %}
+    <div class="row" style="padding-bottom:50px;">
+       <div class="col-sm-4 col-sm-offset-4 col-xs-10 col-xs-offset-1">
+            <div class="panel panel-default">
+                <div class="panel-heading">
+                    <form id="settings_form" method="POST" action="/mymaps">
+                        <label for="username">Display Name</label>
+                            <input type="text" id="username" class="form-control" name="username" placeholder="{{ user.username }}">
+                            <label for="texture_pack">Preferred Texture Pack</label>
+                            <select class="form-control" id="texture_pack" name="texture_pack">
+                                {% for texture in textures %}
+                                    {% if user.texture_pack == texture %}
+                                        <option value="{{texture}}" selected>{{texture}}</option>
+                                    {% else %}
+                                        <option value="{{texture}}">{{texture}}</option>
+                                    {% endif %}   
+                                {% endfor %}
+                            </select>
+                            <label for="test_server">Preferred Test Server</label>
+                            <select class="form-control" id="test_server" name="test_server">
+                                {% for server, desc in servers.iteritems() %}
+                                    {% if user.test_server == server %}
+                                        <option value="{{server}}" selected>{{ desc.get('desc') }}</option>
+                                    {% else %}
+                                        <option value="{{server}}">{{ desc.get('desc') }}</option>
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                            <div class="text-center" style="padding-top:10px">
+                                <button class="btn btn-primary" type="submit">Save Changes</button>                    
+                            </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
     <div id="mapdiv">
         <div class="row maprow">
         {% for map in maps %}
-            <div class="col-lg-4 col-md-6 map" id="{{ map.mapid }}">
+            <div class="col-lg-4 col-md-6 map" id="map_{{ map.id }}">
                 <div class="thumbnail">
-                    <h2 class="mapname one-line"><a href="{{ map.mapurl }}" class="searchable">{{ map.mapname }}</a></h2>
-                    <a class="img_helper" href="{{ map.mapurl }}" title="Uploaded: {{ map.uploaddate }}"><img class="img_vertical" src="{{ map.thumburl }}"></a>
+                         <div class="pull-left">
+                            v{{map.version}}
+                            {% if user.id == map.userid %}
+                                <a class="delete_map hide-til-hover" mapid="{{map.id}}"><span class="glyphicon glyphicon-remove"></span></a>
+                            {% endif %}
+                         </div>
+                    <div class="pull-right">
+                    {% if user %}
+                        {% if user.id == map.userid %}
+                             {% if map.newcomments == 1%}
+                                <span class="glyphicon glyphicon-comment newcomment"></span>
+                             {% endif %}
+                         {% endif %}
+                    <a class="vote hide-til-hover" mapid='{{map.id}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.id, user.id) }}"></span></a>{% endif %}<span class="map_votes">{{ map.votes }}</span></div>
+
+                    <h2 class="mapname one-line"><a href="/show/{{ map.id }}" class="searchable">{{ map.mapname }}</a></h2>
+                    <a class="img_helper" href="/show/{{ map.id }}" title="Uploaded: {{ map.upload_time|timesince }} ago"><img class="img_vertical" src="/static/thumbs/{{map.id}}.png"></a>
                      <div class="caption">
-                        <h3 class="one-line">by: <a href="{{ map.authorurl }}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
+                        <h3 class="one-line">by: <a href="/a/{{map.author}}" class='searchable' style="word-wrap:break-word;">{{ map.author }}</a></h3>
                         <div class="buttongroup">
                             {% include 'testselect.html' %}
-                            <a href="{{ map.previewurl }}" class="btn btn-danger">Fullsize Preview</a>
+                            <a href="/static/previews/{{map.id}}.png" class="btn btn-danger">Fullsize Preview</a>
                         </div>
                     </div>
                 </div>
@@ -31,15 +85,15 @@
 <div class="row">
     <div class="text-center">
         <ul class="pagination">
-          <li><a href="{{ url_for_other_page(current_page-1) }}">&laquo;</a></li>
+          <li><a href="{{ url_for_other_page(current_page-1, query) }}">&laquo;</a></li>
             {% for page in pages %}
                 {% if page == current_page %}
                     <li class="active"><span>{{ page }} <span class="sr-only">(current)</span></span></li>
                 {% else %}
-                    <li><a href="{{ url_for_other_page(page) }}">{{ page }}</a></li>
+                    <li><a href="{{ url_for_other_page(page, query) }}">{{ page }}</a></li>
                 {% endif %}
             {% endfor %}
-          <li><a href="{{ url_for_other_page(current_page+1) }}">&raquo;</a></li>
+          <li><a href="{{ url_for_other_page(current_page+1, query) }}">&raquo;</a></li>
         </ul>
     </div>
 </div>
@@ -102,6 +156,46 @@
             };
             var mapupload = new Dropzone("#mapupload");
     </script>
+    <script>
+    $(".vote").click(function(event) {
+        event.preventDefault();
+        element = $(this);
+        $.ajax({
+            url:"/vote",
+            data:{"userid":$(this).attr("userid"), "mapid":$(this).attr("mapid")}
+        }).done(function(data) {
+            if(data.vote_status == true) {
+                element.children().addClass('voted');
+                new_count = parseInt(element.siblings().text())+1;
+                element.siblings(".map_votes").text(new_count);
+            }
+            else {
+                element.children().removeClass('voted');
+                new_count = parseInt(element.siblings().text())-1;
+                element.siblings(".map_votes").text(new_count);
+
+            }
+        });
+    });
+
+    $(".delete_map").click(function(event) {
+        event.preventDefault();
+        mapid = $(this).attr("mapid")
+        $.ajax({
+            url:"/delete",
+            data:{"mapid":mapid}
+        }).done(function(data) {
+            console.log(data);
+            if(data.delete_status == true) {
+
+                $("#map_"+mapid).fadeOut();
+            }
+        });
+    });
+
+    </script>
+
+
 {% endif -%}
 {% endblock %}
 {% block content_scripts %}

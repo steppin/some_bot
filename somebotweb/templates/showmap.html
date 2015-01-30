@@ -1,28 +1,197 @@
 {% extends "base.html" %}
+
+{% block content_scripts %}
+    {% include 'testselectscripts.html' %}
+{% endblock %}
+
+
 {% block content %}
-<div class="col-md-8 col-md-offset-2" style="padding-bottom:50px; padding-top:100px">
+<div class="row" style="padding-bottom:50px; padding-top:100px">
+<div class="col-md-8 col-md-offset-2" >
 <div id="mapdiv">
-    <div class="map" id="{{ mapid }}">
+    <div class="map" id="map_{{ map.id }}">
         <div class="thumbnail">
+            {% if user.id == map.userid %}
+                <div class="pull-left">
+                     <a class="delete_map hide-til-hover" mapid="{{map.id}}"><span class="glyphicon glyphicon-remove"></span></a>
+                </div>
+            {% endif %}
+                <div class="pull-right">
+                {% if user %}
+                    <a class="vote " mapid='{{map.id}}' userid='{{ user.id }}'><span class="glyphicon glyphicon-chevron-up {{ has_voted( map.id, user.id) }}"></span></a>
+                {% endif %}
+                    <span class="map_votes">{{ map.votes }}</span>
+                </div>
             <h2 class='searchable'>{{ map.mapname }}</h2>
-            <a href="{{ map.previewurl }}"><img src="{{ map.previewurl }}" style="max-width:100%; max-height:500px;"></a>
+            <div class="row-fluid">
+            <img onclick="document.location.href = '/static/previews/{{map.id}}.png'" src="/static/previews/{{map.id}}.png" style="max-height:500px;">
+            </div>
              <div class="caption">
-                <h3>by: <a href="{{ map.authorurl }}" class='searchable'>{{ map.author }}</a></h3>
+                <h3>by: <a href="/a/{{map.author}}" class='searchable'>{{ map.author }}</a></h3>
                 <p class='searchable'>{{ map.description }}</p>
                 <div class="buttongroup">
                     {% include 'testselect.html' %}
-                    <a href="{{ map.previewurl }}" class="btn btn-primary">Fullsize Preview</a>
-                    <a href="{{ map.pngdownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download png</a>
-                    <a href="{{ map.jsondownload }}" download="{{ map.mapname }}" class="btn btn-primary">Download json</a>
+                    <a href="/static/previews/{{map.id}}.png" class="btn btn-primary">Fullsize Preview</a>
+                    <a href="/download?mapname={{map.mapname}}&type=png&mapid={{map.id}}" download="{{ map.mapname }}" class="btn btn-primary">png</a>
+                    <a href="/download?mapname={{mapname}}&type=json&mapid={{mapid}}" download="{{ map.mapname }}" class="btn btn-primary">json</a>
+                    <a href="/editor/{{map.id}}"class="btn btn-primary">Remix this map</a>
                 </div>
             </div>
         </div>
     </div>
 </div>
 </div>
+<div class="col-md-2">
+    {% if map.userid == user.id %}
+  <div class="thumbnail">
+    <div class="btn-group-vertical">
+    <div class="btn-group">
+        <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+            Version {{map.version}} <span class="caret"></span>
+        </button>
+        <ul class="dropdown-menu" role="menu" data-mapid="{{map.id}}">
+            {% for index, vermap in map.versions() %}
+                <li><a href="/show/{{vermap.id}}" onclick="" data-url="" data-zone="">v{{index}}</a></li>
+            {% endfor %}
+        </ul>
+        </div>
+        {% if not map.is_primary_version %}
+            <a href="#" class="btn btn-primary" id="set_primary">Make primary version</a>
+        {% else %}
+            <a href="#" class="btn btn-primary btn-success" id="set_primary">Is primary version</a>
+        
+        {% endif %}
+        {% if map.feedback_allowed %}
+            <a href="#" class="btn btn-primary" id="feedback">Feedback Allowed</a>
+        {% else %}
+            <a href="#" class="btn btn-primary btn-danger" id="feedback">Feedback Disallowed</a>
+        {% endif %}
+    </div>
+    {% endif %}
+    </div>
+</div>
+</div>
+
+{% if map.feedback_allowed %}
+<div id="comments" class="col-sm-8 col-sm-offset-2" style="padding-bottom:50px;">
+{% else %}
+<div id="comments" class="col-sm-8 col-sm-offset-2" style="padding-bottom:50px;" hidden>
+{% endif %}
+
+    <div class="panel panel-default">
+        <div class="panel-heading">
+            <form id="add_comment">
+                <div class="input-group">
+                    <input type="text" class="form-control" id="text" placeholder="Leave a comment">
+                    <span class="input-group-btn">
+                          <button class="btn btn-primary" type="button">Send</button>
+                    </span>
+                </div>
+            </form>
+        </div>
+        <ul class="list-group" id="commentLog" style="height: 250px; overflow: scroll;overflow-x: hidden;">
+            {% for comment in comments %}
+                <li class="list-group-item" style="word-break: break-all;">{{comment.time|timesince}}&nbsp;<b>{{ comment.username }}</b> - {{ comment.text|urlize(40)}}</li>
+            {% endfor %}
+        </ul>
+    </div>
+
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#add_comment').submit( function(event) {
+        event.preventDefault();
+        if($("#text").val() != "") {
+            $.ajax({
+                url:"/comment",
+                data:{"text":$("#text").val(), "userid":'{{ userid }}', "mapid":'{{ map.id }}'}
+            }).done(function(data) {
+                $("#text").val('');
+                $("li.list-group-item").remove();
+                console.log(comments);
+                $("ul.list-group").append(data['comments']);
+            });
+        }
+    });
+});
+</script>
 
 
-{% endblock %}
-{% block content_scripts %}
-    {% include 'testselectscripts.html' %}
+    <script>
+
+
+    $("#feedback").click(function(event) {
+        element = $(this);
+        $.ajax({
+            url:"/feedback",
+            data:{"mapid":'{{map.id}}'},
+        }).done(function(data) {
+            console.log(data);
+            if(data.feedback_status == true) {
+                $("#feedback").removeClass("btn-danger");
+                $("#comments").show();
+                $("#feedback").text("Feedback Allowed");
+            }
+            else if (data.feedback_status == false){
+                $("#feedback").addClass("btn-danger");
+                $("#comments").hide();
+                $("#feedback").text("Feedback Disallowed");
+
+            }
+        });
+    });
+
+    $("#set_primary").click(function(event) {
+        element = $(this);
+        $.ajax({
+            url:"/set_primary",
+            data:{"mapid":'{{map.id}}'},
+        }).done(function(data) {
+            console.log(data);
+            if(data.primary_status == true) {
+                $("#set_primary").addClass("btn-success");
+            }
+        });
+    });
+    </script>
+    <script>
+
+    $(".delete_map").click(function(event) {
+        event.preventDefault();
+        mapid = $(this).attr("mapid")
+        $.ajax({
+            url:"/delete",
+            data:{"mapid":mapid}
+        }).done(function(data) {
+            console.log(data);
+            if(data.delete_status == true) {
+                $("#map_"+mapid).fadeOut();
+                document.location = "/";
+            }
+        });
+    });
+
+
+    $(".vote").click(function(event) {
+        event.preventDefault();
+        element = $(this);
+        $.ajax({
+            url:"/vote",
+            data:{"userid":$(this).attr("userid"), "mapid":$(this).attr("mapid")}
+        }).done(function(data) {
+            if(data.vote_status == true) {
+                element.children().addClass('voted');
+                new_count = parseInt(element.siblings().text())+1;
+                element.siblings(".map_votes").text(new_count);
+            }
+            else {
+                element.children().removeClass('voted');
+                new_count = parseInt(element.siblings().text())-1;
+                element.siblings(".map_votes").text(new_count);
+
+            }
+        });
+    });
+    </script>
 {% endblock %}
