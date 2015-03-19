@@ -10,7 +10,7 @@ import cStringIO
 from . import app, db, google
 from .models import User, Map, Comment, Vote
 from PIL import Image, ImageOps
-from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash, render_template_string
+from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash, render_template_string, current_app
 from werkzeug import secure_filename
 from sqlalchemy import or_
 
@@ -559,15 +559,22 @@ def delete_map():
     user = get_user_from_db(email=g.email)
     status = delete_map_from_db(mapid, user)
     return jsonify(delete_status=status)
-
+@app.route('/json/<int:mapid>')
 def get_json_by_id(mapid):
     '''
     Return JSON mapdata from given mapid
     INPUT: mapid (integer)
     OUTPUT: Map JSON
     '''
+    callback = request.args.get('callback', False)
+    if callback:
+        m = Map.query.get_or_404(mapid)
+        data = m.get_json()
+        content = str(callback) + '(' + json.dumps(data) + ')'
+        mimetype = 'application/javascript'
+        return current_app.response_class(content, mimetype=mimetype)
     m = Map.query.get_or_404(mapid)
-    return m
+    return m.get_json()
 
 def login_required(f):
     @wraps(f)
