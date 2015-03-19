@@ -6,7 +6,7 @@ import simplejson as json
 from . import app, db, google
 from .models import User, Map
 from PIL import Image, ImageOps
-from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash
+from flask import request, g, redirect, url_for, abort, render_template, send_from_directory, jsonify, session, flash, current_app
 from werkzeug import secure_filename
 from sqlalchemy import or_
 
@@ -311,16 +311,26 @@ def show_map(mapid):
     '''
     return render_template('showmap.html', map=get_json_by_id(mapid))
 
-
+@app.route('/json/<int:mapid>')
 def get_json_by_id(mapid):
     '''
     Return JSON mapdata from given mapid
     INPUT: mapid (integer)
     OUTPUT: Map JSON
     '''
+    callback = request.args.get('callback', False)
+    print callback
+    if callback:
+        m = Map.query.get_or_404(mapid)
+        print m
+        data = m.get_json()
+        print data
+        content = str(callback) + '(' + json.dumps(data) + ')'
+        print callback
+        mimetype = 'application/javascript'
+        return current_app.response_class(content, mimetype=mimetype)
     m = Map.query.get_or_404(mapid)
     return m.get_json()
-
 
 @app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
 @app.route("/maptest/<int:mapid>/<zone>")
