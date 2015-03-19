@@ -329,16 +329,6 @@ def get_json_by_id(mapid):
     return m.get_json()
 
 
-    $.ajax({
-        url: 'http://maps.jukejuice.com/json/<mapid>',
-        dataType: 'jsonp',
-        success: function(data){
-            console.log(data)
-        }
-    });
-
-
-
 @app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
 @app.route("/maptest/<int:mapid>/<zone>")
 def test_map(mapid, zone):
