@@ -319,18 +319,25 @@ def get_json_by_id(mapid):
     OUTPUT: Map JSON
     '''
     callback = request.args.get('callback', False)
-    print callback
     if callback:
         m = Map.query.get_or_404(mapid)
-        print m
         data = m.get_json()
-        print data
         content = str(callback) + '(' + json.dumps(data) + ')'
-        print callback
         mimetype = 'application/javascript'
         return current_app.response_class(content, mimetype=mimetype)
     m = Map.query.get_or_404(mapid)
     return m.get_json()
+
+
+    $.ajax({
+        url: 'http://maps.jukejuice.com/json/<mapid>',
+        dataType: 'jsonp',
+        success: function(data){
+            console.log(data)
+        }
+    });
+
+
 
 @app.route("/maptest/<int:mapid>", defaults={'zone': 'us'})
 @app.route("/maptest/<int:mapid>/<zone>")
