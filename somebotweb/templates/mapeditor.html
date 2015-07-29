@@ -8,12 +8,11 @@
     <title>TagPro Map Editor</title>
     <script src="{{ url_for('static', filename='tagpro-map-editor/generatepng.js') }}"></script>
     <script src="{{ url_for('static', filename='tagpro-map-editor/webtoolkit.base64.js') }}"></script>
-    <script src="{{ url_for('static', filename='tagpro-map-editor/jquery-ui-1.10.4.custom.min.js') }}"></script>
 
     <link rel="stylesheet" href="//maxcdn.bootstrapcdn.com/bootstrap/3.2.0/css/bootstrap.min.css">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/style.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='tagpro-map-editor/css/ui-lightness/jquery-ui-1.10.4.custom.min.css') }}">
-<div style="position:fixed;left:0;top:51px;bottom:0;width:320px;overflow-y:scroll;overflow-x:hidden;padding-top:10px;">
+		
+  <div style="position:fixed;left:0;top:0;bottom:0;width:320px;overflow-y:scroll;overflow-x:hidden;padding:10px;">
     <div class="form-group">
       <div class="btn-group btn-group-justified">
         <div>
@@ -27,10 +26,14 @@
           <button id='clear' class='btn btn-default' title="Clear map"><span class="glyphicon glyphicon-remove"></span> Clear</button>
         </div>
         <div class="btn-group">
-          <button id='save' class='btn btn-default' title="Save map to cache"><span class="glyphicon glyphicon-floppy-disk"></span> Save</button>
+          <button id="save" class="btn btn-default" title="Save Map" data-target="#saveDialog" data-toggle="modal"><span class="glyphicon glyphicon-floppy-disk"></span> Load/Save</button>
         </div>
-        <div class="btn-group" style="">
-          <button class='btn btn-default' id="test" title="Test map" style="border-top-right-radius:4px;border-bottom-right-radius:4px;" data-toggle="dropdown"><span class="glyphicon glyphicon-play"></span>Test</button>
+        <div class="btn-group" style="position:static;">
+          <button class='btn btn-default' title="Test Map" style="border-top-right-radius:4px;border-bottom-right-radius:4px;" data-toggle="dropdown"><span class="glyphicon glyphicon-play"></span> Test <span class="caret"></span></button>
+          <ul class="dropdown-menu" style="margin-top: 35px;top:auto;right:0;left:auto;text-align:right;" role="menu">
+            <li><a id='test' href="#" style="overflow:hidden;text-overflow:ellipsis;">North American Server</a></li>
+            <li><a id='testeu' href="#" style="overflow:hidden;text-overflow:ellipsis;">European Server</a></li>
+          </ul>
         </div>
       </div>
     </div>
@@ -46,14 +49,14 @@
 
         <div class="col-xs-4">
           <div id="zoom" class="btn-group btn-group-justified" role="toolbar">
-            <a id="zoomOut" class="btn btn-default" title="Zoom out"><span class="glyphicon glyphicon-zoom-out"></span></a>
-            <a id="zoomIn" class="btn btn-default" title="Zoom in"><span class="glyphicon glyphicon-zoom-in"></span></a>
+            <a id="zoomOut" class="btn btn-default" title="Zoom Out"><span class="glyphicon glyphicon-zoom-out"></span></a>
+            <a id="zoomIn" class="btn btn-default" title="Zoom In"><span class="glyphicon glyphicon-zoom-in"></span></a>
           </div>
         </div>
 
         <div class="col-xs-4">
-          <button class="btn btn-default btn-block" title="Save map" data-target="#importExport" data-toggle="modal">
-            <span class="glyphicon glyphicon-save"></span>
+          <button class="btn btn-default btn-block" title="Import/Export Map" data-target="#importExport" data-toggle="modal">
+            <span class="glyphicon glyphicon-import"></span> / <span class="glyphicon glyphicon-export"></span>
           </button>
         </div>
       </div>
@@ -62,17 +65,23 @@
     <div class="form-group">
       <div class="input-group">
         <span class="input-group-addon">Map Size:</span>
-        <input type="number" class="form-control" placeholder="Width" id="resizeWidth">
+        <label class="form-control" id="resizeWidth">20</label>
         <span class="input-group-addon">by</span>
-        <input type="number" class="form-control" placeholder="Height" id="resizeHeight">
+        <label class="form-control" id="resizeHeight">20</label>
         <span class="input-group-btn">
-          <button id="resize" class="btn btn-default" title="Resize the map to the entered dimensions.">
+          <button id="resize" class="btn btn-default" title="Resize" style="padding: 6px 10px;" type="button" data-toggle="modal" data-target="#resizeDialog">
             <span class="glyphicon glyphicon-resize-full"></span>
+          </button>
+          <button id="addWidth" class="btn btn-default" title="Add Columns" style="padding: 6px 10px;">
+            <span class="glyphicon glyphicon-resize-horizontal"></span>
+          </button>
+          <button id="addHeight" class="btn btn-default" title="Add Rows" style="padding: 6px 10px;">
+            <span class="glyphicon glyphicon-resize-vertical"></span>
           </button>
         </span>
       </div>
     </div>
-
+    
     <div class="form-group">
       <div class="row">
         <div class="col-xs-4">
@@ -91,7 +100,7 @@
 
         <div class="col-xs-4">
           <div id="mirrorMap" class="btn-group btn-group-justified" role="toolbar">
-            <a id="mirror" class="btn btn-default" title="Mirror Map"><span class="glyphicon glyphicon-rotate-right glyphicon-sound-stereo"></span> / <span class="glyphicon glyphicon-sound-stereo"></span></a>
+            <a id="mirror" class="btn btn-default" title="Mirror Map" type="button" data-toggle="modal" data-target="#mirrorOptions"><span class="glyphicon glyphicon-rotate-right glyphicon-sound-stereo"></span> / <span class="glyphicon glyphicon-sound-stereo"></span></a>
           </div>
         </div>
       </div>
@@ -100,25 +109,25 @@
     <div class="form-group" style="margin-bottom: 5px;">
       <div id="tools" role="toolbar">
         <div class="btn-group btn-group-justified">
-          <a id="toolPencil" class="btn btn-default btn-sm" title="Pencil - paint a single pixel."><span class="glyphicon glyphicon-pencil off-center"></span></a>
+          <a id="toolPencil" class="btn btn-default btn-sm" title="Pencil"><span class="glyphicon glyphicon-pencil off-center"></span></a>
 
-          <a id="toolBrush" class="btn btn-default btn-sm" title="Brush - paint a 3x3 area."><span class="glyphicon glyphicon-th-large off-center"></span></a>
+          <a id="toolBrush" class="btn btn-default btn-sm" title="Brush"><span class="glyphicon glyphicon-th-large off-center"></span></a>
 
-          <a id="toolLine" class="btn btn-default btn-sm" title="Line - click and drag to draw a line."><span class="glyphicon glyphicon-minus off-center"></span></a>
+          <a id="toolLine" class="btn btn-default btn-sm" title="Line"><span class="glyphicon glyphicon-minus off-center"></span></a>
 
-          <a id="toolRectFill" class="btn btn-default btn-sm" title="Filled rectangle - draw a filled rectangle"><span class="glyphicon glyphicon-stop off-center"></span></a>
+          <a id="toolRectFill" class="btn btn-default btn-sm" title="Filled Rectangle"><span class="glyphicon glyphicon-stop off-center"></span></a>
 
-          <a id="toolRectOutline" class="btn btn-default btn-sm" title="Outlined rectange - draw an outlined rectangle"><span class="glyphicon glyphicon-unchecked off-center"></span></a>
+          <a id="toolRectOutline" class="btn btn-default btn-sm" title="Outlined Rectange"><span class="glyphicon glyphicon-unchecked off-center"></span></a>
 
-          <a id="toolCircleFill" class="btn btn-default btn-sm" title="Filled circle - draw a filled circle"><span class="glyphicon glyphicon-record off-center"></span></a>
+          <a id="toolCircleFill" class="btn btn-default btn-sm" title="Filled Circle"><span class="glyphicon glyphicon-record off-center"></span></a>
 
-          <a id="toolCircleOutline" class="btn btn-default btn-sm" title="Outlined circle - draw an outlined circle"><span class="glyphicon glyphicon-remove-circle off-center"></span></a>
+          <a id="toolCircleOutline" class="btn btn-default btn-sm" title="Outlined Circle"><span class="glyphicon glyphicon-remove-circle off-center"></span></a>
 
-          <a id="toolFill" class="btn btn-default btn-sm" title="Fill - fill an entire area"><span class="glyphicon glyphicon-tint off-center"></span></a>
+          <a id="toolFill" class="btn btn-default btn-sm" title="Fill"><span class="glyphicon glyphicon-tint off-center"></span></a>
 
-          <a id="toolWire" class="btn btn-default btn-sm" title="Wire - select an emitter (buttons, portals) and then click on the receiver(s) (gates, bombs, portals) to complete the link"><span class="glyphicon glyphicon-wrench off-center"></span></a>
+          <a id="toolWire" class="btn btn-default btn-sm" title="Wire"><span class="glyphicon glyphicon-wrench off-center"></span></a>
           
-          <a id="toolClipboard" class="btn btn-default btn-sm" title="Copy and Paste - select an area to duplicate, then paste it elsewhere in its entirety"><span class="glyphicon glyphicon-folder-close off-center"></span></a>
+          <a id="toolClipboard" class="btn btn-default btn-sm" title="Cut/Copy and Paste"><span class="glyphicon glyphicon-folder-close off-center"></span></a>
         </div>
       </div>
     </div>
@@ -138,10 +147,11 @@
   
     <p>Forked from <a href="https://github.com/PeterReid/tagpro-map-editor">PeterReid</a></p>
     <p><a href="https://github.com/steppin/tagpro-map-editor">Source</a></p>
-
     </div>
 
-  <div style='position:fixed;top:51px;bottom:0;right:0;left:325px;overflow: scroll;white-space: nowrap;' id='map'>
+  </div>
+
+  <div style='position:fixed;top:0;bottom:0;right:0;left:320px;overflow: scroll;white-space: nowrap;' id='map'>
   </div>
 
   <canvas width="200" height="200" id='importCanvas' style='display:none'></canvas>
@@ -190,106 +200,63 @@
             <input type="text" class="form-control" id="mapName" placeholder="Untitled">
           </div>
           <div class="form-group">
-            <label for="author">Author Name</label>
-            <input type="text" class="form-control" id="author" placeholder="{{ username }}">
+            <label for="author">Map Author</label>
+            <input type="text" class="form-control" id="author" placeholder="Anonymous">
           </div>
         </div>
-        <div class="modal-footer">
-          {% if user.id > 0 %}
-          <div class="btn-group">
-            <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
-            Edit your maps <span class="caret"></span>
-            </button>
-            <ul class="dropdown-menu" role="menu">
-              {% for map in user.recent_maps(10) %}
-                  <li><a href="#" class='editmap' mapid="{{map.id}}">{{map.mapname}} - v{{map.version}} </a></li>
-              {% endfor %}
-            </ul>
-          </div>
-          {% endif %}
 
-          <button type="button" id="saveToJJ" class="btn btn-primary btn-success">Save to JJ</button>
-          <button type="button" class="btn btn-primary" data-dismiss="modal" id="closeModal">Close</button>
+        <div class="modal-footer">
+					<button type="button" id="saveToJJ" class="btn btn-primary btn-success">Save to JJ</button>
+          <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
         </div>
       </div>
     </div>
   </div>
   
-
-  <div class="modal fade" id="loading" tabindex="-1" role="dialog" aria-hidden="true" style="margin-top:300px">
+  
+  <div class="modal fade" id="saveDialog" tabindex="-1" role="dialog" aria-labelledby="saveLabel" aria-hidden="true">
     <div class="modal-dialog">
       <div class="modal-content">
         <div class="modal-header">
           <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title">Loading your map...</h4>
+          <h4 class="modal-title" id="saveLabel">Load/Save Maps</h4>
         </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="modal fade" id="instructions" tabindex="-1" role="dialog" aria-labelledby="instructionsLabel" aria-hidden="true">
-    <div class="modal-dialog" style="width: 750px;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
-          <h4 class="modal-title" id="instructionsLabel">Instructions</h4>
-        </div>
-        <div class="modal-body">
-          <p>Select a tile type from the palette on the left to draw it on the map. You can click and drag on the map to for faster drawing. Different tools are available for drawing multiple tiles at once including a line and square shape tool. Mouseover the buttons below to see additional information about each tool. Furthermore, mirrored tiles can be drawn across multiple planes of symmetry from the drop-down menu.</p>
-          <div class="form-group">
-            <div role="toolbar">
-              <div class="col-lg-9" style="margin-left: 12.5%;">
-                <div class="btn-group btn-group-justified">
-                  <a class="btn btn-default btn-sm" title="Pencil - paint a single pixel."><span class="glyphicon glyphicon-pencil"></span></a>
-                  <a class="btn btn-default btn-sm" title="Brush - paint a 3x3 area."><span class="glyphicon glyphicon-th-large"></span></a>
-                  <a class="btn btn-default btn-sm" title="Line - click and drag to draw a line."><span class="glyphicon glyphicon-minus"></span></a>
-                  <a class="btn btn-default btn-sm" title="Filled rectangle - draw a filled rectangle"><span class="glyphicon glyphicon-stop"></span></a>
-                  <a class="btn btn-default btn-sm" title="Outlined rectange - draw an outlined rectangle"><span class="glyphicon glyphicon-unchecked"></span></a>
-                  <a class="btn btn-default btn-sm" title="Filled circle - draw a filled circle"><span class="glyphicon glyphicon-record"></span></a>
-                  <a class="btn btn-default btn-sm" title="Outlined circle - draw an outlined circle"><span class="glyphicon glyphicon-remove-circle"></span></a>
-                  <a class="btn btn-default btn-sm" title="Fill - fill an entire area"><span class="glyphicon glyphicon-tint"></span></a>
-                  <a class="btn btn-default btn-sm" title="Wire - select an emitter (buttons, portals) and then click on the receiver(s) (gates, bombs, portals) to complete the link"><span class="glyphicon glyphicon-wrench"></span></a>
-                  <a class="btn btn-default btn-sm" title="Copy and Paste - select an area to duplicate, then paste it elsewhere in its entirety"><span class="glyphicon glyphicon-folder-close"></span></a>
-                </div>
-              </div>
+        <div class="modal-body" style="text-align: center;">
+          <div class="slot empty" id="slot1">
+            <div>
+              <h4><p style="color: #888;">Empty</p></h4>
+              <p></p>
             </div>
-          </div><br><br>
-          <p>Portals and buttons can link to other map elements. To create a link, select the wire tool (wrench icon) and select the entry portal or button. Then select the exit portal or the bomb and gate elements to be activated by the button.</p>
-          <p>Parts of a map can duplicated with the copy and paste tool. Drag to select an area to duplicate, then paste a duplicate of the area elsewhere on the map. All tile settings such as spawn radius, portal cooldown, and button activations will be copied as well.</p>
-          <p>Spawn points and mars balls are placed on top of other map elements. Spawn points can only be placed on floor tiles or team tiles, but mars balls can be placed on top of any other tile type.</p>
-          <p>Additionally, portals, buttons, and spawn points have extra settings. To modify a portals's cooldown time, a button's timer, or a spawn point's radius and weight, shift+click the map tile. You can modify all extra settings of a tile type at once by shift+clicking the map element in the palette. The default portal cooldown and button timer is 0 seconds and the default spawn radius and weight is 5 tiles and 1, respectively.</p>
-          <p>Lastly, you can resize, rotate, flip, and mirror your map at any point. You can also undo/redo changes or quickly switch between tile types. You can undo/redo by either pressing the undo/redo buttons or pressing z to undo and y to redo and you can quickly change the selected tile type by ctrl+clicking an existing map element.</p>
-          <div class="form-group">
-            <div class="row">
-              <div class="col-xs-3">
-                <div class="btn-group btn-group-justified" role="toolbar">
-                  <a class="btn btn-default" title="Undo"><span class="glyphicon glyphicon-flipped glyphicon-share-alt"></span></a>
-                  <a class="btn btn-default" title="Redo"><span class="glyphicon glyphicon-share-alt"></span></a>
-                </div>
-              </div>
-              
-              <div class="col-xs-3">
-                <div class="btn-group btn-group-justified" role="toolbar">
-                  <a class="btn btn-default" title="Rotate Left"><span class="glyphicon glyphicon-flipped glyphicon-retweet"></span></a>
-                  <a class="btn btn-default" title="Rotate Right"><span class="glyphicon glyphicon-retweet"></span></a>
-                </div>
-              </div>
-
-              <div class="col-xs-3">
-                <div class="btn-group btn-group-justified" role="toolbar">
-                  <a class="btn btn-default" title="Flip Vertical"><span class="glyphicon glyphicon-sort"></span></a>
-                  <a class="btn btn-default" title="Flip Horizontal"><span class="glyphicon glyphicon-rotate-right glyphicon-sort"></span></a>
-                </div>
-              </div>
-
-              <div class="col-xs-3">
-                <div class="btn-group btn-group-justified" role="toolbar">
-                  <a class="btn btn-default" title="Mirror Map"><span class="glyphicon glyphicon-rotate-right glyphicon-sound-stereo"></span> / <span class="glyphicon glyphicon-sound-stereo"></span></a>
-                </div>
-              </div>
+            <div style="margin-left: auto;">
+              <button type="button" class="btn btn-info disabled">Download png</button>
+              <button type="button" class="btn btn-info disabled">Download json</button>
             </div>
           </div>
-          <p>Happy map making!</p>
+          <div class="slot empty" id="slot2">
+            <div>
+              <h4><p style="color: #888;">Empty</p></h4>
+              <p></p>
+            </div>
+            <div style="margin-left: auto;">
+              <button type="button" class="btn btn-info disabled">Download png</button>
+              <button type="button" class="btn btn-info disabled">Download json</button>
+            </div>
+          </div>
+          <div class="slot empty" id="slot3">
+            <div>
+              <h4><p style="color: #888;">Empty</p></h4>
+              <p></p>
+            </div>
+            <div style="margin-left: auto;">
+              <button type="button" class="btn btn-info disabled">Download png</button>
+              <button type="button" class="btn btn-info disabled">Download json</button>
+            </div>
+          </div><br><br>
+          <div class="slot-buttons">
+            <button type="button" id="editSlot" class="btn btn-primary disabled"><span class="glyphicon glyphicon-edit"></span> Edit Map</button>
+            <button type="button" id="saveToSlot" class="btn btn-success disabled"><span class="glyphicon glyphicon-floppy-disk"></span> Save to Slot</button>
+            <button type="button" id="clearSlot" class="btn btn-danger disabled"><span class="glyphicon glyphicon-trash"></span> Clear Slot</button>
+          </div>
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
@@ -297,119 +264,327 @@
       </div>
     </div>
   </div>
+  
+  <div class="modal fade" id="instructions" tabindex="-1" role="dialog" aria-labelledby="instructionsLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+          <h4 class="modal-title" id="instructionsLabel">Instructions</h4>
+        </div>
+        <div class="modal-body panel-group" id="accordion">
+          <p>Select a tile type from the palette on the left to draw it on the map. You can click and drag on the map for faster drawing. Different tools are available for drawing multiple tiles at once including a line and rectangle shape tool. Mouseover the icons below to see additional information about each tool and click the headings for more details.</p>
+          <div class="form-group">
+            <div role="toolbar">
+              <div class="col-lg-9" style="margin-left: 12.5%">
+                <div class="btn-group btn-group-justified">
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Pencil" data-content="Paint a tile at a time"><span class="glyphicon glyphicon-pencil"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Brush" data-content="Paint a 3x3 area"><span class="glyphicon glyphicon-th-large"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Line" data-content="Click and drag to draw a line between two points"><span class="glyphicon glyphicon-minus"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Filled Rectangle" data-content="Click and drag to draw a filled in rectangle - hold shift to make a square"><span class="glyphicon glyphicon-stop"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Outlined Rectangle" data-content="Click and drag to draw a one-tile wide outline of a rectangle - hold shift to make a square"><span class="glyphicon glyphicon-unchecked"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Filled Circle" data-content="Click and drag to draw a filled in circle - hold shift to make a perfect circle"><span class="glyphicon glyphicon-record"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Outlined Circle" data-content="Click and drag to draw a one-tile wide outline of a circle - hold shift to make a perfect circle"><span class="glyphicon glyphicon-remove-circle"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Fill" data-content="Fill an area of tiles - hold shift to expand the fill area across diagonally connected tiles"><span class="glyphicon glyphicon-tint"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Wire" data-content="First select a portal or button and then click the exit portal or the gate(s) and bomb(s) the button activates"><span class="glyphicon glyphicon-wrench"></span></a>
+                  <a class="btn btn-default btn-sm" role="button" data-toggle="popover" data-container="#instructions" data-placement="bottom" data-trigger="hover focus" title="Cut/Copy and Paste" data-content="Click and drag to select an area to duplicate, then click and drag to paste a copy elsewhere in its entirety - hold shift while pasting to paste a pattern in a grid or hold control while pasting to cut out the original tiles"><span class="glyphicon glyphicon-folder-close"></span></a>
+                </div>
+              </div>
+            </div>
+          </div><br><br>
+          <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="headingOne" data-toggle="collapse" data-parent="#accordion" href="#collapseOne" aria-expanded="true" aria-controls="collapseOne">
+              <h5 class="panel-title">
+                <a>Portal Cooldowns and Button Timers</a>
+              </h5>
+            </div>
+            <div id="collapseOne" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingOne">
+              <div class="panel-body">
+                <p>Portals have modifiable cooldown times, which is 0 seconds by default when using this map editor. To modify a portal's cooldown time, place a portal on the map and shift+click the tile. Enter a new portal cooldown time in the dialog box that appears. Or, modify the default portal cooldown time and all portals at once by shift+clicking the portal icon on the left of the screen. Note that cooldown times must be greater than or equal to 0 and entered in milliseconds where 1000 milliseconds is equivalent to 1 second.</p>
+                <p>Buttons have modifiable timers as well. By default, button timers are 0 seconds meaning that any button pressed does not remain held down when a player leaves the button. Shift+click a button to change its timer or shift+click the button icon on the left screen to modify the default button timer and change the timer of all buttons at once. Note that button timers are given in seconds and any negative number can be used to make a button permanently active once pressed.
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="headingTwo" data-toggle="collapse" data-parent="#accordion" href="#collapseTwo" aria-expanded="true" aria-controls="collapseTwo">
+              <h5 class="panel-title">
+                <a>Spawn Points and Mars Balls</a>
+              </h5>
+            </div>
+            <div id="collapseTwo" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingTwo">
+              <div class="panel-body">
+                <p>Spawn points and mars balls are placed on top of other map elements. Spawn points can only be placed on floor tiles or team tiles, but mars balls can be placed on top of any other tile type.</p>
+                <p>Additionally, spawn points have modifiable radii and weights. To modify a spawn point's radius and weight, shift+click the spawn tile on the map. Spawn tiles have a default radius of 5 tiles and a default weight of 1. Increase the weight to increase the frequency that players spawn in that area. The spawn radius must be greater than or equal to 0 where a radius of 0 will force all spawns to that tile only. You can also modify all spawn tiles at once by shift+clicking the spawn ball icon on the left of the screen. Note that both red and blue spawn tiles share the same default settings and will all be changed.</p>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="headingThree" data-toggle="collapse" data-parent="#accordion" href="#collapseThree" aria-expanded="true" aria-controls="collapseThree">
+              <h5 class="panel-title">
+                <a>Additional Tools and Information</a>
+              </h5>
+            </div>
+            <div id="collapseThree" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingThree">
+              <div class="panel-body">
+                <p>You can also resize, rotate, flip, and mirror your map at any point. You can also undo/redo changes by either pressing the undo/redo buttons or pressing z to undo and y to redo. To resize your map you can either use the main resizing tool which will allow you to pick a specific size, or you can quickly add a row or column anywhere on the map by using either of the other two resizing tools. Mouseover the icons below for more information on each tool.</p>
+                <p>To quickly change the selected tile type, hotkeys are set up for the most common tools and map elements. Press and hold the alt key to temporarily view the hotkeys or double press the alt key to keep the hotkeys permanently visible until you press the alt key again. You can also ctrl+click on an element on the map itself to easily change the selected tile type that.</p>
+                <div class="form-group">
+                  <div class="row">
+                    <div class="col-xs-3" style="width: 25%">
+                      <div class="btn-group btn-group-justified" role="toolbar">
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Resize" data-content="Allows you to specify a map width and height"><span class="glyphicon glyphicon-resize-full"></span></a>
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Add Columns" data-content="Click and drag to widen your map by adding one or more columns - hold ctrl while dragging to remove the selected columns"><span class="glyphicon glyphicon-resize-horizontal off-center"></span></a>
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Add Rows" data-content="Click and drag to make your map taller your map by adding one or more rows - hold ctrl while dragging to remove the selected rows"><span class="glyphicon glyphicon-resize-vertical off-center"></span></a>
+                      </div>
+                    </div>
+                    
+                    <div class="col-xs-3" style="width: 18.5%">
+                      <div class="btn-group btn-group-justified" role="toolbar">
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Undo" data-content="Undo the most recent change"><span class="glyphicon glyphicon-flipped glyphicon-share-alt off-center2"></span></a>
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Redo" data-content="Redo the most recently undone change"><span class="glyphicon glyphicon-share-alt off-center"></span></a>
+                      </div>
+                    </div>
+              
+                    <div class="col-xs-3" style="width: 18.5%">
+                      <div class="btn-group btn-group-justified" role="toolbar">
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Rotate Left" data-content="Rotate the map left by 90 degrees"><span class="glyphicon glyphicon-flipped glyphicon-retweet off-center2"></span></a>
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Rotate Right" data-content="Rotate the map right by 90 degrees"><span class="glyphicon glyphicon-retweet off-center2"></span></a>
+                      </div>
+                    </div>
 
-  <div id="resizeDialog" title="Resize" style='display:none'>
-    <table>
-      <tr>
-        <td></td>
-        <td style='text-align:center'>
-          <!--<input type='checkbox' id='resizeAnchorTop'/>!-->
-          <a id="resizeAnchorTop" class="btn btn-xs btn-default" title="Extend Left"><span class="glyphicon glyphicon-arrow-up"></span></a>
-        </td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>
-          <!--<input type='checkbox' id='resizeAnchorLeft'/>!-->
-          <a id="resizeAnchorLeft" class="btn btn-xs btn-default" title="Extend Left"><span class="glyphicon glyphicon-arrow-left"></span></a>
-	</td>
-        <td style='text-align:center'>
+                    <div class="col-xs-3" style="width: 18.5%">
+                      <div class="btn-group btn-group-justified" role="toolbar">
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Flip Vertical" data-content="Flip the map vertically across the x-axis"><span class="glyphicon glyphicon-sort off-center"></span></a>
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Flip Horizontal" data-content="Flip the map horizontally across the y-axis"><span class="glyphicon glphyicon-flipped glyphicon-sort off-center2"></span></a>
+                      </div>
+                    </div>
+
+                    <div class="col-xs-3" style="width: 18.5%">
+                      <div class="btn-group btn-group-justified" role="toolbar">
+                        <a class="btn btn-default" data-toggle="popover" data-container="#instructions" data-placement="top" data-trigger="hover focus" title="Mirror Map" data-content="Allows you to mirror the map along its top, bottom, left, or right edge"><span class="glyphicon glyphicon-rotate-right glyphicon-sound-stereo"></span> / <span class="glyphicon glyphicon-sound-stereo"></span></a>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="panel panel-default">
+            <div class="panel-heading" role="tab" id="headingFour" data-toggle="collapse" data-parent="#accordion" href="#collapseFour" aria-expanded="true" aria-controls="collapseFour">
+              <h5 class="panel-title">
+                <a>Saving and Loading a Saved Map</a>
+              </h5>
+            </div>
+            <div id="collapseFour" class="panel-collapse collapse" role="tabpanel" aria-labelledby="headingFour">
+              <div class="panel-body">
+                <p>While editing, your map will auto-save to cache every so often as you make changes. Maps are also automatically saved when leaving the page or when refreshed. In addition to the default map saving, there are 3 slots to save maps to. Maps slots can only be saved to manually and are great for working on multiple projects at once.</p>
+              </div>
+            </div>
+          </div>
+          <br>
+          <h4>Happy map making!</h4>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-primary" data-dismiss="modal">Close</button>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal" id="resizeDialog" tabindex="-1" role="dialog" aria-labelledby="resizeLabel" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+      <div class="modal-dialog modal-sm vertical-align-center">
+        <div class="modal-content">
+          <div class="modal-header modal-colored-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="resizeLabel">Resize Map</h4>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <table>
+              <tr>
+                <td></td>
+                <td style='text-align:center'>
+                  <a id="resizeAnchorTop" class="btn btn-xs btn-default" title="Extend/Shrink Up"><span class="glyphicon glyphicon-arrow-up"></span></a>
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>
+                  <a id="resizeAnchorLeft" class="btn btn-xs btn-default" title="Extend/Shrink Left"><span class="glyphicon glyphicon-arrow-left"></span></a>
+                </td>
+                <td style='text-align:center'>
           
-        </td>
-        <td>
-          <!--<input type='checkbox' id='resizeAnchorRight'/>!-->
-          <a id="resizeAnchorRight" class="btn btn-xs btn-default" title="Extend Left"><span class="glyphicon glyphicon-arrow-right"></span></a>
-	</td>
-      </tr>
-      <tr>
-        <td></td>
-        <td style='text-align:center'>
-          <!--<input type='checkbox' id='resizeAnchorBottom'/>!-->
-          <a id="resizeAnchorBottom" class="btn btn-xs btn-default" title="Extend Left"><span class="glyphicon glyphicon-arrow-down"></span></a>
-        </td>
-        <td></td>
-      </tr>
-    </table><br>
-    <div>
-      Width: <input type='text' id='resizeWidthTo' style='width:4em' /> Height: <input type='text' id='resizeHeightTo' style='width:4em' />
-    </div>
-  </div>
-
-  <div id="spawnOptions" title="Spawn Point" style='display:none'>
-    <div>
-      Spawn Radius: <input type='text' id='spawnRadius' style='width:4em' />
-    </div><br>
-    <div>
-      Spawn Weight: <input type='text' id='spawnWeight' style='width:4em' />
-    </div><br>
-    <div id="spawnAll">
-      <label class="radioLabel" style="width: auto">
-        <input type='radio' name="spawnType" value="all" checked/>  Change all spawn points<br>
-      </label>
-      <label class="radioLabel" style="width: auto">
-        <input type='radio' name="spawnType" value="default"/>  Change only unmodified spawn points
-      </label>
+                </td>
+                <td>
+                  <a id="resizeAnchorRight" class="btn btn-xs btn-default" title="Extend/Shrink Right"><span class="glyphicon glyphicon-arrow-right"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td></td>
+                <td style='text-align:center'>
+                  <a id="resizeAnchorBottom" class="btn btn-xs btn-default" title="Extend/Shrink Down"><span class="glyphicon glyphicon-arrow-down"></span></a>
+                </td>
+                <td></td>
+              </tr>
+            </table><br>
+            <div>
+              Width: <input type='text' id='resizeWidthTo' style='width:4em' />&emsp;&emsp;&emsp;Height: <input type='text' id='resizeHeightTo' style='width:4em' />
+            </div>
+            <div class="modal-footer">
+              <button id="resizeSubmit" type="button" class="btn btn-primary" data-dismiss="modal">Resize</button>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <div id="portalOptions" title="Portal" style='display:none'>
-    <div>
-      Cooldown: <input type='text' id='portalCooldown' style='width:4em' />
-    </div><br>
-    <div id="portalAll">
-      <label class="radioLabel" style="width: auto">
-        <input type='radio' name="portalType" value="all" checked/>  Change all portals<br>
-      </label>
-      <label class="radioLabel" style="width: auto">
-        <input type='radio' name="portalType" value="default"/>  Change only unmodified portals
-      </label>
+  <div class="modal" id="spawnOptions" tabindex="-1" role="dialog" aria-labelledby="spawnLabel" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+      <div class="modal-dialog modal-sm vertical-align-center">
+        <div class="modal-content">
+          <div class="modal-header modal-colored-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="spawnLabel">Spawn Point</h4>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <div>
+              Spawn Radius: <input type='text' id='spawnRadius' style='width:4em' />
+            </div><br>
+            <div>
+              Spawn Weight: <input type='text' id='spawnWeight' style='width:4em' />
+            </div><br>
+            <div id="spawnAll" style="text-align: left;">
+              <label class="radioLabel" style="width: auto">
+                <input type='radio' name="spawnType" value="all" checked/>  Change all spawn points<br>
+              </label>
+              <label class="radioLabel" style="width: auto">
+                <input type='radio' name="spawnType" value="default"/>  Change only unmodified spawn points
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="spawnSubmit" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <div id="switchOptions" title="Button" style='display:none'>
-    <div>
-      Timer: <input type='text' id='switchTimer' style='width:4em' />
-    </div><br>
-    <div id="switchAll">
-      <label class="radioLabel" style="width: auto">
-        <input type='radio' name="switchType" value="all" checked/>  Change all buttons<br>
-      </label>
-      <label class="radioLabel" style="width: auto">
-        <input type='radio' name="switchType" value="default"/>  Change only unmodified buttons
-      </label>
+  <div class="modal" id="portalOptions" tabindex="-1" role="dialog" aria-labelledby="portalLabel" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+      <div class="modal-dialog modal-sm vertical-align-center">
+        <div class="modal-content">
+          <div class="modal-header modal-colored-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="portalLabel">Portal</h4>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <div style="text-align: left;">
+              Choose the portal cooldown time in milliseconds.
+            </div><br>
+            <div>
+              Cooldown: <input type='text' id='portalCooldown' style='width:4em' />
+            </div><br>
+            <div id="portalAll" style="text-align: left;">
+              <label class="radioLabel" style="width: auto">
+                <input type='radio' name="portalType" value="all" checked/>  Change all portals<br>
+              </label>
+              <label class="radioLabel" style="width: auto">
+                <input type='radio' name="portalType" value="default"/>  Change only unmodified portals
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="portalSubmit" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
   
-  <div id="mirrorOptions" title="Mirror Map" style='display:none'>
-    <table>
-      <tr>
-        <td></td>
-        <td style='text-align:center'>
-          <a id="mirrorAnchorTop" class="btn btn-xs btn-default" title="Mirror Up" value="[0,-1]"><span class="glyphicon glyphicon-arrow-up"></span></a>
-        </td>
-        <td></td>
-      </tr>
-      <tr>
-        <td>
-          <a id="mirrorAnchorLeft" class="btn btn-xs btn-default" title="Mirror Left" value="[-1,0]"><span class="glyphicon glyphicon-arrow-left"></span></a>
-        </td>
-        <td style='text-align:center'>
+  <div class="modal" id="switchOptions" tabindex="-1" role="dialog" aria-labelledby="switchLabel" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+      <div class="modal-dialog modal-sm vertical-align-center">
+        <div class="modal-content">
+          <div class="modal-header modal-colored-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="switchLabel">Button</h4>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <div style="text-align: left;">
+              Choose the button timer time in seconds.
+            </div><br>
+            <div>
+              Timer: <input type='text' id='switchTimer' style='width:4em' />
+            </div><br>
+            <div id="switchAll" style="text-align: left;">
+              <label class="radioLabel" style="width: auto">
+                <input type='radio' name="switchType" value="all" checked/>  Change all buttons<br>
+              </label>
+              <label class="radioLabel" style="width: auto">
+                <input type='radio' name="switchType" value="default"/>  Change only unmodified buttons
+              </label>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button id="switchSubmit" type="button" class="btn btn-primary" data-dismiss="modal">Save</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  
+  <div class="modal" id="mirrorOptions" tabindex="-1" role="dialog" aria-labelledby="mirrorLabel" aria-hidden="true">
+    <div class="vertical-alignment-helper">
+      <div class="modal-dialog modal-sm vertical-align-center">
+        <div class="modal-content">
+          <div class="modal-header modal-colored-header">
+            <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+            <h4 class="modal-title" id="mirrorLabel">Mirror Map</h4>
+          </div>
+          <div class="modal-body" style="text-align: center;">
+            <div style="text-align: left;">
+              Pick a direction to mirror in:
+            </div><br>
+            <table>
+              <tr>
+                <td></td>
+                <td style='text-align:center'>
+                  <a id="mirrorAnchorTop" class="btn btn-xs btn-default mirror-dir" title="Mirror Up" value="[0,-1]"><span class="glyphicon glyphicon-arrow-up"></span></a>
+                </td>
+                <td></td>
+              </tr>
+              <tr>
+                <td>
+                  <a id="mirrorAnchorLeft" class="btn btn-xs btn-default mirror-dir" title="Mirror Left" value="[-1,0]"><span class="glyphicon glyphicon-arrow-left"></span></a>
+                </td>
+                <td style='text-align:center'>
           
-        </td>
-        <td>
-          <a id="mirrorAnchorRight" class="btn btn-xs btn-default" title="Mirror Right" value="[-2,0]"><span class="glyphicon glyphicon-arrow-right"></span></a>
-        </td>
-      </tr>
-      <tr>
-        <td></td>
-        <td style='text-align:center'>
-          <a id="mirrorAnchorBottom" class="btn btn-xs btn-default" title="Mirror Down" value="[0,-2]"><span class="glyphicon glyphicon-arrow-down"></span></a>
-        </td>
-        <td></td>
-      </tr>
-    </table>
+                </td>
+                <td>
+                  <a id="mirrorAnchorRight" class="btn btn-xs btn-default mirror-dir" title="Mirror Right" value="[-2,0]"><span class="glyphicon glyphicon-arrow-right"></span></a>
+                </td>
+              </tr>
+              <tr>
+                <td></td>
+                <td style='text-align:center'>
+                  <a id="mirrorAnchorBottom" class="btn btn-xs btn-default mirror-dir" title="Mirror Down" value="[0,-2]"><span class="glyphicon glyphicon-arrow-down"></span></a>
+                </td>
+                <td></td>
+              </tr>
+            </table>
+          </div>
+          <div class="modal-footer">
+            <button id="mirrorSubmit" type="button" class="btn btn-primary" data-dismiss="modal">Mirror</button>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
-
+  
+  <div id="alerts" style="display: table; position: absolute; width: 33%; top: 20px; margin: auto; left: 0px; right: 0px; z-index: 2000;"></div>
+  
   {% if remix %}
   <div id="remix" mapid="{{mapid}}"hidden></div>
   {% endif %}
