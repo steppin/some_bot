@@ -391,7 +391,8 @@ def edit():
             pass
         else:
             path = os.path.join('textures',"Vanilla",name+".png")
-        data = (name, url_for('static', filename=os.path.join('textures',texture,name+".png")))
+        # .replace here to account for os.pah.join on windows...
+        data = (name, url_for('static', filename=os.path.join('textures',texture,name+".png")).replace('%5C', '/'))
         filepaths.append( data )
 
     filepaths.append( ("walltiles", url_for('static', filename="tagpro-map-editor/default-skin-v2.png")))
