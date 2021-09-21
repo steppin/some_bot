@@ -383,7 +383,7 @@ def edit():
         username = user.username
         texture = user.texture_pack
 
-    files = ['tiles', 'speedpad', 'speedpadblue', 'speedpadred', 'portal', 'gravitywell']
+    files = ['tiles', 'speedpad', 'speedpadblue', 'speedpadred', 'portal', 'portalblue', 'portalred', 'gravitywell']
     filepaths = []
     for name in files:
         path = os.path.join('textures',texture,name+".png")
@@ -391,7 +391,7 @@ def edit():
             pass
         else:
             path = os.path.join('textures',"Vanilla",name+".png")
-        # .replace here to account for os.pah.join on windows...
+        # .replace here to account for os.path.join on windows...
         data = (name, url_for('static', filename=os.path.join('textures',texture,name+".png")).replace('%5C', '/'))
         filepaths.append( data )
 
