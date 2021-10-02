@@ -5,19 +5,15 @@ SQLALCHEMY_DATABASE_URI = "postgres:///{}".format(os.environ.get("SOMEBOT_DB", "
 MAX_CONTENT_LENGTH = 512 * 1024  # 512KB
 TEST_SERVERS = OrderedDict([
     ('us', {
-        'url': 'http://tagpro-maptest.koalabeast.com/',
-        'desc': 'Los Angeles (US)',
-    }),
-    ('ca', {
-        'url': 'http://maptest2.newcompte.fr/',
-        'desc': 'Montreal (Ca)',
+        'url': 'https://tagpro-maptest-dallas.koalabeast.com/',
+        'desc': 'Dallas (Us)',
     }),
     ('eu', {
-        'url': 'http://maptest.newcompte.fr/',
+        'url': 'https://tagpro-maptest-paris.koalabeast.com/',
         'desc': 'Paris (Fr)',
     }),
     ('au', {
-        'url': 'http://oceanic.newcompte.fr/',
+        'url': 'https://tagpro-maptest-sydney.koalabeast.com/',
         'desc': 'Sydney (Au)',
     }),
 ])

@@ -5,3 +5,5 @@ secret.py
 **/static/maps/
 **/static/thumbs/
 **/static/previews/
+.python-version
+.vscode

@@ -383,7 +383,7 @@ def edit():
         username = user.username
         texture = user.texture_pack
 
-    files = ['tiles', 'speedpad', 'speedpadblue', 'speedpadred', 'portal', 'gravitywell']
+    files = ['tiles', 'speedpad', 'speedpadblue', 'speedpadred', 'portal', 'portalblue', 'portalred', 'gravitywell']
     filepaths = []
     for name in files:
         path = os.path.join('textures',texture,name+".png")
