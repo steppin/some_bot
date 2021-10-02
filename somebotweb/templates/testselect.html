@@ -10,7 +10,7 @@
     </button>
     <ul class="testselect dropdown-menu" role="menu" data-mapid="{{map.id}}">
         {% for zone, test_server in config['TEST_SERVERS'].iteritems() %}
-            <li><a href="{{test_server['url']}}um?mapid=23451"  target="_blank">{{test_server['desc']}}</a></li>
+            <li><a href="{{test_server['url']}}um?mapid={{map.mapid}}"  target="_blank">{{test_server['desc']}}</a></li>
         {% endfor %}
     </ul>
 </div>
