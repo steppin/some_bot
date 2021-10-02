@@ -665,7 +665,7 @@ def return_maps_by_author(author):
             page = 1
     except:
         page = 1
-    maps, pages = search_db(author=author)
+    maps, pages = search_db(author=author, page=(page-1))
     if not maps:
         maps = recent_maps()
     user = get_user_from_db(userid=g.get("userid", -1))
