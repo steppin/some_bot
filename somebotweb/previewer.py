@@ -81,8 +81,8 @@ def dissect(texture='Vanilla', write_dir=True):
     speedpad_blue = Image.open(resource('speedpadblue.png', texture=texture))
     speedpad_red = Image.open(resource('speedpadred.png', texture=texture))
     portal = Image.open(resource('portal.png', texture=texture))
-    portal_red = Image.open(resource('portalred.png', texture=texture))
-    portal_blue = Image.open(resource('portalblue.png', texture=texture))
+    portalred = Image.open(resource('portalred.png', texture=texture))
+    portalblue = Image.open(resource('portalblue.png', texture=texture))
     gravitywell = Image.open(resource('gravitywell.png', texture=texture))
 
     sprite_dir = resource(sprite_dir=True, texture=texture)
@@ -111,8 +111,8 @@ def dissect(texture='Vanilla', write_dir=True):
         'button': (13,6),
         'topspeed': (12,7),
         'portal':(0,0, portal),
-        'portal_red':(0,0, portal_red),
-        'portal_blue':(0,0, portal_blue),
+        'portalred':(0,0, portalred),
+        'portalblue':(0,0, portalblue),
         'gravitywell': (0,0, gravitywell),
         # THIS IS WHERE IT GETS UGLY
         '135': ((0,0),(7,5),(7,5),(3,5)),
