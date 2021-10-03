@@ -113,6 +113,9 @@ def dissect(texture='Vanilla', write_dir=True):
         'portal':(0,0, portal),
         'portalred':(0,0, portalred),
         'portalblue':(0,0, portalblue),
+        'portaloff': (4, 0, portal),
+        'portaloff_red': (4, 0, portalred),
+        'portaloff_blue': (4, 0, portalblue),
         'gravitywell': (0,0, gravitywell),
         # THIS IS WHERE IT GETS UGLY
         '135': ((0,0),(7,5),(7,5),(3,5)),
