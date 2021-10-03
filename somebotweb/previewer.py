@@ -39,6 +39,8 @@ rgbs = {
     (187, 184, 221): "blue_tile",
     (220, 220, 186): "yellow_tile",
     (202, 192, 0): "portaloff",
+    (204, 51, 0): "portaloff_red",
+    (0, 102, 204): "portaloff_blue",
     (155, 0,  0): "redball",
     (0, 0, 155): "blueball",
     (255, 115, 115): "speedpad_red",
@@ -79,6 +81,8 @@ def dissect(texture='Vanilla', write_dir=True):
     speedpad_blue = Image.open(resource('speedpadblue.png', texture=texture))
     speedpad_red = Image.open(resource('speedpadred.png', texture=texture))
     portal = Image.open(resource('portal.png', texture=texture))
+    portalred = Image.open(resource('portalred.png', texture=texture))
+    portalblue = Image.open(resource('portalblue.png', texture=texture))
     gravitywell = Image.open(resource('gravitywell.png', texture=texture))
 
     sprite_dir = resource(sprite_dir=True, texture=texture)
@@ -107,6 +111,11 @@ def dissect(texture='Vanilla', write_dir=True):
         'button': (13,6),
         'topspeed': (12,7),
         'portal':(0,0, portal),
+        'portalred':(0,0, portalred),
+        'portalblue':(0,0, portalblue),
+        'portaloff': (4, 0, portal),
+        'portaloff_red': (4, 0, portalred),
+        'portaloff_blue': (4, 0, portalblue),
         'gravitywell': (0,0, gravitywell),
         # THIS IS WHERE IT GETS UGLY
         '135': ((0,0),(7,5),(7,5),(3,5)),
@@ -267,6 +276,20 @@ class plot():
                 try:
                     if "destination" in self.json['portals'][cord_key]:
                         paste = "portal"
+                except KeyError:
+                    pass
+            if paste == 'portaloff_red':
+                cord_key = "%d,%d" % (item[0], item[1])
+                try:
+                    if "destination" in self.json['portals'][cord_key]:
+                        paste = "portalred"
+                except KeyError:
+                    pass
+            if paste == 'portaloff_blue':
+                cord_key = "%d,%d" % (item[0], item[1])
+                try:
+                    if "destination" in self.json['portals'][cord_key]:
+                        paste = "portalblue"
                 except KeyError:
                     pass
             if paste in WALLS:

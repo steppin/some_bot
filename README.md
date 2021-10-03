@@ -28,6 +28,16 @@ Setup
 
 4. create your `secret.py` by following the template in `secret.py.example`
 
+
+Production notes learned the hard way
+---
+
+1. Initially `previewer.py` and any time textures are modified:
+
+        cd somebotweb
+        python -c 'import previewer; previewer.init_textures()'
+
+
 Run dev server
 ----
 
