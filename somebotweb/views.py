@@ -1,6 +1,7 @@
 import os
 import time
 import requests
+import platform
 import simplejson as json
 from functools import wraps
 import datetime
@@ -182,7 +183,7 @@ def generate_preview(mapid, texture="Vanilla"):
     logic = os.path.join(app.config['UPLOAD_DIR'], mapid + '.json')
     map_ = previewer.plot(layout, logic, texture)
     preview = map_.draw()
-    with open(os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png'), 'w') as f:
+    with open(os.path.join(app.config['PREVIEW_DIR'], str(mapid) + '.png'), 'wb') as f:
         f.write(preview.getvalue())
 
 
@@ -391,7 +392,10 @@ def edit():
             pass
         else:
             path = os.path.join('textures',"Vanilla",name+".png")
-        data = (name, url_for('static', filename=os.path.join('textures',texture,name+".png")))
+        img_url = url_for('static', filename=os.path.join('textures',texture,name+".png"))
+        if platform.system() == 'Windows':
+            img_url = img_url.replace('%5C', '/')
+        data = (name, img_url)
         filepaths.append( data )
 
     filepaths.append( ("walltiles", url_for('static', filename="tagpro-map-editor/default-skin-v2.png")))

@@ -1,8 +1,8 @@
 <div class="btn-group">
     {% if user %}
-    <a href="{{url_for('test_map', mapid=map.id, zone= user.test_server) }}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
+    <a href="{{config['TEST_SERVERS'][user.test_server]['url']}}um?mapid={{map.id}}" target="_blank" class="btn btn-primary" id="test{{ map.mapid }}">Test</a>
     {% else %}
-    <a href="{{url_for('test_map', mapid=map.id) }}" target="_blank" class="btn btn-primary" id="test{{ map.id }}">Test</a>
+    <a href="{{config['TEST_SERVERS']['us']['url']}}um?mapid={{map.id}}" target="_blank" class="btn btn-primary" id="test{{ map.id }}">Test</a>
     {% endif %}
     <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
         <span class="caret"></span>
